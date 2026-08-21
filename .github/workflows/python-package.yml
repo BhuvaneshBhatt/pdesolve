@@ -1,0 +1,284 @@
+name: Test, build, and publish
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Upgrade packaging tools
+        run: python -m pip install --upgrade pip setuptools wheel
+
+      - name: Install package and test dependencies
+        run: python -m pip install -e ".[test]"
+
+      - name: Run Ruff
+        run: ruff check .
+
+      - name: Run test suite
+        run: python -m pytest
+
+  build:
+    name: Build distributions
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install release tools
+        run: python -m pip install --upgrade build twine
+
+      - name: Check tag matches package version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import tomllib
+
+          with Path("pyproject.toml").open("rb") as stream:
+              project = tomllib.load(stream)["project"]
+
+          package_version = project["version"]
+          tag = os.environ["GITHUB_REF_NAME"]
+          tag_version = tag[1:] if tag.startswith("v") else tag
+
+          if package_version != tag_version:
+              raise SystemExit(
+                  f"Tag/version mismatch: tag={tag!r}, "
+                  f"pyproject version={package_version!r}"
+              )
+
+          print(f"Release version: {package_version}")
+          PY
+
+      - name: Build wheel and source distribution
+        run: python -m build
+
+      - name: Validate distribution metadata
+        run: python -m twine check --strict dist/*
+
+      - name: Verify wheel excludes repository-only content
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import zipfile
+
+          wheel = next(Path("dist").glob("*.whl"))
+          forbidden = (
+              "tests/",
+              "tools/",
+              "docs/",
+              "notebooks/",
+              "examples/",
+              "test_reports/",
+          )
+
+          with zipfile.ZipFile(wheel) as archive:
+              names = archive.namelist()
+
+          bad = [
+              name
+              for name in names
+              if any(
+                  name == prefix.rstrip("/") or name.startswith(prefix)
+                  for prefix in forbidden
+              )
+          ]
+
+          if bad:
+              raise SystemExit(
+                  "Repository-only files were included in the wheel:\n"
+                  + "\n".join(bad)
+              )
+
+          if not any(name.startswith("pdesolve/") for name in names):
+              raise SystemExit("Wheel does not contain the pdesolve package.")
+
+          print("Wheel contents look correct.")
+          PY
+
+      - name: Upload built distributions
+        uses: actions/upload-artifact@v5
+        with:
+          name: python-package-distributions
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  wheel-smoke-test:
+    name: Smoke-test built wheel
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up clean Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Download distributions
+        uses: actions/download-artifact@v6
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Install wheel
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install dist/*.whl
+
+      - name: Smoke-test installed wheel
+        shell: bash
+        run: |
+          cd "${RUNNER_TEMP}"
+          python - <<'PY'
+          from importlib.metadata import version
+          import sympy as sp
+          import pdesolve
+          from pdesolve import (
+              build_benchmark_suite,
+              build_pde_problem,
+              pdesolve as solve_pde,
+          )
+
+          installed = version("pdesolve")
+          assert installed == pdesolve.__version__
+          assert "/site-packages/" in pdesolve.__file__.replace("\\", "/")
+
+          x, t = sp.symbols("x t", real=True)
+          u = sp.Function("u")
+
+          transport = sp.Eq(
+              sp.diff(u(x, t), t) + sp.diff(u(x, t), x),
+              0,
+          )
+          initial = sp.Eq(u(x, 0), sp.sin(x))
+
+          problem = build_pde_problem(
+              transport,
+              u(x, t),
+              (x, t),
+              ics=[initial],
+          )
+          assert problem is not None
+
+          result = solve_pde(
+              transport,
+              u(x, t),
+              (x, t),
+              ics=[initial],
+          )
+          rhs = result.solution.rhs
+          assert sp.simplify(
+              sp.diff(rhs, t) + sp.diff(rhs, x)
+          ) == 0
+          assert sp.simplify(
+              rhs.subs(t, 0) - sp.sin(x)
+          ) == 0
+
+          heat = sp.Eq(
+              sp.diff(u(x, t), t),
+              sp.diff(u(x, t), x, 2),
+          )
+          boundaries = [
+              sp.Eq(u(0, t), 0),
+              sp.Eq(u(sp.pi, t), 0),
+          ]
+
+          heat_result = solve_pde(
+              heat,
+              u(x, t),
+              (x, t),
+              ics=[initial],
+              bcs=boundaries,
+              domain=sp.Interval(0, sp.pi),
+          )
+          heat_rhs = heat_result.solution.rhs
+
+          assert sp.simplify(
+              sp.diff(heat_rhs, t) - sp.diff(heat_rhs, x, 2)
+          ) == 0
+          assert sp.simplify(
+              heat_rhs.subs(t, 0) - sp.sin(x)
+          ) == 0
+          assert sp.simplify(heat_rhs.subs(x, 0)) == 0
+          assert sp.simplify(heat_rhs.subs(x, sp.pi)) == 0
+
+          suite = build_benchmark_suite()
+          assert suite is not None
+
+          print(f"PDESolve {installed} wheel smoke test passed.")
+          PY
+
+  publish:
+    name: Publish to PyPI
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - build
+      - wheel-smoke-test
+    runs-on: ubuntu-latest
+
+    environment:
+      name: pypi
+      url: https://pypi.org/p/pdesolve
+
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v6
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
