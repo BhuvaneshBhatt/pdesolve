@@ -53,7 +53,7 @@ Use `solve_fundamental_solution(...)` and `solve_green_function(...)` for explic
 pip install -e .
 ```
 
-Requires Python 3.10+ and SymPy 1.12+.
+Requires Python 3.11+ and SymPy 1.12+.
 
 ## Tests
 

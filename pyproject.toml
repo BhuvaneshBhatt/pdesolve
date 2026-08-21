@@ -9,7 +9,7 @@ description = "Symbolic partial differential equation solver with classical, tra
 readme = "README.md"
 license = "GPL-3.0-only"
 license-files = ["LICENSE"]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [{name = "Bhuvanesh Bhatt", email = "bhuvaneshbhatt@gmail.com"}]
 maintainers = [{name = "Bhuvanesh Bhatt", email = "bhuvaneshbhatt@gmail.com"}]
 keywords = [
