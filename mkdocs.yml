@@ -1,0 +1,35 @@
+site_name: PDESolve
+site_description: Symbolic PDE toolbox documentation
+theme:
+  name: readthedocs
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Capability matrix: capability-matrix.md
+  - Worked examples:
+      - Overview: examples/index.md
+      - Linear first order: examples/linear-first-order.md
+      - Nonlinear first order: examples/nonlinear-first-order.md
+      - Conservation laws: examples/conservation-laws.md
+      - Heat equations: examples/heat-equations.md
+      - Wave equations: examples/wave-equations.md
+      - Elliptic and separation: examples/elliptic-separation.md
+      - Constant coefficients: examples/constant-coefficient.md
+      - Transform methods: examples/transform-methods.md
+      - Hyperbolic systems: examples/hyperbolic-systems.md
+      - Symmetry reduction: examples/symmetry-reduction.md
+      - Kernels and Green functions: examples/kernels-green.md
+  - Executable tutorial notebooks: tutorial-notebooks.md
+  - Inputs, conditions, domains: inputs-conditions-domains.md
+  - Methods and solver inventory: method-inventory.md
+  - Results and verification: results-verification.md
+  - Planning and diagnostics: planning-diagnostics.md
+  - Public API inventory: public-api-inventory.md
+  - Architecture: architecture.md
+  - Limitations: limitations.md
+  - Developer guide: developer-guide.md
+  - Testing and benchmarks: testing.md
+
+  - Public API policy: public-api-policy.md
+
+  - Symbolic infrastructure: symbolic-infrastructure.md

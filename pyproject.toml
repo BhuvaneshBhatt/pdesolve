@@ -1,0 +1,79 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pdesolve"
+version = "0.1.0"
+description = "Symbolic partial differential equation solver with classical, transform, reduction, and Green-function methods"
+readme = "README.md"
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{name = "Bhuvanesh Bhatt", email = "bhuvaneshbhatt@gmail.com"}]
+maintainers = [{name = "Bhuvanesh Bhatt", email = "bhuvaneshbhatt@gmail.com"}]
+keywords = [
+    "partial differential equations",
+    "PDE",
+    "symbolic computation",
+    "computer algebra",
+    "SymPy",
+    "characteristics",
+    "Green functions",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+dependencies = ["sympy>=1.12"]
+
+[project.urls]
+Homepage = "https://github.com/BhuvaneshBhatt/pdesolve"
+Source = "https://github.com/BhuvaneshBhatt/pdesolve"
+Issues = "https://github.com/BhuvaneshBhatt/pdesolve/issues"
+Documentation = "https://github.com/BhuvaneshBhatt/pdesolve/tree/main/docs"
+
+[project.optional-dependencies]
+tutorials = ["jupyter>=1.0", "nbclient>=0.8", "nbformat>=5.9", "numpy>=1.24", "matplotlib>=3.7"]
+test = [
+    "pytest>=8",
+    "nbformat>=5.9",
+    "ruff>=0.6",
+]
+docs = [
+    "mkdocs>=1.6",
+    "mkdocs-material>=9",
+]
+release = [
+    "build>=1.2",
+    "twine>=5",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "pdesolve._version.__version__"}
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["pdesolve*"]
+
+[tool.setuptools.package-data]
+pdesolve = ["data/benchmarks/*.csv", "data/benchmarks/*.json"]
+
+[tool.ruff]
+exclude = ["notebooks"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/pdesolve/classical.py" = ["F403"]
+"src/pdesolve/core/__init__.py" = ["F403"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "canonical_method(method): associates a regression test with a canonical solver method",
+]

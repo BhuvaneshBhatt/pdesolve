@@ -1,0 +1,1031 @@
+{
+  "canonical_execution_method_count": 35,
+  "canonical_execution_methods": [
+    "burgers_implicit",
+    "charpit",
+    "classification_only",
+    "complete_integral",
+    "conservation_law",
+    "constant_coefficient_inverse_operator",
+    "first_order",
+    "first_order_nonlinear_auto",
+    "fourier_heat",
+    "generalized_clairaut_complete_integral",
+    "heat_dirichlet_series",
+    "heat_half_line_transform",
+    "heat_laplace_transform",
+    "heat_neumann_series",
+    "heat_robin_series",
+    "heat_whole_line",
+    "hyperbolic_system",
+    "invariant_reduction_auto",
+    "jacobi",
+    "kernel_fundamental_solution",
+    "kernel_green_function",
+    "laplace_fourier_heat",
+    "laplace_rectangle_dirichlet_series",
+    "post_reduction_auto",
+    "quasilinear_implicit",
+    "separation_framework",
+    "separation_of_variables",
+    "structured_transform",
+    "symmetry_reduction",
+    "transport_ivp",
+    "unified_transform",
+    "wave_dalembert",
+    "wave_dirichlet_series",
+    "wave_laplace_sine_transform",
+    "wave_laplace_transform"
+  ],
+  "exports_by_module": {
+    "": 1,
+    "pdesolve.boundary_model": 4,
+    "pdesolve.classical_first_order": 1,
+    "pdesolve.classical_methods": 2,
+    "pdesolve.complete_integral_helpers": 8,
+    "pdesolve.conditions": 3,
+    "pdesolve.conservation_laws": 9,
+    "pdesolve.dispatcher": 3,
+    "pdesolve.domains": 8,
+    "pdesolve.errors": 6,
+    "pdesolve.first_order_api": 1,
+    "pdesolve.first_order_framework": 2,
+    "pdesolve.first_order_geometry": 3,
+    "pdesolve.first_order_linear": 5,
+    "pdesolve.first_order_nonlinear": 9,
+    "pdesolve.green_subsystem": 4,
+    "pdesolve.hyperbolic_system": 4,
+    "pdesolve.kernels": 5,
+    "pdesolve.lie_analysis": 4,
+    "pdesolve.method_names": 1,
+    "pdesolve.planners.coordinator": 1,
+    "pdesolve.problem": 2,
+    "pdesolve.recognition": 3,
+    "pdesolve.recognizers.coordinator": 1,
+    "pdesolve.result_verification": 9,
+    "pdesolve.results": 28,
+    "pdesolve.separation_framework": 2,
+    "pdesolve.separation_general": 2,
+    "pdesolve.solver_execution": 1,
+    "pdesolve.solvers.coordinator": 1,
+    "pdesolve.special_pdes": 4,
+    "pdesolve.sturm_liouville": 3,
+    "pdesolve.transform_framework": 2,
+    "pdesolve.transform_postprocess": 3,
+    "pdesolve.unified_transform": 7
+  },
+  "method_test_mentions": {
+    "burgers_implicit": 2,
+    "charpit": 15,
+    "classification_only": 9,
+    "complete_integral": 44,
+    "conservation_law": 54,
+    "constant_coefficient_inverse_operator": 3,
+    "first_order": 74,
+    "first_order_nonlinear_auto": 9,
+    "fourier_heat": 11,
+    "generalized_clairaut_complete_integral": 10,
+    "heat_dirichlet_series": 7,
+    "heat_half_line_transform": 2,
+    "heat_laplace_transform": 1,
+    "heat_neumann_series": 1,
+    "heat_robin_series": 3,
+    "heat_whole_line": 5,
+    "hyperbolic_system": 20,
+    "invariant_reduction_auto": 3,
+    "jacobi": 12,
+    "kernel_fundamental_solution": 3,
+    "kernel_green_function": 4,
+    "laplace_fourier_heat": 5,
+    "laplace_rectangle_dirichlet_series": 2,
+    "post_reduction_auto": 1,
+    "quasilinear_implicit": 12,
+    "separation_framework": 10,
+    "separation_of_variables": 6,
+    "structured_transform": 10,
+    "symmetry_reduction": 4,
+    "transport_ivp": 10,
+    "unified_transform": 19,
+    "wave_dalembert": 6,
+    "wave_dirichlet_series": 3,
+    "wave_laplace_sine_transform": 1,
+    "wave_laplace_transform": 1
+  },
+  "package_version": "0.1.0",
+  "test_file_count": 58,
+  "top_level_export_count": 152,
+  "top_level_exports": [
+    {
+      "kind": "str",
+      "module": "",
+      "name": "__version__",
+      "signature": ""
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.errors",
+      "name": "PDEError",
+      "signature": ""
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.errors",
+      "name": "PDEInputError",
+      "signature": ""
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.errors",
+      "name": "PDEMethodNotApplicable",
+      "signature": ""
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.errors",
+      "name": "PDETransformationError",
+      "signature": ""
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.errors",
+      "name": "PDEVerificationError",
+      "signature": ""
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.errors",
+      "name": "PDESolveError",
+      "signature": ""
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.dispatcher",
+      "name": "pdesolve",
+      "signature": "(eq_or_expr, dep_expr_or_func, indep_vars=None, *, ics=None, bcs=None, method='auto', assumptions=True, **kwargs)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.dispatcher",
+      "name": "extract_solution_trace",
+      "signature": "(record)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.dispatcher",
+      "name": "summarize_solution_record",
+      "signature": "(record)"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.problem",
+      "name": "PDEProblem",
+      "signature": "(equation: 'sp.Equality', dep_function: 'sp.Expr', indep_vars: 'tuple[sp.Symbol, ...]', ics: 'Any' = None, bcs: 'Any' = None, domain: 'Any' = None, assumptions: 'Any' = True, profile: 'Any' = None, normalized_data: 'Any' = None, details: 'dict[str, Any]' = <factory>, canonical_representation: 'CanonicalPDERepresentation | None' = None) -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.problem",
+      "name": "build_pde_problem",
+      "signature": "(eq_or_expr, dep_expr_or_func, indep_vars=None, *, ics=None, bcs=None, domain=None, assumptions=True)"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "SolverMethodResult",
+      "signature": "(*, method_family: 'str', solution: 'Any', details: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "PDEVerificationSummary",
+      "signature": "(verified: 'bool | None', status: 'str', pde_verified: 'bool | None' = None, initial_verified: 'bool | None' = None, boundary_verified: 'bool | None' = None, pde_residual: 'Any' = None, initial_residuals: 'tuple[Any, ...]' = (), boundary_residuals: 'tuple[Any, ...]' = (), mode: 'str' = 'unknown', message: 'str' = '') -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "PDESolverTraceStep",
+      "signature": "(method: 'str', stage: 'str', success: 'bool', message: 'str' = '', exception_type: 'str | None' = None, verification: 'PDEVerificationSummary | None' = None) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "PDEExecutionTrace",
+      "signature": "(selected_method: 'str | None', attempted_methods: 'tuple[str, ...]', steps: 'tuple[PDESolverTraceStep, ...]' = ()) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "CanonicalPDERepresentation",
+      "signature": "(dependent_variables: 'tuple[sp.Expr, ...]', independent_variables: 'tuple[sp.Symbol, ...]', normalized_equations: 'tuple[sp.Equality, ...]', order: 'int', linearity: 'str', principal_part: 'Any' = None, coefficient_dependence: 'tuple[str, ...]' = (), principal_multiindex: 'Any' = None, ic_metadata: 'dict[str, Any]' = <factory>, bc_metadata: 'dict[str, Any]' = <factory>, domain_metadata: 'dict[str, Any]' = <factory>, geometry_metadata: 'dict[str, Any]' = <factory>, time_slice_metadata: 'dict[str, Any]' = <factory>, weak_solution_flags: 'tuple[str, ...]' = (), transformability_tags: 'tuple[str, ...]' = (), recognized_tags: 'tuple[str, ...]' = (), details: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "PDEProblemProfile",
+      "signature": "(indep_vars: 'tuple[sp.Symbol, ...]', dep_function: 'sp.Expr', normalized_equation: 'sp.Equality', zero_expression: 'sp.Expr', order: 'int', principal_solved_form: 'object | None', characteristic_data: 'object | None', first_order_linear: 'object | None', second_order_class: 'object | None', canonical_family: 'str | None', conservation_law: 'object | None', details: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "PDESolverMethodCandidate",
+      "signature": "(method: 'str', score: 'int', reasons: 'tuple[str, ...]', details: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "PDESolutionPlan",
+      "signature": "(profile: 'PDEProblemProfile', steps: 'tuple[PDESolverMethodCandidate, ...]', details: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "BasePDEResult",
+      "signature": "(method: 'str', solution: 'Any', classification: 'Any' = None, assumptions: 'Any' = True, verification: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>, reduced_problem: 'Any' = None, warnings: 'tuple[str, ...]' = ()) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "ClosedFormPDEResult",
+      "signature": "(method: 'str', solution: 'Any', classification: 'Any' = None, assumptions: 'Any' = True, verification: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>, reduced_problem: 'Any' = None, warnings: 'tuple[str, ...]' = ()) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "ImplicitPDEResult",
+      "signature": "(method: 'str', solution: 'Any', classification: 'Any' = None, assumptions: 'Any' = True, verification: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>, reduced_problem: 'Any' = None, warnings: 'tuple[str, ...]' = ()) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "SeriesPDEResult",
+      "signature": "(method: 'str', solution: 'Any', classification: 'Any' = None, assumptions: 'Any' = True, verification: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>, reduced_problem: 'Any' = None, warnings: 'tuple[str, ...]' = (), series_terms: 'Any' = None) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "TransformPDEResult",
+      "signature": "(method: 'str', solution: 'Any', classification: 'Any' = None, assumptions: 'Any' = True, verification: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>, reduced_problem: 'Any' = None, warnings: 'tuple[str, ...]' = (), transform_data: 'Any' = None) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "WeakSolutionResult",
+      "signature": "(method: 'str', solution: 'Any', classification: 'Any' = None, assumptions: 'Any' = True, verification: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>, reduced_problem: 'Any' = None, warnings: 'tuple[str, ...]' = (), admissibility: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "EigenfunctionExpansionResult",
+      "signature": "(method: 'str', solution: 'Any', classification: 'Any' = None, assumptions: 'Any' = True, verification: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>, reduced_problem: 'Any' = None, warnings: 'tuple[str, ...]' = (), series_terms: 'Any' = None, eigen_data: 'Any' = None) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "SystemPDEResult",
+      "signature": "(method: 'str', solution: 'Any', classification: 'Any' = None, assumptions: 'Any' = True, verification: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>, reduced_problem: 'Any' = None, warnings: 'tuple[str, ...]' = (), system_size: 'int' = 1, transform: 'Any' = None, characteristic_variables: 'Any' = None) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "NumericalFallbackResult",
+      "signature": "(method: 'str', solution: 'Any', classification: 'Any' = None, assumptions: 'Any' = True, verification: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>, reduced_problem: 'Any' = None, warnings: 'tuple[str, ...]' = (), numerical_object: 'Any' = None) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "UnsolvedButReducedResult",
+      "signature": "(method: 'str', solution: 'Any', classification: 'Any' = None, assumptions: 'Any' = True, verification: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>, reduced_problem: 'Any' = None, warnings: 'tuple[str, ...]' = ()) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "PDESolutionRecord",
+      "signature": "(method: 'str', solution: 'Any', classification: 'Any' = None, assumptions: 'Any' = True, verification: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>, reduced_problem: 'Any' = None, warnings: 'tuple[str, ...]' = (), steps: 'tuple[str, ...]' = (), canonical_equation: 'sp.Equality | None' = None) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.recognition",
+      "name": "PDERecognitionRecord",
+      "signature": "(family: 'str', recognized: 'bool', solver_hint: 'str | None' = None, tags: 'tuple[str, ...]' = (), metadata: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.recognition",
+      "name": "build_canonical_representation",
+      "signature": "(profile: 'PDEProblemProfile', *, ics=None, bcs=None, normalized_data=None, dep_expr=None, domain=None) -> 'CanonicalPDERepresentation'"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.recognition",
+      "name": "recognize_pde_structure",
+      "signature": "(profile: 'PDEProblemProfile', *, canonical: 'CanonicalPDERepresentation | None' = None) -> 'tuple[PDERecognitionRecord, ...]'"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.first_order_geometry",
+      "name": "AdaptedCoordinateReduction",
+      "signature": "(invariant: 'sp.Expr', transverse_var: 'sp.Symbol', param: 'sp.Symbol', subst_map: 'dict[sp.Symbol, sp.Expr]', coeff: 'sp.Expr') -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.first_order_geometry",
+      "name": "adapted_coordinate_reduction",
+      "signature": "(a: 'sp.Expr', b: 'sp.Expr', x: 'sp.Symbol', y: 'sp.Symbol') -> 'Optional[AdaptedCoordinateReduction]'"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.first_order_geometry",
+      "name": "characteristic_first_integral",
+      "signature": "(a: 'sp.Expr', b: 'sp.Expr', x: 'sp.Symbol', y: 'sp.Symbol') -> 'Optional[sp.Expr]'"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.first_order_linear",
+      "name": "FirstOrderPDEResult",
+      "signature": "(*, method_family: 'str', solution: 'Any', details: 'dict[str, Any]' = <factory>, invariant: 'Optional[sp.Expr]' = None, reduction: 'Optional[AdaptedCoordinateReduction]' = None) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.first_order_linear",
+      "name": "LinearFirstOrderProfile",
+      "signature": "(a: 'sp.Expr', b: 'sp.Expr', c: 'sp.Expr', d: 'sp.Expr', reduction: 'Optional[AdaptedCoordinateReduction]') -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.first_order_linear",
+      "name": "parse_linear_first_order",
+      "signature": "(eq: 'sp.Equality | sp.Expr', u: 'sp.Function', x: 'sp.Symbol', y: 'sp.Symbol') -> 'LinearFirstOrderProfile'"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.first_order_linear",
+      "name": "recognize_first_order_linear_pde",
+      "signature": "(eq: 'sp.Equality | sp.Expr', u: 'sp.Function', vars: 'tuple[sp.Symbol, sp.Symbol]') -> 'Optional[LinearFirstOrderProfile]'"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.first_order_linear",
+      "name": "solve_first_order_linear_pde",
+      "signature": "(eq: 'sp.Equality | sp.Expr', u: 'sp.Function', vars: 'tuple[sp.Symbol, sp.Symbol]') -> 'FirstOrderPDEResult'"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.first_order_nonlinear",
+      "name": "ConstantCharacteristicProfile",
+      "signature": "(a: 'sp.Expr', b: 'sp.Expr', source: 'sp.Expr', invariant: 'sp.Expr') -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.first_order_nonlinear",
+      "name": "FirstOrderNonlinearAnalysis",
+      "signature": "(is_first_order: 'bool', is_linear_first_order: 'bool', is_quasilinear: 'bool', conservation_law_family: 'str | None', burgers_family: 'str | None', recommended_methods: 'tuple[str, ...]', details: 'dict[str, Any]') -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.first_order_nonlinear",
+      "name": "InvariantReductionCandidate",
+      "signature": "(method: 'str', score: 'int', invariants: 'tuple[sp.Expr, ...]', transverse_params: 'tuple[sp.Expr, ...]', reduced_eq: 'sp.Equality', ansatz: 'sp.Expr', red_func: 'Any' = None, details: 'dict[str, Any] | None' = None) -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.first_order_nonlinear",
+      "name": "analyze_first_order_nonlinear_pde",
+      "signature": "(eq_or_expr, dep_expr_or_func, indep_vars=None)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.first_order_nonlinear",
+      "name": "enumerate_invariant_reduction_candidates",
+      "signature": "(eq_or_expr, dep_expr_or_func, indep_vars=None, *, degree=1, max_subset_size=2, max_degree=2)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.first_order_nonlinear",
+      "name": "recognize_const_characteristics",
+      "signature": "(eq: 'sp.Equality | sp.Expr', u: 'sp.Function', vars: 'tuple[sp.Symbol, sp.Symbol]') -> 'Optional[ConstantCharacteristicProfile]'"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.first_order_nonlinear",
+      "name": "solve_first_order_quasilinear_pde",
+      "signature": "(eq: 'sp.Equality | sp.Expr', u: 'sp.Function', vars: 'tuple[sp.Symbol, sp.Symbol]') -> 'FirstOrderPDEResult'"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.first_order_nonlinear",
+      "name": "solve_via_invariant_reduction",
+      "signature": "(eq_or_expr, dep_expr_or_func, indep_vars=None, *, ics=None, bcs=None, assumptions=True, degree=1, max_subset_size=2, max_symmetry_steps=2, max_degree=2)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.first_order_nonlinear",
+      "name": "solve_first_order_nonlinear_auto",
+      "signature": "(eq_or_expr, dep_expr_or_func, indep_vars=None, *, ics=None, bcs=None, assumptions=True, **kwargs)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.first_order_api",
+      "name": "solve_first_order_pde",
+      "signature": "(eq, u, vars)"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.special_pdes",
+      "name": "SpecialPDEResult",
+      "signature": "(solution_family: 'sp.Expr', family_name: 'str') -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.special_pdes",
+      "name": "recognize_heat_or_advection_diffusion",
+      "signature": "(eq: 'sp.Equality | sp.Expr', u: 'sp.Function', vars: 'tuple[sp.Symbol, sp.Symbol]') -> 'Optional[SpecialPDEResult]'"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.special_pdes",
+      "name": "recognize_laplace_or_helmholtz",
+      "signature": "(eq: 'sp.Equality | sp.Expr', u: 'sp.Function', vars: 'tuple[sp.Symbol, sp.Symbol]') -> 'Optional[SpecialPDEResult]'"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.special_pdes",
+      "name": "solve_special_pde",
+      "signature": "(eq: 'sp.Equality | sp.Expr', u: 'sp.Function', vars: 'tuple[sp.Symbol, sp.Symbol]') -> 'Optional[SpecialPDEResult]'"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.unified_transform",
+      "name": "EvolutionPDEProfile",
+      "signature": "(family_name: 'str', order_x: 'int', time_coefficient: 'sp.Expr', coeffs: 'dict[int, sp.Expr]', dispersion_relation: 'sp.Expr', notes: 'str' = '') -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.unified_transform",
+      "name": "UnifiedTransformResult",
+      "signature": "(*, method_family: 'str', solution: 'Any', details: 'dict[str, Any]' = <factory>, dispersion_relation: 'sp.Expr', domain: 'str', is_formal: 'bool' = False, notes: 'str' = '', profile: 'Optional[EvolutionPDEProfile]' = None) -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.unified_transform",
+      "name": "determine_dispersion_relation",
+      "signature": "(eq: 'sp.Equality | sp.Expr', u: 'sp.Function', vars: 'tuple[sp.Symbol, sp.Symbol]') -> 'sp.Expr'"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.unified_transform",
+      "name": "recognize_evolution_pde",
+      "signature": "(eq: 'sp.Equality | sp.Expr', u: 'sp.Function', vars: 'tuple[sp.Symbol, sp.Symbol]') -> 'Optional[EvolutionPDEProfile]'"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.unified_transform",
+      "name": "solve_unified_transform",
+      "signature": "(eq: 'sp.Equality | sp.Expr', u: 'sp.Function', vars: 'tuple[sp.Symbol, sp.Symbol]', *, initial_condition: 'Optional[sp.Equality]' = None, boundary_conditions: 'Optional[Sequence[sp.Equality]]' = None, domain: 'str' = 'whole_line') -> 'UnifiedTransformResult'"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.unified_transform",
+      "name": "solve_unified_transform_half_line",
+      "signature": "(eq: 'sp.Equality | sp.Expr', initial_condition: 'sp.Equality', boundary_conditions: 'Sequence[sp.Equality]', u: 'sp.Function', vars: 'tuple[sp.Symbol, sp.Symbol]') -> 'UnifiedTransformResult'"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.unified_transform",
+      "name": "solve_unified_transform_whole_line",
+      "signature": "(eq: 'sp.Equality | sp.Expr', initial_condition: 'sp.Equality', u: 'sp.Function', vars: 'tuple[sp.Symbol, sp.Symbol]') -> 'UnifiedTransformResult'"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.hyperbolic_system",
+      "name": "HyperbolicSystemResult",
+      "signature": "(method: 'str', solution: 'Any', classification: 'Any' = None, assumptions: 'Any' = True, verification: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>, reduced_problem: 'Any' = None, warnings: 'tuple[str, ...]' = (), system_size: 'int' = 1, transform: 'Any' = None, *, characteristic_variables: 'tuple[sp.Expr, ...]' = (), solution_map: 'dict[sp.Expr, sp.Expr]', coeff_matrix: 'sp.Matrix', eigenvalues: 'tuple[sp.Expr, ...]', canonical_system: 'CanonicalLinearSystemPDE | None' = None) -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.hyperbolic_system",
+      "name": "solve_hyperbolic_system",
+      "signature": "(eqns: 'Sequence[sp.Equality | sp.Expr]', ics: 'Sequence[sp.Equality]', funcs: 'Sequence[sp.Function]', vars: 'tuple[sp.Symbol, sp.Symbol]') -> 'HyperbolicSystemResult'"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.method_names",
+      "name": "normalize_method_name",
+      "signature": "(name: 'str') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.complete_integral_helpers",
+      "name": "integrate_pfaffian_equation",
+      "signature": "(p_fields, dep_expr_or_func, indep_vars=None, *, dependent_symbol=None, allow_implicit=True, constant_symbol=None)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.complete_integral_helpers",
+      "name": "solve_charpit_complete_integral_2vars",
+      "signature": "(eq_or_expr, dep_expr_or_func, indep_vars=None, *, parameter_symbol=None)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.complete_integral_helpers",
+      "name": "solve_jacobi_complete_integral",
+      "signature": "(eq_or_expr, dep_expr_or_func, indep_vars=None, *, parameter_symbols=None)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.complete_integral_helpers",
+      "name": "solve_complete_integral_pde",
+      "signature": "(eq_or_expr, dep_expr_or_func, indep_vars=None, *, assumptions=True, **kwargs)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.classical_methods",
+      "name": "solve_linear_constant_coefficient_pde_bvp_2d",
+      "signature": "(eq_or_expr, dep_expr_or_func, indep_vars=None, *, ics=None, bcs=None, assumptions=True)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.classical_methods",
+      "name": "solve_euler_bernoulli_beam_freefree_ibvp",
+      "signature": "(dep_expr_or_func, *, x, t, length, stiffness=1, initial_displacement=None, initial_velocity=None, n_terms=8)"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.complete_integral_helpers",
+      "name": "CompleteIntegralResult",
+      "signature": "(method: 'str', solutions: 'tuple[sp.Equality, ...]', details: 'dict', verification: 'tuple[dict, ...]' = ()) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.classical_first_order",
+      "name": "PDEIVPResult",
+      "signature": "(method: 'str', solution: 'sp.Expr | sp.Equality', details: 'dict') -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.complete_integral_helpers",
+      "name": "process_initial_curve_2d",
+      "signature": "(initial, dep_expr_or_func, indep_vars=None, *, parameter=None)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.complete_integral_helpers",
+      "name": "fit_complete_integral_to_initial_curve",
+      "signature": "(solution_eq, initial, dep_expr_or_func, indep_vars=None)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.complete_integral_helpers",
+      "name": "solve_first_order_cauchy_problem_2d",
+      "signature": "(eq_or_expr, initial, dep_expr_or_func, indep_vars=None, *, assumptions=True, **kwargs)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.conservation_laws",
+      "name": "canonicalize_scalar_conservation_law_1d",
+      "signature": "(eq_or_expr, dep_expr_or_func, indep_vars=None)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.conservation_laws",
+      "name": "parse_scalar_conservation_law_initial_data",
+      "signature": "(initial_conditions, dep_expr_or_func, indep_vars=None)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.conservation_laws",
+      "name": "solve_scalar_conservation_law_ivp",
+      "signature": "(eq_or_expr, dep_expr_or_func, indep_vars=None, *, initial_conditions=None)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.conservation_laws",
+      "name": "verify_piecewise_conservation_law_solution",
+      "signature": "(eq_or_expr, solution, dep_expr_or_func, indep_vars=None, *, initial_conditions=None)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.conservation_laws",
+      "name": "verify_weak_conservation_law_solution",
+      "signature": "(solution, dep_expr_or_func=None, indep_vars=None)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.conservation_laws",
+      "name": "canonicalize_scalar_conservation_law",
+      "signature": "(eq_or_expr, dep_expr_or_func, indep_vars=None)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.conservation_laws",
+      "name": "parse_conservation_law_initial_data",
+      "signature": "(initial_conditions, dep_expr_or_func, indep_vars=None)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.conservation_laws",
+      "name": "analyze_conservation_law",
+      "signature": "(eq_or_expr, dep_expr_or_func, indep_vars=None, *, ics=None)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.conservation_laws",
+      "name": "verify_conservation_law_solution",
+      "signature": "(eq_or_expr, solution, dep_expr_or_func, indep_vars=None, *, structured_result=None, initial_conditions=None)"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "ConservationLawCanonicalForm",
+      "signature": "(indep_vars: 'tuple[sp.Symbol, sp.Symbol]', dep_function: 'sp.Expr', density: 'sp.Expr', flux: 'sp.Expr', source: 'sp.Expr' = 0, normalized_equation: 'sp.Equality | None' = None, autonomous_flux: 'sp.Expr | None' = None, family: 'str' = 'scalar_conservation_law', details: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "ConservationLawInitialData1D",
+      "signature": "(indep_vars: 'tuple[sp.Symbol, sp.Symbol]', dep_function: 'sp.Expr', kind: 'str', profile: 'Any' = None, equation: 'sp.Equality | None' = None, left_state: 'Any' = None, right_state: 'Any' = None, interface: 'Any' = None, details: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "ConservationLawPropagationResult",
+      "signature": "(method: 'str', solution: 'sp.Equality', profile: 'Any', speed: 'Any', canonical_form: 'ConservationLawCanonicalForm | None' = None, initial_data: 'ConservationLawInitialData1D | None' = None, details: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "ConservationLawImplicitCharacteristicResult",
+      "signature": "(method: 'str', solution: 'sp.Equality | tuple[sp.Equality, ...]', profile: 'Any', characteristic_parameter: 'Any', characteristic_relation: 'sp.Equality', profile_relation: 'sp.Equality', footpoint_equation: 'sp.Equality | None' = None, implicit_relation: 'sp.Equality | None' = None, characteristic_speed: 'Any' = None, canonical_form: 'ConservationLawCanonicalForm | None' = None, initial_data: 'ConservationLawInitialData1D | None' = None, details: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "ConservationLawShockResult",
+      "signature": "(method: 'str', solution: 'sp.Equality', flux: 'sp.Expr', left_state: 'Any', right_state: 'Any', shock_speed: 'Any', canonical_form: 'ConservationLawCanonicalForm | None' = None, initial_data: 'ConservationLawInitialData1D | None' = None, details: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "ConservationLawRarefactionResult",
+      "signature": "(method: 'str', solution: 'sp.Equality', flux: 'sp.Expr', left_state: 'Any', right_state: 'Any', left_speed: 'Any', right_speed: 'Any', self_similar_variable: 'Any', canonical_form: 'ConservationLawCanonicalForm | None' = None, initial_data: 'ConservationLawInitialData1D | None' = None, details: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.conditions",
+      "name": "ConditionEquation",
+      "signature": "(equation: 'sp.Equality', role: 'str', variable: 'sp.Symbol | None' = None, location: 'sp.Expr | None' = None, derivative_multiindex: 'tuple[int, ...]' = (), metadata: 'dict[str, Any]' = <factory>, kind: 'str | None' = None) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.conditions",
+      "name": "ConditionModel",
+      "signature": "(dependent_function: 'Any', independent_variables: 'tuple[sp.Symbol, ...]', initial_conditions: 'tuple[ConditionEquation, ...]' = (), boundary_conditions: 'tuple[ConditionEquation, ...]' = (), mixed_conditions: 'tuple[ConditionEquation, ...]' = (), event_conditions: 'tuple[ConditionEquation, ...]' = (), metadata: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.conditions",
+      "name": "parse_conditions",
+      "signature": "(ics=None, bcs=None, *, dep_expr=None, indep_vars: 'tuple[sp.Symbol, ...]' = ()) -> 'ConditionModel'"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.domains",
+      "name": "DomainGeometry",
+      "signature": "(kind: 'str', coordinates: 'tuple[sp.Symbol, ...]', extents: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.domains",
+      "name": "IntervalDomain",
+      "signature": "(kind: 'str', coordinates: 'tuple[sp.Symbol, ...]', extents: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.domains",
+      "name": "RectangleDomain",
+      "signature": "(kind: 'str', coordinates: 'tuple[sp.Symbol, ...]', extents: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.domains",
+      "name": "DiskDomain",
+      "signature": "(kind: 'str', coordinates: 'tuple[sp.Symbol, ...]', extents: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.domains",
+      "name": "HalfLineDomain",
+      "signature": "(kind: 'str', coordinates: 'tuple[sp.Symbol, ...]', extents: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.domains",
+      "name": "FullLineDomain",
+      "signature": "(kind: 'str', coordinates: 'tuple[sp.Symbol, ...]', extents: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.domains",
+      "name": "PolarAnnulusDomain",
+      "signature": "(kind: 'str', coordinates: 'tuple[sp.Symbol, ...]', extents: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.domains",
+      "name": "infer_domain_geometry",
+      "signature": "(*, indep_vars: 'tuple[sp.Symbol, ...]', bcs=None, condition_model=None, domain=None, assumptions=True) -> 'DomainGeometry'"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.hyperbolic_system",
+      "name": "CanonicalLinearSystemPDE",
+      "signature": "(equations: 'tuple[sp.Equality, ...]', variables: 'tuple[sp.Symbol, sp.Symbol]', unknowns: 'tuple[sp.FunctionClass, ...]', coeff_matrix: 'sp.Matrix', forcing: 'sp.Matrix', variable_coefficient: 'bool', diagonalizable: 'bool', transform_matrix: 'sp.Matrix | None' = None, diagonal_matrix: 'sp.Matrix | None' = None) -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.hyperbolic_system",
+      "name": "extract_canonical_linear_system_form",
+      "signature": "(eqns: 'Sequence[sp.Equality | sp.Expr]', funcs: 'Sequence[sp.Function]', vars: 'tuple[sp.Symbol, sp.Symbol]') -> 'CanonicalLinearSystemPDE'"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.separation_framework",
+      "name": "SeparableGeometryPlan",
+      "signature": "(geometry_kind: 'str', boundary_family: 'str', eigenbasis: 'str', spatial_variables: 'tuple[sp.Symbol, ...]', metadata: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.separation_framework",
+      "name": "build_separable_geometry_plan",
+      "signature": "(geometry: 'DomainGeometry | None', conditions: 'ConditionModel | None', *, family: 'str | None' = None) -> 'SeparableGeometryPlan | None'"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.transform_framework",
+      "name": "TransformMethodPlan",
+      "signature": "(method: 'str', domain: 'str', transform_family: 'str', required_conditions: 'tuple[str, ...]' = (), metadata: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.transform_framework",
+      "name": "build_transform_method_plan",
+      "signature": "(canonical: 'CanonicalPDERepresentation | None', geometry: 'DomainGeometry | None', conditions: 'ConditionModel | None') -> 'TransformMethodPlan | None'"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.boundary_model",
+      "name": "BoundaryComponent",
+      "signature": "(name: 'str', variable: 'sp.Symbol | None', location: 'sp.Expr | None', geometry_kind: 'str', metadata: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.boundary_model",
+      "name": "BoundaryConditionBinding",
+      "signature": "(component: 'BoundaryComponent', kind: 'str', equation: 'sp.Equality', metadata: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.boundary_model",
+      "name": "BoundaryModel",
+      "signature": "(geometry: 'DomainGeometry | None', components: 'tuple[BoundaryComponent, ...]' = (), bindings: 'tuple[BoundaryConditionBinding, ...]' = (), metadata: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.boundary_model",
+      "name": "build_boundary_model",
+      "signature": "(geometry: 'DomainGeometry | None', conditions: 'ConditionModel | None') -> 'BoundaryModel | None'"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.first_order_framework",
+      "name": "CanonicalFirstOrderPDE",
+      "signature": "(variables: 'tuple[sp.Symbol, ...]', dependent_variable: 'sp.Expr', equation: 'sp.Equality', F: 'sp.Expr', p_symbol: 'sp.Symbol', q_symbol: 'sp.Symbol | None', recognized_family: 'str', metadata: 'dict[str, Any]' = <factory>) -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.first_order_framework",
+      "name": "canonicalize_first_order_nonlinear_pde",
+      "signature": "(eq, uexpr, vars_)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.solver_execution",
+      "name": "solve_with_canonical_problem",
+      "signature": "(problem, method: 'str', **kwargs) -> 'BasePDEResult'"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.recognizers.coordinator",
+      "name": "recognize_canonical_problem",
+      "signature": "(problem)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.planners.coordinator",
+      "name": "plan_canonical_problem",
+      "signature": "(problem, **preferences)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.solvers.coordinator",
+      "name": "execute_planned_solver",
+      "signature": "(problem, method, **kwargs)"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "KernelRepresentationResult",
+      "signature": "(method: 'str', solution: 'Any', classification: 'Any' = None, assumptions: 'Any' = True, verification: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>, reduced_problem: 'Any' = None, warnings: 'tuple[str, ...]' = (), kernel: 'Any' = None, source_point: 'Any' = None, operator_family: 'str | None' = None) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "FundamentalSolutionResult",
+      "signature": "(method: 'str', solution: 'Any', classification: 'Any' = None, assumptions: 'Any' = True, verification: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>, reduced_problem: 'Any' = None, warnings: 'tuple[str, ...]' = (), kernel: 'Any' = None, source_point: 'Any' = None, operator_family: 'str | None' = None) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.results",
+      "name": "GreenFunctionResult",
+      "signature": "(method: 'str', solution: 'Any', classification: 'Any' = None, assumptions: 'Any' = True, verification: 'dict[str, Any]' = <factory>, metadata: 'dict[str, Any]' = <factory>, reduced_problem: 'Any' = None, warnings: 'tuple[str, ...]' = (), kernel: 'Any' = None, source_point: 'Any' = None, operator_family: 'str | None' = None, boundary_type: 'str | None' = None) -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.kernels",
+      "name": "KernelMethodPlan",
+      "signature": "(method: 'str', operator_family: 'str', geometry_kind: 'str', boundary_family: 'str', source_point: 'tuple[sp.Expr, ...]', metadata: 'dict[str, Any]') -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.kernels",
+      "name": "build_kernel_method_plan",
+      "signature": "(problem, *, geometry=None)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.kernels",
+      "name": "solve_fundamental_solution",
+      "signature": "(eq_or_expr, dep_expr_or_func, indep_vars=None, *, assumptions=True, source_point=None)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.kernels",
+      "name": "solve_green_function",
+      "signature": "(eq_or_expr, dep_expr_or_func, indep_vars=None, *, bcs=None, assumptions=True, geometry=None, source_point=None)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.kernels",
+      "name": "execute_kernel_plan",
+      "signature": "(problem, *, plan: 'KernelMethodPlan | None' = None)"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.green_subsystem",
+      "name": "AdvancedGreenPlan",
+      "signature": "(method: 'str', operator_family: 'str', geometry_kind: 'str', boundary_family: 'str', source_point: 'tuple[sp.Expr, ...]', metadata: 'dict[str, Any]') -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.green_subsystem",
+      "name": "recognize_advanced_kernel_problem",
+      "signature": "(eq_or_expr, dep_expr_or_func, indep_vars)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.green_subsystem",
+      "name": "execute_advanced_green_plan",
+      "signature": "(eq_or_expr, dep_expr_or_func, indep_vars, *, bcs=None, geometry=None, assumptions=True)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.green_subsystem",
+      "name": "solve_linear_ode_green_function",
+      "signature": "(eq_or_expr, dep_expr_or_func, var, *, conditions=None)"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.result_verification",
+      "name": "VerificationStrategy",
+      "signature": "(*args, **kwargs)"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.result_verification",
+      "name": "ClassicalResidualVerifier",
+      "signature": "(name: 'str' = 'classical_residual') -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.result_verification",
+      "name": "ImplicitSolutionVerifier",
+      "signature": "(name: 'str' = 'implicit_relation') -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.result_verification",
+      "name": "WeakSolutionVerifier",
+      "signature": "(name: 'str' = 'weak_solution') -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.result_verification",
+      "name": "KernelVerifier",
+      "signature": "(name: 'str' = 'kernel') -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.result_verification",
+      "name": "SeriesVerifier",
+      "signature": "(name: 'str' = 'series') -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.result_verification",
+      "name": "TransformVerifier",
+      "signature": "(name: 'str' = 'transform_structural') -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.result_verification",
+      "name": "select_verification_strategy",
+      "signature": "(result: 'Any') -> 'VerificationStrategy'"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.result_verification",
+      "name": "verify_result",
+      "signature": "(equation, result, dep_function, indep_vars, *, ics=None, bcs=None, assumptions=True) -> 'PDEVerificationSummary'"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.separation_general",
+      "name": "ProductSeparationResult",
+      "signature": "(ansatz: 'sp.Equality', separated_expression: 'sp.Expr', separation_constant: 'sp.Symbol', factor_equations: 'tuple[sp.Equality, ...]', factors: 'tuple[sp.Expr, ...]', variables: 'tuple[sp.Symbol, ...]', verified_separable: 'bool') -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.separation_general",
+      "name": "separate_product_pde",
+      "signature": "(equation, dep_function, indep_vars, *, separation_constant=None) -> 'ProductSeparationResult'"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.sturm_liouville",
+      "name": "SturmLiouvilleProblem",
+      "signature": "(variable: 'sp.Symbol', function: 'sp.Expr', p: 'sp.Expr', q: 'sp.Expr', weight: 'sp.Expr', interval: 'tuple[sp.Expr, sp.Expr]', left_boundary: 'str' = 'dirichlet', right_boundary: 'str' = 'dirichlet') -> None"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.sturm_liouville",
+      "name": "SturmLiouvilleSpectrum",
+      "signature": "(problem: 'SturmLiouvilleProblem', index: 'sp.Symbol', eigenvalues: 'sp.Expr', eigenfunctions: 'sp.Expr', norm_squared: 'sp.Expr', orthogonality_weight: 'sp.Expr', includes_zero_mode: 'bool' = False) -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.sturm_liouville",
+      "name": "solve_regular_constant_sturm_liouville",
+      "signature": "(problem: 'SturmLiouvilleProblem') -> 'SturmLiouvilleSpectrum'"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.transform_postprocess",
+      "name": "TransformPostprocessReport",
+      "signature": "(changed: 'bool', stages: 'tuple[str, ...]', skipped_reason: 'str | None' = None) -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.transform_postprocess",
+      "name": "evaluate_inner_transforms",
+      "signature": "(expr, *, max_ops: 'int' = 60)"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.transform_postprocess",
+      "name": "postprocess_transform_result",
+      "signature": "(result: 'Any', *, max_ops: 'int' = 60)"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.lie_analysis",
+      "name": "LiePointSymmetryAnalysis",
+      "signature": "(determining_equations: 'tuple[sp.Equality, ...]', xi_functions: 'tuple[sp.Expr, ...]', phi_function: 'sp.Expr', polynomial_solution: 'object | None', generators: 'tuple[tuple[tuple[sp.Expr, ...], sp.Expr], ...]') -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.lie_analysis",
+      "name": "analyze_lie_point_symmetries",
+      "signature": "(equation, dep_function, indep_vars, *, polynomial_degree: 'int' = 1, include_dependent_var: 'bool' = True)"
+    },
+    {
+      "kind": "class",
+      "module": "pdesolve.lie_analysis",
+      "name": "LieInvariantCoordinates",
+      "signature": "(invariants: 'tuple[sp.Expr, ...]', transverse: 'tuple[sp.Expr, ...]', jacobian: 'sp.Expr', validity_conditions: 'tuple[sp.Expr, ...]') -> None"
+    },
+    {
+      "kind": "function",
+      "module": "pdesolve.lie_analysis",
+      "name": "invariants_from_point_generator",
+      "signature": "(indep_vars, dep_symbol, xi_coeffs, phi=0)"
+    }
+  ]
+}

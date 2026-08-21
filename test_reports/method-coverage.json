@@ -1,0 +1,392 @@
+{
+  "canonical_method_count": 35,
+  "minimum_tests_per_method": 4,
+  "registry_matches_coverage_specs": true,
+  "methods": [
+    {
+      "method": "first_order_nonlinear_auto",
+      "family": "first_order_nonlinear",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[first_order_nonlinear_auto]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[first_order_nonlinear_auto]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[first_order_nonlinear_auto]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[first_order_nonlinear_auto]"
+      ]
+    },
+    {
+      "method": "invariant_reduction_auto",
+      "family": "invariant_reduction",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[invariant_reduction_auto]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[invariant_reduction_auto]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[invariant_reduction_auto]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[invariant_reduction_auto]"
+      ]
+    },
+    {
+      "method": "classification_only",
+      "family": "classification",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[classification_only]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[classification_only]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[classification_only]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[classification_only]"
+      ]
+    },
+    {
+      "method": "first_order",
+      "family": "first_order_linear",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[first_order]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[first_order]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[first_order]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[first_order]"
+      ]
+    },
+    {
+      "method": "transport_ivp",
+      "family": "transport",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[transport_ivp]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[transport_ivp]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[transport_ivp]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[transport_ivp]"
+      ]
+    },
+    {
+      "method": "quasilinear_implicit",
+      "family": "first_order_quasilinear",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[quasilinear_implicit]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[quasilinear_implicit]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[quasilinear_implicit]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[quasilinear_implicit]"
+      ]
+    },
+    {
+      "method": "conservation_law",
+      "family": "conservation_law",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[conservation_law]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[conservation_law]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[conservation_law]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[conservation_law]"
+      ]
+    },
+    {
+      "method": "burgers_implicit",
+      "family": "burgers",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[burgers_implicit]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[burgers_implicit]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[burgers_implicit]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[burgers_implicit]"
+      ]
+    },
+    {
+      "method": "wave_dalembert",
+      "family": "wave",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[wave_dalembert]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[wave_dalembert]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[wave_dalembert]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[wave_dalembert]"
+      ]
+    },
+    {
+      "method": "heat_whole_line",
+      "family": "heat",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[heat_whole_line]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[heat_whole_line]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[heat_whole_line]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[heat_whole_line]"
+      ]
+    },
+    {
+      "method": "fourier_heat",
+      "family": "transform_heat",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[fourier_heat]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[fourier_heat]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[fourier_heat]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[fourier_heat]"
+      ]
+    },
+    {
+      "method": "heat_dirichlet_series",
+      "family": "series_heat",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[heat_dirichlet_series]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[heat_dirichlet_series]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[heat_dirichlet_series]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[heat_dirichlet_series]"
+      ]
+    },
+    {
+      "method": "heat_neumann_series",
+      "family": "series_heat",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[heat_neumann_series]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[heat_neumann_series]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[heat_neumann_series]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[heat_neumann_series]"
+      ]
+    },
+    {
+      "method": "heat_robin_series",
+      "family": "series_heat",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[heat_robin_series]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[heat_robin_series]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[heat_robin_series]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[heat_robin_series]"
+      ]
+    },
+    {
+      "method": "wave_dirichlet_series",
+      "family": "series_wave",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[wave_dirichlet_series]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[wave_dirichlet_series]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[wave_dirichlet_series]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[wave_dirichlet_series]"
+      ]
+    },
+    {
+      "method": "separation_framework",
+      "family": "separation",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[separation_framework]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[separation_framework]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[separation_framework]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[separation_framework]"
+      ]
+    },
+    {
+      "method": "separation_of_variables",
+      "family": "separation",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[separation_of_variables]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[separation_of_variables]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[separation_of_variables]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[separation_of_variables]"
+      ]
+    },
+    {
+      "method": "laplace_rectangle_dirichlet_series",
+      "family": "elliptic_series",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[laplace_rectangle_dirichlet_series]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[laplace_rectangle_dirichlet_series]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[laplace_rectangle_dirichlet_series]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[laplace_rectangle_dirichlet_series]"
+      ]
+    },
+    {
+      "method": "heat_half_line_transform",
+      "family": "transform_heat",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[heat_half_line_transform]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[heat_half_line_transform]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[heat_half_line_transform]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[heat_half_line_transform]"
+      ]
+    },
+    {
+      "method": "heat_laplace_transform",
+      "family": "transform_heat",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[heat_laplace_transform]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[heat_laplace_transform]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[heat_laplace_transform]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[heat_laplace_transform]"
+      ]
+    },
+    {
+      "method": "laplace_fourier_heat",
+      "family": "transform_heat",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[laplace_fourier_heat]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[laplace_fourier_heat]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[laplace_fourier_heat]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[laplace_fourier_heat]"
+      ]
+    },
+    {
+      "method": "wave_laplace_transform",
+      "family": "transform_wave",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[wave_laplace_transform]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[wave_laplace_transform]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[wave_laplace_transform]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[wave_laplace_transform]"
+      ]
+    },
+    {
+      "method": "wave_laplace_sine_transform",
+      "family": "transform_wave",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[wave_laplace_sine_transform]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[wave_laplace_sine_transform]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[wave_laplace_sine_transform]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[wave_laplace_sine_transform]"
+      ]
+    },
+    {
+      "method": "structured_transform",
+      "family": "transform_framework",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[structured_transform]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[structured_transform]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[structured_transform]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[structured_transform]"
+      ]
+    },
+    {
+      "method": "unified_transform",
+      "family": "unified_transform",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[unified_transform]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[unified_transform]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[unified_transform]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[unified_transform]"
+      ]
+    },
+    {
+      "method": "symmetry_reduction",
+      "family": "symmetry",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[symmetry_reduction]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[symmetry_reduction]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[symmetry_reduction]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[symmetry_reduction]"
+      ]
+    },
+    {
+      "method": "post_reduction_auto",
+      "family": "reduction",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[post_reduction_auto]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[post_reduction_auto]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[post_reduction_auto]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[post_reduction_auto]"
+      ]
+    },
+    {
+      "method": "generalized_clairaut_complete_integral",
+      "family": "complete_integral",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[generalized_clairaut_complete_integral]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[generalized_clairaut_complete_integral]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[generalized_clairaut_complete_integral]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[generalized_clairaut_complete_integral]"
+      ]
+    },
+    {
+      "method": "charpit",
+      "family": "complete_integral",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[charpit]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[charpit]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[charpit]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[charpit]"
+      ]
+    },
+    {
+      "method": "complete_integral",
+      "family": "complete_integral",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[complete_integral]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[complete_integral]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[complete_integral]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[complete_integral]"
+      ]
+    },
+    {
+      "method": "jacobi",
+      "family": "complete_integral",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[jacobi]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[jacobi]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[jacobi]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[jacobi]"
+      ]
+    },
+    {
+      "method": "hyperbolic_system",
+      "family": "system",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[hyperbolic_system]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[hyperbolic_system]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[hyperbolic_system]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[hyperbolic_system]"
+      ]
+    },
+    {
+      "method": "constant_coefficient_inverse_operator",
+      "family": "constant_coefficient",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[constant_coefficient_inverse_operator]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[constant_coefficient_inverse_operator]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[constant_coefficient_inverse_operator]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[constant_coefficient_inverse_operator]"
+      ]
+    },
+    {
+      "method": "kernel_fundamental_solution",
+      "family": "kernel",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[kernel_fundamental_solution]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[kernel_fundamental_solution]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[kernel_fundamental_solution]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[kernel_fundamental_solution]"
+      ]
+    },
+    {
+      "method": "kernel_green_function",
+      "family": "kernel",
+      "test_count": 4,
+      "tests": [
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_is_registered_and_documented[kernel_green_function]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_dispatches_to_its_registered_handler[kernel_green_function]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_representative_mathematical_execution[kernel_green_function]",
+        "tests/test_canonical_method_hardening.py::test_every_canonical_method_has_declared_family_contract[kernel_green_function]"
+      ]
+    }
+  ]
+}

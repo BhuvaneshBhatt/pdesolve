@@ -1,0 +1,13 @@
+PDE,Variables,Target reduction generator,Analyze,Principal multiindex,Reduce,Reduced equation,Fully solve reduced equation,Solve method,Solution
+Linear advection,"x,t","(1, c)",True,"(0, 1)",True,"Eq(Derivative(f(z1), z1), 0)",True,dsolve,"Eq(f(z1), C1)"
+Inviscid Burgers,"x,t","(1, c)",True,"(0, 1)",True,"Eq((c*f(z1) - 1)*Derivative(f(z1), z1), 0)",True,dsolve,"Eq(f(z1), C1)"
+Viscous Burgers,"x,t","(1, c)",True,"(0, 1)",True,"Eq(-Derivative(f(z1), (z1, 2)) + f(z1)*Derivative(f(z1), z1)/nu - Derivative(f(z1), z1)/(c*nu), 0)",False,NotImplementedError,
+Heat 1D,"x,t","(1, c)",True,"(0, 1)",True,"Eq(Derivative(f(z1), (z1, 2)) + Derivative(f(z1), z1)/c, 0)",True,dsolve,"Eq(f(z1), C1 + C2*exp(-z1/c))"
+Advection-diffusion,"x,t","(1, c)",True,"(0, 1)",True,"Eq(-Derivative(f(z1), (z1, 2)) + c*Derivative(f(z1), z1)/D - Derivative(f(z1), z1)/(D*c), 0)",True,dsolve,"Eq(f(z1), C1 + C2*exp(z1*(c - 1/c)/D))"
+Fisher-KPP,"x,t","(1, c)",True,"(0, 1)",True,"Eq(f(z1)**2 - f(z1) - Derivative(f(z1), (z1, 2)) - Derivative(f(z1), z1)/c, 0)",False,NotImplementedError,
+Wave 1D,"x,t","(1, c)",True,"(0, 2)",True,"Eq(Derivative(f(z1), (z1, 2)), 0)",True,dsolve,"Eq(f(z1), C1 + C2*z1)"
+KdV,"x,t","(1, c)",True,"(0, 1)",True,"Eq(6*f(z1)*Derivative(f(z1), z1) + Derivative(f(z1), (z1, 3)) - Derivative(f(z1), z1)/c, 0)",False,NotImplementedError,
+Heat 2D,"x,y,t","(1, 0, c)",True,"(0, 0, 1)",True,"Eq(Derivative(f(z1, z2), (z1, 2)) + Derivative(f(z1, z2), (z2, 2)) + Derivative(f(z1, z2), z2)/c, 0)",False,NotImplementedError,
+Wave 2D,"x,y,t","(1, 0, c)",True,"(0, 0, 2)",True,"Eq(-Derivative(f(z1, z2), (z1, 2)) - Derivative(f(z1, z2), (z2, 2)) + Derivative(f(z1, z2), (z2, 2))/c**2, 0)",False,NotImplementedError,
+Laplace 2D,"x,y","(1, 0)",True,"(0, 2)",True,"Eq(Derivative(f(z1), (z1, 2)), 0)",True,dsolve,"Eq(f(z1), C1 + C2*z1)"
+Poisson 2D,"x,y","(1, 0)",True,"(0, 2)",True,"Eq(Derivative(f(z1), (z1, 2)) - 1, 0)",True,dsolve,"Eq(f(z1), C1 + C2*z1 + z1**2/2)"
