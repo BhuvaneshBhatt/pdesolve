@@ -1,16 +1,16 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from itertools import combinations
-from typing import Sequence
 
 import sympy as sp
 
 from .geometry import CharacteristicCoordinatesResult, DistributionKD, VectorFieldKD
-from .utils import (
+from .symbolic_algebra_helpers import (
+    expr_complexity,
     extract_first_single_argument_undef_arg,
     extract_rhs_from_pde_solution,
-    expr_complexity,
     matrix_is_diagonal,
     matrix_is_zero,
     matrix_rank_symbolic,
@@ -50,18 +50,13 @@ def find_coordinates_translation_subalgebra(
 
     null_basis = nullspace_basis_rows(C)
     if len(null_basis) < k - r:
-        raise ValueError(
-            "Could not construct enough invariants for translation subalgebra."
-        )
+        raise ValueError("Could not construct enough invariants for translation subalgebra.")
 
     invariants = [
-        sp.expand(sum(null_basis[i][j, 0] * vars[j] for j in range(k)))
-        for i in range(k - r)
+        sp.expand(sum(null_basis[i][j, 0] * vars[j] for j in range(k))) for i in range(k - r)
     ]
     qcols = right_inverse_columns(C)
-    transverse = [
-        sp.expand(sum(qcols[j][i, 0] * vars[i] for i in range(k))) for j in range(r)
-    ]
+    transverse = [sp.expand(sum(qcols[j][i, 0] * vars[i] for i in range(k))) for j in range(r)]
     return _coordinate_result(vars, invariants, transverse, "translation_linear")
 
 
@@ -88,21 +83,16 @@ def find_coordinates_diagonal_scaling_subalgebra(
 
     null_basis = nullspace_basis_rows(S)
     if len(null_basis) < k - r:
-        raise ValueError(
-            "Could not construct enough invariants for scaling subalgebra."
-        )
+        raise ValueError("Could not construct enough invariants for scaling subalgebra.")
 
     invariants = []
     for i in range(k - r):
         v = null_basis[i]
-        invariants.append(
-            sp.expand(sp.prod(vars[j] ** sp.simplify(v[j, 0]) for j in range(k)))
-        )
+        invariants.append(sp.expand(sp.prod(vars[j] ** sp.simplify(v[j, 0]) for j in range(k))))
 
     qcols = right_inverse_columns(S)
     transverse = [
-        sp.expand(sum(qcols[j][i, 0] * sp.log(vars[i]) for i in range(k)))
-        for j in range(r)
+        sp.expand(sum(qcols[j][i, 0] * sp.log(vars[i]) for i in range(k))) for j in range(r)
     ]
     conditions = tuple(sp.expand(v) for v in vars)
     return _coordinate_result(
@@ -128,8 +118,7 @@ def _find_linear_transport_coordinates_affine(M, bvec, xs):
     if len(inv_rows) < k - 1:
         return None
     invariants = tuple(
-        sp.expand(sum(inv_rows[i][j, 0] * xs[j] for j in range(k)))
-        for i in range(k - 1)
+        sp.expand(sum(inv_rows[i][j, 0] * xs[j] for j in range(k))) for i in range(k - 1)
     )
 
     qsyms = sp.symbols(f"q0:{k}")
@@ -143,8 +132,7 @@ def _find_linear_transport_coordinates_affine(M, bvec, xs):
         return None
     sol = sol[0]
     free = sorted(
-        list(set().union(*(sp.sympify(v).free_symbols for v in sol.values()))),
-        key=lambda s: s.name,
+        list(set().union(*(sp.sympify(v).free_symbols for v in sol.values()))), key=lambda s: s.name
     )
     sub = {p: 0 for p in free}
     q = [sp.expand(sol[qsyms[i]].subs(sub)) for i in range(k)]
@@ -256,10 +244,7 @@ def _candidate_cross_section_offsets_affine(ell, M, bvec, xs):
     offsets = [sp.Integer(0)]
     k = len(xs)
     xstars = sp.symbols(f"xstar0:{k}")
-    eqs = [
-        sp.Eq(sum(M[i, j] * xstars[j] for j in range(k)) + bvec[i, 0], 0)
-        for i in range(k)
-    ]
+    eqs = [sp.Eq(sum(M[i, j] * xstars[j] for j in range(k)) + bvec[i, 0], 0) for i in range(k)]
     try:
         sol = sp.solve(eqs, xstars, dict=True)
     except Exception:
@@ -308,9 +293,7 @@ def _find_flow_affine_linear_cross_section_coordinates(M, bvec, xs):
             if not isinstance(sols, (list, tuple)):
                 sols = [sols]
             explicit_sols = [
-                sp.simplify(sol)
-                for sol in sols
-                if s not in sp.sympify(sol).free_symbols
+                sp.simplify(sol) for sol in sols if s not in sp.sympify(sol).free_symbols
             ]
             if not explicit_sols:
                 continue
@@ -324,8 +307,7 @@ def _find_flow_affine_linear_cross_section_coordinates(M, bvec, xs):
             if len(null_basis) < k - 1:
                 continue
             invariants = [
-                sp.expand(sum(v[j, 0] * x0_sub[j] for j in range(k)))
-                for v in null_basis[: k - 1]
+                sp.expand(sum(v[j, 0] * x0_sub[j] for j in range(k))) for v in null_basis[: k - 1]
             ]
             return tuple(invariants), sp.expand(s_expr)
     return None
@@ -339,23 +321,17 @@ def solve_invariants_transverse_pdsolve_k2(field: VectorFieldKD):
     X1, X2 = field.coeffs
     zfun = sp.Function("Z")
     sfun = sp.Function("S")
-    z_sol = sp.pdsolve(
-        sp.Eq(X1 * sp.diff(zfun(x, y), x) + X2 * sp.diff(zfun(x, y), y), 0)
-    )
+    z_sol = sp.pdsolve(sp.Eq(X1 * sp.diff(zfun(x, y), x) + X2 * sp.diff(zfun(x, y), y), 0))
     z_rhs = extract_rhs_from_pde_solution(z_sol)
     z_expr = extract_first_single_argument_undef_arg(z_rhs)
     if z_expr is None:
         raise NotImplementedError("Could not extract invariant from pdsolve output.")
-    s_sol = sp.pdsolve(
-        sp.Eq(X1 * sp.diff(sfun(x, y), x) + X2 * sp.diff(sfun(x, y), y), 1)
-    )
+    s_sol = sp.pdsolve(sp.Eq(X1 * sp.diff(sfun(x, y), x) + X2 * sp.diff(sfun(x, y), y), 1))
     s_rhs = replace_applied_undefs(extract_rhs_from_pde_solution(s_sol), 0)
     return (sp.expand(z_expr),), sp.expand(s_rhs)
 
 
-def find_coordinates_single_affine(
-    field: VectorFieldKD,
-) -> CharacteristicCoordinatesResult:
+def find_coordinates_single_affine(field: VectorFieldKD) -> CharacteristicCoordinatesResult:
     data = field.affine_data()
     if data is None:
         raise ValueError("Field is not affine.")
@@ -410,9 +386,9 @@ def _canonicalize_affine_like(expr, vars):
     # remove additive constants only for purely transverse/invariant linear forms? keep them for now
     grad = [sp.expand(sp.diff(expr, v)) for v in vars]
     residual = sp.expand(expr - sum(grad[i] * vars[i] for i in range(len(vars))))
-    if all(
-        g.free_symbols.isdisjoint(set(vars)) for g in grad
-    ) and residual.free_symbols.isdisjoint(set(vars)):
+    if all(g.free_symbols.isdisjoint(set(vars)) for g in grad) and residual.free_symbols.isdisjoint(
+        set(vars)
+    ):
         # normalize by first nonzero gradient entry
         for g in grad:
             if sp.simplify(g) != 0:
@@ -441,9 +417,7 @@ def _canonicalize_coordinate_system(invariants, transverse, vars):
 
 
 def _coordinate_result(vars, invariants, transverse, method, conditions=()):
-    invariants, transverse = _canonicalize_coordinate_system(
-        invariants, transverse, vars
-    )
+    invariants, transverse = _canonicalize_coordinate_system(invariants, transverse, vars)
     exprs = tuple(invariants) + tuple(transverse)
     jac = _jacobian_det(exprs, vars) if len(exprs) == len(vars) else sp.Integer(0)
     validity = list(map(sp.expand, conditions))
@@ -500,8 +474,7 @@ def _find_common_linear_coordinates_affine_distribution(Ms, bs, xs, r):
     if len(inv_basis) < k - r:
         return None
     invariants = tuple(
-        sp.expand(sum(inv_basis[i][j, 0] * xs[j] for j in range(k)))
-        for i in range(k - r)
+        sp.expand(sum(inv_basis[i][j, 0] * xs[j] for j in range(k))) for i in range(k - r)
     )
 
     # transverse coordinates q_j^T x, requiring q_j^T M_m=0 and q_j^T b_n = delta_nj
@@ -519,21 +492,15 @@ def _find_common_linear_coordinates_affine_distribution(Ms, bs, xs, r):
         try:
             sol, params = Aeq.gauss_jordan_solve(beq)
         except Exception:
-            return _coordinate_result(
-                xs, invariants, (), "common_linear_first_integrals"
-            )
+            return _coordinate_result(xs, invariants, (), "common_linear_first_integrals")
         if params.shape[0] > 0:
             sub = {params[i, 0]: 0 for i in range(params.shape[0])}
             sol = sp.Matrix([sp.expand(sol[i, 0].subs(sub)) for i in range(k)])
         else:
             sol = sp.Matrix([sp.expand(sol[i, 0]) for i in range(k)])
         qcols.append(sol)
-    transverse = tuple(
-        sp.expand(sum(qcols[j][i, 0] * xs[i] for i in range(k))) for j in range(r)
-    )
-    return _coordinate_result(
-        xs, invariants, transverse, "common_linear_first_integrals"
-    )
+    transverse = tuple(sp.expand(sum(qcols[j][i, 0] * xs[i] for i in range(k))) for j in range(r))
+    return _coordinate_result(xs, invariants, transverse, "common_linear_first_integrals")
 
 
 def _common_affine_eigenforms_distribution(Ms, bs, xs, r):
@@ -570,10 +537,7 @@ def _common_affine_eigenforms_distribution(Ms, bs, xs, r):
                 if lam is None:
                     ok = False
                     break
-                if any(
-                    sp.simplify(w[idx, 0] - lam * v[idx, 0]) != 0
-                    for idx in range(k + 1)
-                ):
+                if any(sp.simplify(w[idx, 0] - lam * v[idx, 0]) != 0 for idx in range(k + 1)):
                     ok = False
                     break
                 lambdas.append(lam)
@@ -584,9 +548,7 @@ def _common_affine_eigenforms_distribution(Ms, bs, xs, r):
             if all(sp.simplify(coeffs[i]) == 0 for i in range(k)):
                 continue
             wexpr = sp.expand(sum(coeffs[i] * xs[i] for i in range(k)) + d)
-            forms.append(
-                (tuple(map(sp.expand, lambdas)), sp.Matrix(coeffs), sp.expand(d), wexpr)
-            )
+            forms.append((tuple(map(sp.expand, lambdas)), sp.Matrix(coeffs), sp.expand(d), wexpr))
     if len(forms) < k:
         return None
     chosen = None
@@ -689,10 +651,7 @@ def _find_joint_flow_cross_section_coordinates_affine_distribution(Ms, bs, xs, r
     x0 = y0[:k, 0]
     for L in _candidate_linear_cross_section_matrices(Ms, bs, xs, r):
         # choose offsets 0 only for now, then fixed-point offsets if available could be added later
-        eqs = [
-            sp.Eq(sp.expand(sum(L[j, i] * x0[i] for i in range(k))), 0)
-            for j in range(r)
-        ]
+        eqs = [sp.Eq(sp.expand(sum(L[j, i] * x0[i] for i in range(k))), 0) for j in range(r)]
         try:
             sol = sp.solve(eqs, s_syms, dict=True)
         except Exception:
@@ -708,13 +667,11 @@ def _find_joint_flow_cross_section_coordinates_affine_distribution(Ms, bs, xs, r
         s_exprs = tuple(sp.expand(sol0[s_syms[j]].subs(sub)) for j in range(r))
         try:
             x0_sub = [
-                sp.simplify(comp.subs({s_syms[j]: s_exprs[j] for j in range(r)}))
-                for comp in x0
+                sp.simplify(comp.subs({s_syms[j]: s_exprs[j] for j in range(r)})) for comp in x0
             ]
         except Exception:
             x0_sub = [
-                sp.expand(comp.subs({s_syms[j]: s_exprs[j] for j in range(r)}))
-                for comp in x0
+                sp.expand(comp.subs({s_syms[j]: s_exprs[j] for j in range(r)})) for comp in x0
             ]
         null_basis = L.nullspace()
         if len(null_basis) < k - r:
@@ -804,8 +761,7 @@ def _common_constant_derivative_coordinate_functions_affine_distribution(Ms, bs,
                         lam = sp.simplify(wv[idx, 0] / v[idx, 0])
                         break
                 if lam is None or any(
-                    sp.simplify(wv[idx, 0] - lam * v[idx, 0]) != 0
-                    for idx in range(k + 1)
+                    sp.simplify(wv[idx, 0] - lam * v[idx, 0]) != 0 for idx in range(k + 1)
                 ):
                     ok = False
                     break
@@ -821,9 +777,7 @@ def _common_constant_derivative_coordinate_functions_affine_distribution(Ms, bs,
 def _common_affine_coordinates_distribution(Ms, bs, xs, r):
     """Construct coordinates from constant-derivative candidate functions."""
     k = len(xs)
-    cands = _common_constant_derivative_coordinate_functions_affine_distribution(
-        Ms, bs, xs, r
-    )
+    cands = _common_constant_derivative_coordinate_functions_affine_distribution(Ms, bs, xs, r)
     if len(cands) < k:
         return None
     # choose k candidates with independent gradients and derivative matrix rank r
@@ -856,10 +810,7 @@ def _common_affine_coordinates_distribution(Ms, bs, xs, r):
         s = sp.expand(sum(qcols[j][i, 0] * chosen[i][2] for i in range(k)))
         transverse.append(s)
     return _coordinate_result(
-        xs,
-        tuple(invariants),
-        tuple(transverse),
-        "commuting_affine_constant_derivative_coords",
+        xs, tuple(invariants), tuple(transverse), "commuting_affine_constant_derivative_coords"
     )
 
 
@@ -887,9 +838,7 @@ def _commuting_affine_distribution_coordinates(distribution: DistributionKD):
     if coords is not None:
         return coords
     # joint flow cross-section fallback
-    coords = _find_joint_flow_cross_section_coordinates_affine_distribution(
-        Ms, bs, vars, r
-    )
+    coords = _find_joint_flow_cross_section_coordinates_affine_distribution(Ms, bs, vars, r)
     if coords is not None:
         return coords
     return None

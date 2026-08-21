@@ -1,40 +1,40 @@
-from ..problem import PDEProblem, build_pde_problem, build_system_pde_problem
-from ..results import (
-    PDEVerificationSummary,
-    PDESolverTraceStep,
-    PDEExecutionTrace,
-    CanonicalPDERepresentation,
-    PDEProblemProfile,
-    PDESolverMethodCandidate,
-    PDESolutionPlan,
-    BasePDEResult,
-    ClosedFormPDEResult,
-    ImplicitPDEResult,
-    SeriesPDEResult,
-    TransformPDEResult,
-    WeakSolutionResult,
-    EigenfunctionExpansionResult,
-    SystemPDEResult,
-    NumericalFallbackResult,
-    UnsolvedButReducedResult,
-    PDESolutionRecord,
-)
-from ..conditions import ConditionEquation, ConditionModel, parse_conditions
-from ..domains import (
-    DomainGeometry,
-    IntervalDomain,
-    RectangleDomain,
-    DiskDomain,
-    HalfLineDomain,
-    FullLineDomain,
-    PolarAnnulusDomain,
-    infer_domain_geometry,
-)
 from ..boundary_model import (
     BoundaryComponent,
     BoundaryConditionBinding,
     BoundaryModel,
     build_boundary_model,
+)
+from ..conditions import ConditionEquation, ConditionModel, parse_conditions
+from ..domains import (
+    DiskDomain,
+    DomainGeometry,
+    FullLineDomain,
+    HalfLineDomain,
+    IntervalDomain,
+    PolarAnnulusDomain,
+    RectangleDomain,
+    infer_domain_geometry,
+)
+from ..problem import PDEProblem, build_pde_problem, build_system_pde_problem
+from ..results import (
+    BasePDEResult,
+    CanonicalPDERepresentation,
+    ClosedFormPDEResult,
+    EigenfunctionExpansionResult,
+    ImplicitPDEResult,
+    NumericalFallbackResult,
+    PDEExecutionTrace,
+    PDEProblemProfile,
+    PDESolutionPlan,
+    PDESolutionRecord,
+    PDESolverMethodCandidate,
+    PDESolverTraceStep,
+    PDEVerificationSummary,
+    SeriesPDEResult,
+    SystemPDEResult,
+    TransformPDEResult,
+    UnsolvedButReducedResult,
+    WeakSolutionResult,
 )
 
 __all__ = [

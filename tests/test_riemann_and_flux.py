@@ -3,18 +3,18 @@ import sympy as sp
 from pdesolve.classical import (
     PDEBoundaryCondition1D,
     canonicalize_pde_problem,
+    construct_burgers_rarefaction,
+    detect_scalar_conservation_law_family,
+    pdesolve,
     recognize_pde_family,
-    solve_heat_equation_1d_neumann_series,
+    separate_variables_structured,
     solve_heat_equation_1d_half_line_transform,
+    solve_heat_equation_1d_laplace_transform_formal,
+    solve_heat_equation_1d_neumann_series,
+    solve_inviscid_burgers_ivp_implicit,
     solve_wave_equation_1d_dirichlet_series,
     solve_wave_equation_1d_laplace_transform_formal,
-    solve_heat_equation_1d_laplace_transform_formal,
-    separate_variables_structured,
-    detect_scalar_conservation_law_family,
-    solve_inviscid_burgers_ivp_implicit,
-    construct_burgers_rarefaction,
     verify_pde_solution_with_data,
-    pdesolve,
 )
 
 
@@ -39,10 +39,7 @@ def test_neumann_series_and_verification_smoke():
         u,
         (x, t),
         ics={"initial_profile": 1},
-        bcs=[
-            PDEBoundaryCondition1D(0, "neumann", 0),
-            PDEBoundaryCondition1D(sp.pi, "neumann", 0),
-        ],
+        bcs=[PDEBoundaryCondition1D(0, "neumann", 0), PDEBoundaryCondition1D(sp.pi, "neumann", 0)],
     )
     assert report.verified
 
@@ -57,9 +54,7 @@ def test_half_line_and_laplace_transform_helpers():
     wave = solve_wave_equation_1d_laplace_transform_formal(
         u, x=x, t=t, initial_displacement=sp.sin(x), initial_velocity=0
     )
-    heat = solve_heat_equation_1d_laplace_transform_formal(
-        u, x=x, t=t, initial_profile=sp.sin(x)
-    )
+    heat = solve_heat_equation_1d_laplace_transform_formal(u, x=x, t=t, initial_profile=sp.sin(x))
     assert isinstance(wave.solution, sp.Equality)
     assert isinstance(heat.solution, sp.Equality)
 

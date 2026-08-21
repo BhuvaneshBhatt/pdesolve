@@ -4,9 +4,9 @@ from dataclasses import dataclass
 
 import sympy as sp
 
-from .geometry import CharacteristicCoordinatesResult, DistributionKD, VectorFieldKD
 from .frobenius import local_frobenius_chart
-from .utils import enumerate_multiindices, multiindex_sum
+from .geometry import CharacteristicCoordinatesResult, DistributionKD, VectorFieldKD
+from .symbolic_algebra_helpers import enumerate_multiindices, multiindex_sum
 
 
 @dataclass
@@ -71,9 +71,7 @@ def build_invariant_jet_bundle_from_chart(
     if chart is None:
         chart = local_frobenius_chart(distribution)
 
-    invariants = tuple(
-        sp.Symbol(f"z{i + 1}", real=True) for i in range(len(chart.invariants))
-    )
+    invariants = tuple(sp.Symbol(f"z{i + 1}", real=True) for i in range(len(chart.invariants)))
     reduced_jet = ReducedJetSpaceKD(invariants, max_order=max_order, dep_name=dep_name)
 
     # Differential operators D_{z^alpha} in x-coordinates from the Jacobian inverse.

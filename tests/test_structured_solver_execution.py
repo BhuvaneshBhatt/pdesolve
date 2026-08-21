@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sympy as sp
 
-from pdesolve import build_pde_problem, pdesolve, build_benchmark_suite
+from pdesolve import build_benchmark_suite, build_pde_problem, pdesolve
 from pdesolve.separation_framework import execute_separation_plan
 from pdesolve.transform_framework import execute_transform_plan
 

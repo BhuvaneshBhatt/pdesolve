@@ -16,9 +16,7 @@ class CacheStats:
 
 @lru_cache(maxsize=4096)
 def cached_bracket_coeffs(
-    vars_sig: tuple[str, ...],
-    coeffs1_sig: tuple[str, ...],
-    coeffs2_sig: tuple[str, ...],
+    vars_sig: tuple[str, ...], coeffs1_sig: tuple[str, ...], coeffs2_sig: tuple[str, ...]
 ):
     vars = tuple(sp.Symbol(v) for v in vars_sig)
     coeffs1 = tuple(sp.sympify(s) for s in coeffs1_sig)
@@ -38,9 +36,7 @@ def cached_distribution_diagnostics(
     from .geometry import VectorFieldKD
 
     vars = tuple(sp.Symbol(v) for v in vars_sig)
-    fields = tuple(
-        VectorFieldKD(vars, tuple(sp.sympify(c) for c in row)) for row in coeffs_sig
-    )
+    fields = tuple(VectorFieldKD(vars, tuple(sp.sympify(c) for c in row)) for row in coeffs_sig)
     return dist_diag(fields, vars)
 
 
@@ -52,13 +48,9 @@ def dist_diag(fields, vars):
 
 @lru_cache(maxsize=1024)
 def cached_prolongation_coefficients_scalar_kd(
-    vars_sig: tuple[str, ...],
-    dep_name: str,
-    max_order: int,
-    xis_sig: tuple[str, ...],
-    phi_sig: str,
+    vars_sig: tuple[str, ...], dep_name: str, max_order: int, xis_sig: tuple[str, ...], phi_sig: str
 ):
-    from .pde import ScalarJetSpaceKD
+    from .jet_space import ScalarJetSpaceKD
     from .symmetry import _prolongation_coefficients_scalar_kd_uncached
 
     vars = tuple(sp.Symbol(v) for v in vars_sig)

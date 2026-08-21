@@ -3,16 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 import sympy as sp
 
-from .first_order_geometry import (
-    AdaptedCoordinateReduction,
-    adapted_coordinate_reduction,
-)
+from .first_order_geometry import AdaptedCoordinateReduction, adapted_coordinate_reduction
 from .results import SolverMethodResult
-
 
 # Recognition ---------------------------------------------------------------
 
@@ -23,16 +18,14 @@ class LinearFirstOrderProfile:
     b: sp.Expr
     c: sp.Expr
     d: sp.Expr
-    reduction: Optional[AdaptedCoordinateReduction]
+    reduction: AdaptedCoordinateReduction | None
 
 
 def parse_linear_first_order(
     eq: sp.Equality | sp.Expr, u: sp.Function, x: sp.Symbol, y: sp.Symbol
 ) -> LinearFirstOrderProfile:
     """Parse ``a u_x + b u_y + c u + d = 0`` into coefficients."""
-    expr = (
-        sp.simplify(eq.lhs - eq.rhs) if isinstance(eq, sp.Equality) else sp.simplify(eq)
-    )
+    expr = sp.simplify(eq.lhs - eq.rhs) if isinstance(eq, sp.Equality) else sp.simplify(eq)
     dep = u(x, y)
     dep_x = sp.diff(dep, x)
     dep_y = sp.diff(dep, y)
@@ -49,7 +42,7 @@ def parse_linear_first_order(
 
 def recognize_first_order_linear_pde(
     eq: sp.Equality | sp.Expr, u: sp.Function, vars: tuple[sp.Symbol, sp.Symbol]
-) -> Optional[LinearFirstOrderProfile]:
+) -> LinearFirstOrderProfile | None:
     x, y = vars
     prof = parse_linear_first_order(eq, u, x, y)
     if prof.a == 0 and prof.b == 0:
@@ -62,8 +55,8 @@ def recognize_first_order_linear_pde(
 
 @dataclass(frozen=True, kw_only=True)
 class FirstOrderPDEResult(SolverMethodResult):
-    invariant: Optional[sp.Expr] = None
-    reduction: Optional[AdaptedCoordinateReduction] = None
+    invariant: sp.Expr | None = None
+    reduction: AdaptedCoordinateReduction | None = None
 
 
 def solve_first_order_linear_pde(
@@ -72,9 +65,7 @@ def solve_first_order_linear_pde(
     """Solve a linear first-order PDE using a simple adapted-coordinate reduction."""
     prof = recognize_first_order_linear_pde(eq, u, vars)
     if prof is None or prof.reduction is None:
-        raise NotImplementedError(
-            "Could not build an adapted-coordinate reduction for this PDE"
-        )
+        raise NotImplementedError("Could not build an adapted-coordinate reduction for this PDE")
 
     red = prof.reduction
     xi = red.transverse_var
@@ -91,9 +82,7 @@ def solve_first_order_linear_pde(
         mu = sp.simplify(sp.exp(sp.integrate(p_term, xi)))
         red_sol = sp.simplify((arb(eta) - sp.integrate(q_term * mu, xi)) / mu)
     except Exception as exc:
-        raise NotImplementedError(
-            "Failed to solve the reduced first-order ODE"
-        ) from exc
+        raise NotImplementedError("Failed to solve the reduced first-order ODE") from exc
 
     sol = sp.simplify(red_sol.subs(eta, red.invariant))
     return FirstOrderPDEResult(

@@ -1,4 +1,5 @@
 import sympy as sp
+
 import pdesolve as rle
 
 
@@ -24,9 +25,7 @@ def test_charpit_separated_form():
 def test_jacobi_additive_or_autonomous_result_has_verification():
     x, y, z = sp.symbols("x y z", real=True)
     u = sp.Function("u")
-    eq = sp.Eq(
-        sp.diff(u(x, y, z), x) ** 2, sp.diff(u(x, y, z), y) + sp.diff(u(x, y, z), z)
-    )
+    eq = sp.Eq(sp.diff(u(x, y, z), x) ** 2, sp.diff(u(x, y, z), y) + sp.diff(u(x, y, z), z))
     res = rle.solve_jacobi_complete_integral(eq, u(x, y, z), (x, y, z))
     assert res.solutions
     assert res.verification

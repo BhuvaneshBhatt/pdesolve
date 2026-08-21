@@ -5,15 +5,11 @@ from typing import Any
 
 import sympy as sp
 
-from .conditions import (
-    ConditionModel,
-    summarize_condition_model,
-    classify_condition_equation,
-)
+from .conditions import ConditionModel, classify_condition_equation, summarize_condition_model
 from .domains import DomainGeometry
 from .results import CanonicalPDERepresentation, TransformPDEResult
-from .unified_transform import solve_unified_transform, recognize_evolution_pde
 from .transform_postprocess import postprocess_transform_result
+from .unified_transform import recognize_evolution_pde, solve_unified_transform
 
 
 @dataclass(frozen=True)
@@ -54,11 +50,7 @@ def build_transform_method_plan(
             else "laplace"
         )
         return TransformMethodPlan(
-            "structured_transform",
-            "half_line",
-            fam,
-            ("profile",),
-            {"geometry_kind": geometry.kind},
+            "structured_transform", "half_line", fam, ("profile",), {"geometry_kind": geometry.kind}
         )
     if geometry.kind == "interval" and bc_kinds:
         fam = (
@@ -69,11 +61,7 @@ def build_transform_method_plan(
             else "sturm_liouville_transform"
         )
         return TransformMethodPlan(
-            "structured_transform",
-            "interval",
-            fam,
-            ("profile",),
-            {"geometry_kind": geometry.kind},
+            "structured_transform", "interval", fam, ("profile",), {"geometry_kind": geometry.kind}
         )
     if geometry.kind == "unspecified_spacetime" and "integral_transform" in tags:
         return TransformMethodPlan(
@@ -109,9 +97,7 @@ def initial_condition_equation(model: ConditionModel | None):
     tvar = _time_var(model)
     for cond in model.initial_conditions:
         if (
-            classify_condition_equation(
-                cond, time_variable=tvar, spatial_variables=spatial
-            )
+            classify_condition_equation(cond, time_variable=tvar, spatial_variables=spatial)
             == "profile"
         ):
             return cond.equation
@@ -161,16 +147,12 @@ def execute_transform_plan(
 ):
     plan = (
         plan
-        or (getattr(problem.canonical_representation, "details", {}) or {}).get(
-            "transform_plan"
-        )
+        or (getattr(problem.canonical_representation, "details", {}) or {}).get("transform_plan")
         or problem.details.get("transform_plan")
     )
     if plan is None:
         raise NotImplementedError("No structured transform plan available.")
-    classical_mod = classical_mod or __import__(
-        "pdesolve.classical_methods", fromlist=["dummy"]
-    )
+    classical_mod = classical_mod or __import__("pdesolve.classical_methods", fromlist=["dummy"])
     cond_model = problem.details.get("condition_model") or (
         getattr(problem.canonical_representation, "details", {}) or {}
     ).get("condition_model")
@@ -183,13 +165,9 @@ def execute_transform_plan(
         and len(problem.indep_vars) >= 2
     ):
         x0 = problem.indep_vars[0]
-        ic_eq = sp.Eq(
-            problem.dep_function.func(x0, 0), problem.ics.get("initial_profile")
-        )
+        ic_eq = sp.Eq(problem.dep_function.func(x0, 0), problem.ics.get("initial_profile"))
     if ic_eq is None:
-        raise ValueError(
-            "structured_transform requires an explicit initial-condition equation."
-        )
+        raise ValueError("structured_transform requires an explicit initial-condition equation.")
 
     ufunc = problem.dep_function.func
     vars2 = problem.indep_vars[:2]
@@ -291,9 +269,7 @@ def execute_transform_plan(
             tvar = _time_var(cond_model)
             for cond in cond_model.initial_conditions:
                 if (
-                    classify_condition_equation(
-                        cond, time_variable=tvar, spatial_variables=spatial
-                    )
+                    classify_condition_equation(cond, time_variable=tvar, spatial_variables=spatial)
                     == "velocity"
                 ):
                     velocity = cond.equation.rhs
@@ -347,11 +323,7 @@ def execute_transform_plan(
                     diffusivity = sp.simplify(-ev.coeffs.get(2, 0) / a_t)
             return _as_transform_result(
                 classical_mod.solve_heat_equation_1d_fourier_transform(
-                    problem.dep_function,
-                    x=x,
-                    t=t,
-                    diffusivity=diffusivity,
-                    initial_profile=profile,
+                    problem.dep_function, x=x, t=t, diffusivity=diffusivity, initial_profile=profile
                 ),
                 plan,
             )

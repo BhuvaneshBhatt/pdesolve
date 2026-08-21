@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sympy as sp
+
 import pdesolve as pds
 
 
@@ -24,11 +25,7 @@ def main() -> None:
             u(x, t),
             (x, t),
             method="constant_coefficient_inverse_operator",
-            ics={
-                "equation": ic_eq,
-                "initial_profile": sp.exp(-(x**2)),
-                "curve_value": 0,
-            },
+            ics={"equation": ic_eq, "initial_profile": sp.exp(-(x**2)), "curve_value": 0},
         )
     )
 

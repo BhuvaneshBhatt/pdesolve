@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Optional, Sequence
 
 import sympy as sp
 
@@ -34,13 +34,11 @@ class UnifiedTransformResult(SolverMethodResult):
     domain: str
     is_formal: bool = False
     notes: str = ""
-    profile: Optional[EvolutionPDEProfile] = None
+    profile: EvolutionPDEProfile | None = None
 
 
 def _as_expr(eq: sp.Equality | sp.Expr) -> sp.Expr:
-    return (
-        sp.simplify(eq.lhs - eq.rhs) if isinstance(eq, sp.Equality) else sp.simplify(eq)
-    )
+    return sp.simplify(eq.lhs - eq.rhs) if isinstance(eq, sp.Equality) else sp.simplify(eq)
 
 
 def _parse_initial_condition(
@@ -70,7 +68,7 @@ def _parse_initial_condition(
 
 def _parse_boundary_value(
     boundary_conditions: Sequence[sp.Equality], target: sp.Expr
-) -> Optional[sp.Expr]:
+) -> sp.Expr | None:
     for bc in boundary_conditions:
         if bc.lhs == target:
             return bc.rhs
@@ -79,7 +77,7 @@ def _parse_boundary_value(
 
 def _extract_constant_coeff_evolution(
     eq: sp.Equality | sp.Expr, u: sp.Function, x: sp.Symbol, t: sp.Symbol
-) -> Optional[tuple[sp.Expr, dict[int, sp.Expr]]]:
+) -> tuple[sp.Expr, dict[int, sp.Expr]] | None:
     """Parse ``a_t q_t + sum_j a_j q_{x^j} = 0`` with constant coefficients."""
     expr = sp.expand(_as_expr(eq))
     q = u(x, t)
@@ -145,7 +143,7 @@ def determine_dispersion_relation(
 
 def recognize_evolution_pde(
     eq: sp.Equality | sp.Expr, u: sp.Function, vars: tuple[sp.Symbol, sp.Symbol]
-) -> Optional[EvolutionPDEProfile]:
+) -> EvolutionPDEProfile | None:
     """Classify supported scalar constant-coefficient evolution PDE families."""
     x, t = vars
     parsed = _extract_constant_coeff_evolution(eq, u, x, t)
@@ -164,9 +162,7 @@ def recognize_evolution_pde(
         notes = "First-order transport/advection-reaction family."
     elif set(nonzero_orders).issubset({2}):
         c2 = sp.simplify(coeffs.get(2, 0))
-        a_re, a_im = [
-            sp.simplify(part) for part in sp.expand_complex(a_t).as_real_imag()
-        ]
+        a_re, a_im = [sp.simplify(part) for part in sp.expand_complex(a_t).as_real_imag()]
         _, c2_im = [sp.simplify(part) for part in sp.expand_complex(c2).as_real_imag()]
         if a_re == 0 and a_im != 0 and c2_im == 0:
             family = "schrodinger_like"
@@ -199,17 +195,13 @@ def solve_unified_transform_whole_line(
     t0, q0 = _parse_initial_condition(initial_condition, u, x, t)
     profile = recognize_evolution_pde(eq, u, vars)
     if profile is None:
-        raise NotImplementedError(
-            "Could not recognize a scalar constant-coefficient evolution PDE"
-        )
+        raise NotImplementedError("Could not recognize a scalar constant-coefficient evolution PDE")
 
     k = sp.symbols("k", complex=True)
     q0hat = sp.FourierTransform(q0, x, k)
     time_shift = sp.simplify(t - t0)
     solution = sp.Integral(
-        q0hat
-        * sp.exp(sp.I * k * x - profile.dispersion_relation * time_shift)
-        / (2 * sp.pi),
+        q0hat * sp.exp(sp.I * k * x - profile.dispersion_relation * time_shift) / (2 * sp.pi),
         (k, -sp.oo, sp.oo),
     )
     return UnifiedTransformResult(
@@ -229,7 +221,7 @@ def _solve_half_line_advection(
     boundary_conditions: Sequence[sp.Equality],
     u: sp.Function,
     vars: tuple[sp.Symbol, sp.Symbol],
-) -> Optional[UnifiedTransformResult]:
+) -> UnifiedTransformResult | None:
     x, t = vars
     a_t = profile.time_coefficient
     coeffs = profile.coeffs
@@ -248,9 +240,7 @@ def _solve_half_line_advection(
     time_shift = sp.simplify(t - t0)
     initial_branch = sp.exp(-b * time_shift) * q0.subs(x, x - a * time_shift)
     boundary_branch = sp.exp(-b * x / a) * g0.subs(t, t - x / a)
-    solution = sp.Piecewise(
-        (initial_branch, sp.Ge(x - a * time_shift, 0)), (boundary_branch, True)
-    )
+    solution = sp.Piecewise((initial_branch, sp.Ge(x - a * time_shift, 0)), (boundary_branch, True))
     return UnifiedTransformResult(
         solution=solution,
         dispersion_relation=profile.dispersion_relation,
@@ -268,7 +258,7 @@ def _solve_half_line_heat_dirichlet(
     boundary_conditions: Sequence[sp.Equality],
     u: sp.Function,
     vars: tuple[sp.Symbol, sp.Symbol],
-) -> Optional[UnifiedTransformResult]:
+) -> UnifiedTransformResult | None:
     """Dirichlet half-line heat solver in integral form."""
     x, t = vars
     if profile.family_name != "heat_like":
@@ -321,7 +311,7 @@ def _solve_half_line_schrodinger_dirichlet_zero(
     boundary_conditions: Sequence[sp.Equality],
     u: sp.Function,
     vars: tuple[sp.Symbol, sp.Symbol],
-) -> Optional[UnifiedTransformResult]:
+) -> UnifiedTransformResult | None:
     """Half-line Schrödinger with homogeneous Dirichlet data via boundary elimination.
 
     This is the first genuinely nontrivial unified-transform branch beyond the
@@ -359,9 +349,7 @@ def _solve_half_line_schrodinger_dirichlet_zero(
     kernel_plus = sp.exp(sp.I * (x + xi) ** 2 / (4 * kappa * time_shift)) / sp.sqrt(
         4 * sp.pi * sp.I * kappa * time_shift
     )
-    solution = sp.Integral(
-        (kernel_minus - kernel_plus) * q0.subs(x, xi), (xi, 0, sp.oo)
-    )
+    solution = sp.Integral((kernel_minus - kernel_plus) * q0.subs(x, xi), (xi, 0, sp.oo))
     return UnifiedTransformResult(
         solution=solution,
         dispersion_relation=profile.dispersion_relation,
@@ -390,11 +378,9 @@ def _formal_half_line_representation(
     q0hat = sp.Integral(q0.subs(x, s) * sp.exp(-sp.I * k * s), (s, 0, sp.oo))
     boundary_symbol = sp.Function("G")(k, t)
     solution = sp.Integral(
-        q0hat * sp.exp(sp.I * k * x - omega * (t - t0)) / (2 * sp.pi),
-        (k, -sp.oo, sp.oo),
+        q0hat * sp.exp(sp.I * k * x - omega * (t - t0)) / (2 * sp.pi), (k, -sp.oo, sp.oo)
     ) + sp.Integral(
-        boundary_symbol * sp.exp(sp.I * k * x - omega * (t - t0)) / (2 * sp.pi),
-        (k, -sp.oo, sp.oo),
+        boundary_symbol * sp.exp(sp.I * k * x - omega * (t - t0)) / (2 * sp.pi), (k, -sp.oo, sp.oo)
     )
     return UnifiedTransformResult(
         solution=solution,
@@ -417,13 +403,9 @@ def solve_unified_transform_half_line(
     """Solve a minimal class of half-line scalar evolution PDEs."""
     profile = recognize_evolution_pde(eq, u, vars)
     if profile is None:
-        raise NotImplementedError(
-            "Could not recognize a scalar constant-coefficient evolution PDE"
-        )
+        raise NotImplementedError("Could not recognize a scalar constant-coefficient evolution PDE")
 
-    explicit = _solve_half_line_advection(
-        profile, initial_condition, boundary_conditions, u, vars
-    )
+    explicit = _solve_half_line_advection(profile, initial_condition, boundary_conditions, u, vars)
     if explicit is not None:
         return explicit
     explicit = _solve_half_line_heat_dirichlet(
@@ -446,15 +428,13 @@ def solve_unified_transform(
     u: sp.Function,
     vars: tuple[sp.Symbol, sp.Symbol],
     *,
-    initial_condition: Optional[sp.Equality] = None,
-    boundary_conditions: Optional[Sequence[sp.Equality]] = None,
+    initial_condition: sp.Equality | None = None,
+    boundary_conditions: Sequence[sp.Equality] | None = None,
     domain: str = "whole_line",
 ) -> UnifiedTransformResult:
     """Top-level unified-transform entry point."""
     if initial_condition is None:
-        raise ValueError(
-            "initial_condition is required for the unified-transform solvers"
-        )
+        raise ValueError("initial_condition is required for the unified-transform solvers")
     boundary_conditions = list(boundary_conditions or [])
     if domain == "whole_line":
         return solve_unified_transform_whole_line(eq, initial_condition, u, vars)

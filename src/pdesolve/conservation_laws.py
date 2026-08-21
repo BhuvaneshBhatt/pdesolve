@@ -4,32 +4,30 @@ from typing import Any
 
 import sympy as sp
 
-from .errors import PDEMethodNotApplicable
-
 from .classical_methods import (
+    conserved_mass_statement,
     detect_conservation_law_1d,
     detect_scalar_conservation_law_family,
-    conserved_mass_statement,
+    extract_conservation_form_auto,
     rankine_hugoniot_speed,
-    solve_scalar_conservation_law_riemann_general,
-    solve_scalar_conservation_law_riemann_burgers,
     solve_burgers_family,
     solve_burgers_ivp_characteristic_formal,
+    solve_scalar_conservation_law_riemann_burgers,
+    solve_scalar_conservation_law_riemann_general,
     solve_viscous_burgers_cole_hopf_formal,
-    extract_conservation_form_auto,
 )
+from .errors import PDEMethodNotApplicable
 from .results import (
     ConservationLawCanonicalForm,
+    ConservationLawImplicitCharacteristicResult,
     ConservationLawInitialData1D,
     ConservationLawPropagationResult,
-    ConservationLawImplicitCharacteristicResult,
-    ConservationLawShockResult,
     ConservationLawRarefactionResult,
+    ConservationLawShockResult,
     PDEVerificationSummary,
     SolverMethodResult,
 )
 from .verify import verify_solution_with_conditions
-
 
 __all__ = [
     "ConservationLawCanonicalForm",
@@ -93,9 +91,7 @@ def _extract_autonomous_flux(
     return None
 
 
-def canonicalize_scalar_conservation_law_1d(
-    eq_or_expr, dep_expr_or_func, indep_vars=None
-):
+def canonicalize_scalar_conservation_law_1d(eq_or_expr, dep_expr_or_func, indep_vars=None):
     """Return a normalized scalar conservation-law description.
 
     Preferred target form:
@@ -116,9 +112,7 @@ def canonicalize_scalar_conservation_law_1d(
             source=sp.Integer(0),
             normalized_equation=cons.normalized_equation,
             autonomous_flux=_extract_autonomous_flux(flux, uexpr, (x, t)),
-            family=detect_scalar_conservation_law_family(
-                eq_or_expr, uexpr, vars_
-            ).family,
+            family=detect_scalar_conservation_law_family(eq_or_expr, uexpr, vars_).family,
             details=dict(cons.details),
         )
     except Exception:
@@ -173,9 +167,7 @@ def _riemann_states_from_profile(profile, x):
         right = sp.simplify(sp.limit(profile, x, 0, dir="+"))
     except Exception:
         return None, None
-    if left.has(sp.oo, -sp.oo, sp.zoo, sp.nan) or right.has(
-        sp.oo, -sp.oo, sp.zoo, sp.nan
-    ):
+    if left.has(sp.oo, -sp.oo, sp.zoo, sp.nan) or right.has(sp.oo, -sp.oo, sp.zoo, sp.nan):
         return None, None
     return left, right
 
@@ -256,9 +248,7 @@ def parse_scalar_conservation_law_initial_data(
 def solve_scalar_conservation_law_ivp(
     eq_or_expr, dep_expr_or_func, indep_vars=None, *, initial_conditions=None
 ):
-    canonical = canonicalize_scalar_conservation_law_1d(
-        eq_or_expr, dep_expr_or_func, indep_vars
-    )
+    canonical = canonicalize_scalar_conservation_law_1d(eq_or_expr, dep_expr_or_func, indep_vars)
     data = parse_scalar_conservation_law_initial_data(
         initial_conditions, canonical.dep_function, canonical.indep_vars
     )
@@ -270,9 +260,7 @@ def solve_scalar_conservation_law_ivp(
             "Structured IVP results currently target source-free scalar conservation laws."
         )
     if canonical.autonomous_flux is None:
-        raise NotImplementedError(
-            "Structured IVP results currently target autonomous fluxes f(u)."
-        )
+        raise NotImplementedError("Structured IVP results currently target autonomous fluxes f(u).")
 
     usym = sp.Symbol("u", real=True)
     f = canonical.autonomous_flux
@@ -284,9 +272,7 @@ def solve_scalar_conservation_law_ivp(
         )
         sol_eq = sp.Eq(
             uexpr,
-            base.solution
-            if not isinstance(base.solution, sp.Equality)
-            else base.solution.rhs,
+            base.solution if not isinstance(base.solution, sp.Equality) else base.solution.rhs,
         )
         selection = dict(base.details.get("selection", {}))
         branch = selection.get("branch")
@@ -356,13 +342,9 @@ def solve_scalar_conservation_law_ivp(
     speed_xi = sp.simplify(fp.subs(usym, gxi))
     characteristic_relation = sp.Eq(x, sp.expand(xi + speed_xi * t))
     profile_relation = sp.Eq(uexpr, gxi)
-    implicit_relation = sp.Eq(
-        uexpr, sp.simplify(profile.subs(x, x - fp.subs(usym, uexpr) * t))
-    )
+    implicit_relation = sp.Eq(uexpr, sp.simplify(profile.subs(x, x - fp.subs(usym, uexpr) * t)))
     foot = sp.Symbol("x0", real=True)
-    footpoint_equation = sp.Eq(
-        x, sp.expand(foot + fp.subs(usym, profile.subs(x, foot)) * t)
-    )
+    footpoint_equation = sp.Eq(x, sp.expand(foot + fp.subs(usym, profile.subs(x, foot)) * t))
     return ConservationLawImplicitCharacteristicResult(
         method="scalar_conservation_implicit_characteristics",
         solution=(characteristic_relation, profile_relation),
@@ -388,7 +370,7 @@ def _extract_solution_rhs(solution):
     if isinstance(solution, sp.Equality):
         return solution.rhs
     if hasattr(solution, "solution"):
-        inner = getattr(solution, "solution")
+        inner = solution.solution
         if isinstance(inner, sp.Equality):
             return inner.rhs
         return inner
@@ -404,9 +386,7 @@ def verify_piecewise_conservation_law_solution(
 
     initial_data = None
     if initial_conditions is not None:
-        initial_data = parse_scalar_conservation_law_initial_data(
-            initial_conditions, uexpr, vars_
-        )
+        initial_data = parse_scalar_conservation_law_initial_data(initial_conditions, uexpr, vars_)
 
     if isinstance(
         solution,
@@ -454,9 +434,7 @@ def verify_piecewise_conservation_law_solution(
         res == 0 for res in branch_residuals if res is not None
     )
 
-    weak_summary = verify_weak_conservation_law_solution(
-        solution, dep_expr_or_func, indep_vars
-    )
+    weak_summary = verify_weak_conservation_law_solution(solution, dep_expr_or_func, indep_vars)
     if symbolic_branch_ok and weak_summary.verified is not False:
         return PDEVerificationSummary(
             verified=True,
@@ -482,8 +460,7 @@ def _extract_piecewise_interfaces(expr, x, t):
         rels = list(cond.args) if isinstance(cond, sp.And) else [cond]
         for rel in rels:
             if isinstance(
-                rel,
-                (sp.StrictLessThan, sp.LessThan, sp.StrictGreaterThan, sp.GreaterThan),
+                rel, (sp.StrictLessThan, sp.LessThan, sp.StrictGreaterThan, sp.GreaterThan)
             ):
                 lhs = sp.simplify(rel.lhs - rel.rhs)
                 if lhs.has(x) and lhs.has(t):
@@ -491,9 +468,7 @@ def _extract_piecewise_interfaces(expr, x, t):
     return out
 
 
-def verify_weak_conservation_law_solution(
-    solution, dep_expr_or_func=None, indep_vars=None
-):
+def verify_weak_conservation_law_solution(solution, dep_expr_or_func=None, indep_vars=None):
     """Weak-solution checks specialized for structured shock/rarefaction outputs."""
     if isinstance(solution, ConservationLawShockResult):
         usym = sp.Symbol("u", real=True)
@@ -522,12 +497,8 @@ def verify_weak_conservation_law_solution(
     if isinstance(solution, ConservationLawRarefactionResult):
         usym = sp.Symbol("u", real=True)
         fp = sp.simplify(sp.diff(solution.flux, usym))
-        left_ok = (
-            sp.simplify(fp.subs(usym, solution.left_state) - solution.left_speed) == 0
-        )
-        right_ok = (
-            sp.simplify(fp.subs(usym, solution.right_state) - solution.right_speed) == 0
-        )
+        left_ok = sp.simplify(fp.subs(usym, solution.left_state) - solution.left_speed) == 0
+        right_ok = sp.simplify(fp.subs(usym, solution.right_state) - solution.right_speed) == 0
         admiss = entropy_admissibility_scalar_riemann(
             solution.flux,
             solution.left_state,
@@ -564,11 +535,7 @@ def verify_weak_conservation_law_solution(
             message="Implicit characteristic relations constructed for scalar conservation law.",
         )
     # Best-effort multi-interface piecewise check for weak branches.
-    sol_expr = (
-        solution.rhs
-        if isinstance(solution, sp.Equality)
-        else getattr(solution, "rhs", None)
-    )
+    sol_expr = solution.rhs if isinstance(solution, sp.Equality) else getattr(solution, "rhs", None)
     if (
         dep_expr_or_func is not None
         and indep_vars is not None
@@ -606,14 +573,12 @@ def lax_shock_inequalities(flux, u_left, u_right, shock_speed, *, u_symbol=None)
         "shock_speed": shock_speed,
         "left_ok": sp.simplify(left_speed - sp.sympify(shock_speed)) >= 0
         if all(
-            getattr(sp.sympify(v), "is_real", None) is not False
-            for v in (left_speed, shock_speed)
+            getattr(sp.sympify(v), "is_real", None) is not False for v in (left_speed, shock_speed)
         )
         else sp.simplify(left_speed - sp.sympify(shock_speed)),
         "right_ok": sp.simplify(sp.sympify(shock_speed) - right_speed) >= 0
         if all(
-            getattr(sp.sympify(v), "is_real", None) is not False
-            for v in (right_speed, shock_speed)
+            getattr(sp.sympify(v), "is_real", None) is not False for v in (right_speed, shock_speed)
         )
         else sp.simplify(sp.sympify(shock_speed) - right_speed),
     }
@@ -625,8 +590,7 @@ def oleinik_one_sided_bound(flux, u_left, u_right, *, u_symbol=None):
     if sp.simplify(u_left - u_right) == 0:
         return {"applicable": False, "bound": None}
     secant = sp.simplify(
-        (f.subs(u, u_left) - f.subs(u, u_right))
-        / (sp.sympify(u_left) - sp.sympify(u_right))
+        (f.subs(u, u_left) - f.subs(u, u_right)) / (sp.sympify(u_left) - sp.sympify(u_right))
     )
     return {"applicable": True, "bound": secant}
 
@@ -668,32 +632,22 @@ def entropy_admissibility_scalar_riemann(
     ls = left_speed if left_speed is not None else sp.simplify(fp.subs(u, u_left))
     rs = right_speed if right_speed is not None else sp.simplify(fp.subs(u, u_right))
     metadata.update(
-        {
-            "admissible": bool(sp.simplify(ls - rs) <= 0),
-            "left_speed": ls,
-            "right_speed": rs,
-        }
+        {"admissible": bool(sp.simplify(ls - rs) <= 0), "left_speed": ls, "right_speed": rs}
     )
     return metadata
 
 
 def canonicalize_scalar_conservation_law(eq_or_expr, dep_expr_or_func, indep_vars=None):
-    return canonicalize_scalar_conservation_law_1d(
-        eq_or_expr, dep_expr_or_func, indep_vars
-    )
+    return canonicalize_scalar_conservation_law_1d(eq_or_expr, dep_expr_or_func, indep_vars)
 
 
-def parse_conservation_law_initial_data(
-    initial_conditions, dep_expr_or_func, indep_vars=None
-):
+def parse_conservation_law_initial_data(initial_conditions, dep_expr_or_func, indep_vars=None):
     return parse_scalar_conservation_law_initial_data(
         initial_conditions, dep_expr_or_func, indep_vars
     )
 
 
-def analyze_conservation_law(
-    eq_or_expr, dep_expr_or_func, indep_vars=None, *, ics=None
-):
+def analyze_conservation_law(eq_or_expr, dep_expr_or_func, indep_vars=None, *, ics=None):
     structured = solve_scalar_conservation_law_ivp(
         eq_or_expr, dep_expr_or_func, indep_vars, initial_conditions=ics
     )
@@ -706,9 +660,7 @@ def analyze_conservation_law(
     else:
         method = structured.method
     return SolverMethodResult(
-        method_family=method,
-        solution=solution,
-        details={"structured_result": structured},
+        method_family=method, solution=solution, details={"structured_result": structured}
     )
 
 
@@ -726,9 +678,5 @@ def verify_conservation_law_solution(
             structured_result, dep_expr_or_func, indep_vars
         )
     return verify_piecewise_conservation_law_solution(
-        eq_or_expr,
-        solution,
-        dep_expr_or_func,
-        indep_vars,
-        initial_conditions=initial_conditions,
+        eq_or_expr, solution, dep_expr_or_func, indep_vars, initial_conditions=initial_conditions
     )

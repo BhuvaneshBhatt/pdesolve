@@ -1,24 +1,14 @@
 import sympy as sp
 
-from pdesolve.geometry import (
-    VectorFieldKD,
-    DistributionKD,
-    CharacteristicCoordinatesResult,
-)
-from pdesolve.frobenius import local_frobenius_chart
+from pdesolve.canonical import canonicalize_coordinate_chart, canonicalize_reduced_equation
 from pdesolve.diffinv import invariant_jet_bundle
-from pdesolve.canonical import (
-    canonicalize_coordinate_chart,
-    canonicalize_reduced_equation,
-)
-from pdesolve.lie import (
-    lie_algebra_structure_summary,
-    choose_frobenius_friendly_subalgebras,
-)
-from pdesolve.pde import (
-    build_scalar_jet_equation_from_sympy_pde,
+from pdesolve.frobenius import local_frobenius_chart
+from pdesolve.geometry import CharacteristicCoordinatesResult, DistributionKD, VectorFieldKD
+from pdesolve.jet_space import (
     build_scalar_general_solved_pde_from_equation,
+    build_scalar_jet_equation_from_sympy_pde,
 )
+from pdesolve.lie import choose_frobenius_friendly_subalgebras, lie_algebra_structure_summary
 from pdesolve.reduction import reduce_scalar_by_frobenius_chart
 
 
@@ -80,15 +70,12 @@ def test_frobenius_reduction_canonicalizes_output():
     x, y, t = sp.symbols("x y t", positive=True, real=True)
     ufun = sp.Function("u")
     pde = sp.Eq(
-        sp.diff(ufun(x, y, t), t),
-        sp.diff(ufun(x, y, t), x, 2) + sp.diff(ufun(x, y, t), y, 2),
+        sp.diff(ufun(x, y, t), t), sp.diff(ufun(x, y, t), x, 2) + sp.diff(ufun(x, y, t), y, 2)
     )
     jet, jpde = build_scalar_jet_equation_from_sympy_pde(
         (x, y, t), ufun, pde, max_order=2, dep_name="u"
     )
-    eq_obj, _ = build_scalar_general_solved_pde_from_equation(
-        jet, jpde, max_principal_order=2
-    )
+    eq_obj, _ = build_scalar_general_solved_pde_from_equation(jet, jpde, max_principal_order=2)
     dist = DistributionKD(
         (x, y, t),
         (

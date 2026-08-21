@@ -131,9 +131,7 @@ def normalize_solution(
     ok, reason = _eligible(solution, method, policy)
     target = solution.rhs if isinstance(solution, sp.Equality) else solution
     if not ok:
-        return solution, NormalizationReport(
-            False, False, reason, _ops(target), _ops(target), ()
-        )
+        return solution, NormalizationReport(False, False, reason, _ops(target), _ops(target), ())
     normalized, before, after, stages = _normalize_expr(target, policy)
     if isinstance(solution, sp.Equality):
         out = sp.Eq(solution.lhs, normalized, evaluate=False)

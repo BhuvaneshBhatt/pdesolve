@@ -1,48 +1,46 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 import sympy as sp
-from sympy.polys.polyerrors import PolynomialError
 from sympy.core.function import AppliedUndef
+from sympy.polys.polyerrors import PolynomialError
 
-from .conditions import summarize_condition_model, extract_equations_by_role
+from .complete_integral_helpers import (
+    solve_charpit_complete_integral_2vars,
+    solve_complete_integral_pde,
+    solve_generalized_clairaut_complete_integral,
+    solve_jacobi_complete_integral,
+)
+from .conditions import extract_equations_by_role, summarize_condition_model
+from .constant_coeff import pdesolve_constant_coefficient
+from .errors import PDEMethodNotApplicable
+from .first_order_framework import canonicalize_first_order_nonlinear_pde, execute_first_order_plan
+from .first_order_nonlinear import solve_via_invariant_reduction
+from .hyperbolic_system import solve_hyperbolic_system
+from .kernels import execute_kernel_plan
+from .method_names import normalize_method_name
 from .results import (
     BasePDEResult,
     ClosedFormPDEResult,
-    ImplicitPDEResult,
-    SeriesPDEResult,
-    TransformPDEResult,
-    WeakSolutionResult,
     EigenfunctionExpansionResult,
-    SystemPDEResult,
-    UnsolvedButReducedResult,
-    KernelRepresentationResult,
     FundamentalSolutionResult,
     GreenFunctionResult,
+    ImplicitPDEResult,
+    KernelRepresentationResult,
+    SeriesPDEResult,
     SolverMethodResult,
+    SystemPDEResult,
+    TransformPDEResult,
+    UnsolvedButReducedResult,
+    WeakSolutionResult,
 )
-from .first_order_framework import (
-    canonicalize_first_order_nonlinear_pde,
-    execute_first_order_plan,
-)
-from .first_order_nonlinear import solve_via_invariant_reduction
-from .unified_transform import solve_unified_transform
-from .hyperbolic_system import solve_hyperbolic_system
-from .constant_coeff import pdesolve_constant_coefficient
-from .method_names import normalize_method_name
 from .separation_framework import execute_separation_plan
 from .transform_framework import execute_transform_plan
-from .kernels import execute_kernel_plan
-from .errors import PDEMethodNotApplicable
-from .complete_integral_helpers import (
-    solve_generalized_clairaut_complete_integral,
-    solve_charpit_complete_integral_2vars,
-    solve_complete_integral_pde,
-    solve_jacobi_complete_integral,
-)
+from .unified_transform import solve_unified_transform
 
 
 @dataclass(frozen=True)
@@ -72,11 +70,7 @@ def _problem_condition_model(problem):
         cm = details.get("condition_model")
         if cm is not None:
             return cm
-    return (
-        problem.details.get("condition_model")
-        if getattr(problem, "details", None)
-        else None
-    )
+    return problem.details.get("condition_model") if getattr(problem, "details", None) else None
 
 
 def _extract_condition_payloads(problem):
@@ -92,49 +86,33 @@ def _extract_condition_payloads(problem):
         if "equations" not in bcs_payload and bc_eqs:
             bcs_payload = {**bcs_payload, "equations": bc_eqs}
         if init_eqs and "equation" not in ics_payload:
-            ics_payload = {
-                **ics_payload,
-                "equation": init_eqs[0],
-                "initial_equation": init_eqs[0],
-            }
+            ics_payload = {**ics_payload, "equation": init_eqs[0], "initial_equation": init_eqs[0]}
         ts = summary.get("time_slices", ())
         if ts and "curve_value" not in ics_payload:
             ics_payload["curve_value"] = ts[0]
         for cond, ck in zip(
-            getattr(cm, "initial_conditions", ()), summary.get("initial_kinds", ())
+            getattr(cm, "initial_conditions", ()), summary.get("initial_kinds", ()), strict=True
         ):
             rhs = (
                 cond.equation.rhs
                 if isinstance(getattr(cond, "equation", None), sp.Equality)
                 else None
             )
-            if (
-                ck == "profile"
-                and rhs is not None
-                and "initial_profile" not in ics_payload
-            ):
+            if ck == "profile" and rhs is not None and "initial_profile" not in ics_payload:
                 ics_payload["initial_profile"] = rhs
                 ics_payload.setdefault("initial_displacement", rhs)
-            elif (
-                ck == "velocity"
-                and rhs is not None
-                and "initial_velocity" not in ics_payload
-            ):
+            elif ck == "velocity" and rhs is not None and "initial_velocity" not in ics_payload:
                 ics_payload["initial_velocity"] = rhs
-        geom = (
-            problem.details.get("domain_geometry")
-            if getattr(problem, "details", None)
-            else None
-        )
+        geom = problem.details.get("domain_geometry") if getattr(problem, "details", None) else None
         if geom is not None:
             if "type" not in bcs_payload:
-                if geom.kind == "interval" and set(
-                    summary.get("boundary_kinds", ())
-                ) == {"dirichlet"}:
+                if geom.kind == "interval" and set(summary.get("boundary_kinds", ())) == {
+                    "dirichlet"
+                }:
                     bcs_payload["type"] = "dirichlet_homogeneous_interval"
-                elif geom.kind == "interval" and set(
-                    summary.get("boundary_kinds", ())
-                ) == {"neumann"}:
+                elif geom.kind == "interval" and set(summary.get("boundary_kinds", ())) == {
+                    "neumann"
+                }:
                     bcs_payload["type"] = "neumann_homogeneous_interval"
             for key, val in getattr(geom, "extents", {}).items():
                 if key == "x" and isinstance(val, tuple) and len(val) == 2:
@@ -177,9 +155,7 @@ def _standardize_result(raw: Any, problem, default_method: str) -> BasePDEResult
             kwargs["series_terms"] = getattr(raw, "series_terms", None)
             kwargs["eigen_data"] = getattr(raw, "eigen_data", None)
             return EigenfunctionExpansionResult(**kwargs)
-        if isinstance(raw, SeriesPDEResult) and not isinstance(
-            raw, EigenfunctionExpansionResult
-        ):
+        if isinstance(raw, SeriesPDEResult) and not isinstance(raw, EigenfunctionExpansionResult):
             kwargs["series_terms"] = getattr(raw, "series_terms", None)
             return SeriesPDEResult(**kwargs)
         if isinstance(raw, TransformPDEResult):
@@ -191,9 +167,7 @@ def _standardize_result(raw: Any, problem, default_method: str) -> BasePDEResult
         if isinstance(raw, SystemPDEResult):
             kwargs["system_size"] = getattr(raw, "system_size", 1)
             kwargs["transform"] = getattr(raw, "transform", None)
-            kwargs["characteristic_variables"] = getattr(
-                raw, "characteristic_variables", None
-            )
+            kwargs["characteristic_variables"] = getattr(raw, "characteristic_variables", None)
             return SystemPDEResult(**kwargs)
         if isinstance(raw, FundamentalSolutionResult):
             kwargs["kernel"] = getattr(raw, "kernel", getattr(raw, "solution", None))
@@ -225,10 +199,7 @@ def _standardize_result(raw: Any, problem, default_method: str) -> BasePDEResult
     elif (
         "shock" in method
         or "rarefaction" in method
-        or (
-            "conservation" in method
-            and ("admissibility" in details or "weak" in method)
-        )
+        or ("conservation" in method and ("admissibility" in details or "weak" in method))
     ):
         cls = WeakSolutionResult
     elif (
@@ -243,11 +214,7 @@ def _standardize_result(raw: Any, problem, default_method: str) -> BasePDEResult
     ):
         cls = (
             EigenfunctionExpansionResult
-            if (
-                "eigen" in method
-                or "basis" in str(details.get("plan", ""))
-                or "series" in method
-            )
+            if ("eigen" in method or "basis" in str(details.get("plan", "")) or "series" in method)
             else SeriesPDEResult
         )
     elif "implicit" in method or isinstance(solution, (tuple, list)):
@@ -279,18 +246,14 @@ def _standardize_result(raw: Any, problem, default_method: str) -> BasePDEResult
         warnings=tuple(details.get("warnings", ()) or ()),
     )
     if cls is TransformPDEResult:
-        return TransformPDEResult(
-            **common, transform_data=details.get("transform_data")
-        )
+        return TransformPDEResult(**common, transform_data=details.get("transform_data"))
     if cls is WeakSolutionResult:
         return WeakSolutionResult(
             **common, admissibility=dict(details.get("admissibility", {}) or {})
         )
     if cls is EigenfunctionExpansionResult:
         return EigenfunctionExpansionResult(
-            **common,
-            series_terms=details.get("terms"),
-            eigen_data=details.get("eigen_data"),
+            **common, series_terms=details.get("terms"), eigen_data=details.get("eigen_data")
         )
     if cls is SeriesPDEResult:
         return SeriesPDEResult(**common, series_terms=details.get("terms"))
@@ -663,10 +626,7 @@ def solve_with_canonical_problem(problem, method: str, **kwargs) -> BasePDEResul
     if handler is None:
         raise PDEMethodNotApplicable(f"Unsupported method: {method}")
     ctx = SolverExecutionContext(
-        problem=problem,
-        method=method,
-        classical_mod=classical_mod,
-        options=dict(kwargs),
+        problem=problem, method=method, classical_mod=classical_mod, options=dict(kwargs)
     )
     raw = handler(ctx)
     return _standardize_result(raw, problem, method)

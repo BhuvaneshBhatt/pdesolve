@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 import sympy as sp
 
 from .family_recognizers import _canonical_linear_pde_1d_xt
@@ -19,12 +20,7 @@ class SeparationOfVariablesResult:
 
 
 def separate_variables(
-    eq_or_expr,
-    dep_expr_or_func,
-    indep_vars=None,
-    *,
-    separation_constant=None,
-    assumptions=True,
+    eq_or_expr, dep_expr_or_func, indep_vars=None, *, separation_constant=None, assumptions=True
 ):
     """
     Attempt separation of variables for common linear homogeneous 1+1 PDE classes.
@@ -48,11 +44,7 @@ def separate_variables(
     uexpr = can["u"]
     X = sp.Function("X")
     T = sp.Function("T")
-    lam = (
-        separation_constant
-        if separation_constant is not None
-        else sp.Symbol("lambda_sep")
-    )
+    lam = separation_constant if separation_constant is not None else sp.Symbol("lambda_sep")
     ansatz_expr = X(x) * T(t)
 
     if can["kind"] == "heat_like":
@@ -128,9 +120,7 @@ def separate_variables(
             can,
         )
 
-    raise NotImplementedError(
-        "Matched PDE type is not yet handled by the separation engine."
-    )
+    raise NotImplementedError("Matched PDE type is not yet handled by the separation engine.")
 
 
 __all__ = ["SeparationOfVariablesResult", "separate_variables"]

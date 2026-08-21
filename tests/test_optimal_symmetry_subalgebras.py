@@ -1,7 +1,7 @@
 import sympy as sp
 
-from pdesolve.geometry import VectorFieldKD, DistributionKD
-from pdesolve.optimal import optimal_system_1d, commuting_subalgebras
+from pdesolve.geometry import DistributionKD, VectorFieldKD
+from pdesolve.symmetry_optimal_systems import commuting_subalgebras, optimal_system_1d
 
 
 def test_optimal_system_1d_dedupes_scalar_multiples():

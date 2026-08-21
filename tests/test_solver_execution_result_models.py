@@ -1,14 +1,9 @@
 import sympy as sp
 
-from pdesolve.problem import build_pde_problem, build_system_pde_problem
-from pdesolve.solver_execution import solve_with_canonical_problem
-from pdesolve.results import (
-    BasePDEResult,
-    SeriesPDEResult,
-    TransformPDEResult,
-    SystemPDEResult,
-)
 from pdesolve.first_order_nonlinear import solve_first_order_nonlinear_auto
+from pdesolve.problem import build_pde_problem, build_system_pde_problem
+from pdesolve.results import BasePDEResult, SeriesPDEResult, SystemPDEResult, TransformPDEResult
+from pdesolve.solver_execution import solve_with_canonical_problem
 
 
 def test_separation_solver_returns_standardized_series_result():
@@ -31,9 +26,7 @@ def test_transform_solver_returns_standardized_transform_result():
     x, t = sp.symbols("x t", real=True)
     u = sp.Function("u")
     eq = sp.Eq(sp.diff(u(x, t), t), sp.diff(u(x, t), x, 2))
-    problem = build_pde_problem(
-        eq, u(x, t), (x, t), ics={"initial_profile": sp.exp(-(x**2))}
-    )
+    problem = build_pde_problem(eq, u(x, t), (x, t), ics={"initial_profile": sp.exp(-(x**2))})
     res = solve_with_canonical_problem(problem, "structured_transform")
     assert isinstance(res, TransformPDEResult)
 

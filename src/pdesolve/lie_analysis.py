@@ -1,18 +1,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 import sympy as sp
 
-from .pde import (
-    build_scalar_jet_equation_from_sympy_pde,
+from .frobenius import local_frobenius_chart
+from .geometry import DistributionKD, VectorFieldKD
+from .jet_space import (
     build_scalar_general_solved_pde_from_equation,
+    build_scalar_jet_equation_from_sympy_pde,
 )
 from .symmetry import (
     determining_equations_for_scalar_general_solved_pde_kd,
     solve_determining_equations_with_polynomial_ansatz_scalar_general_kd,
 )
-from .geometry import DistributionKD, VectorFieldKD
-from .frobenius import local_frobenius_chart
 
 
 @dataclass(frozen=True)
@@ -44,9 +45,7 @@ def analyze_lie_point_symmetries(
         else dep_function
     )
     zero = (
-        equation.lhs - equation.rhs
-        if isinstance(equation, sp.Equality)
-        else sp.sympify(equation)
+        equation.lhs - equation.rhs if isinstance(equation, sp.Equality) else sp.sympify(equation)
     )
     max_order = max(
         (
@@ -57,11 +56,7 @@ def analyze_lie_point_symmetries(
         default=1,
     )
     jet, jet_eq = build_scalar_jet_equation_from_sympy_pde(
-        vars_,
-        dep,
-        equation,
-        max_order=max_order,
-        dep_name=getattr(dep, "__name__", "u"),
+        vars_, dep, equation, max_order=max_order, dep_name=getattr(dep, "__name__", "u")
     )
     solved, _ = build_scalar_general_solved_pde_from_equation(jet, jet_eq)
     xis, phi, det = determining_equations_for_scalar_general_solved_pde_kd(solved)

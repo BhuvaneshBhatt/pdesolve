@@ -6,30 +6,22 @@ from typing import Any, Protocol
 import sympy as sp
 
 from .results import (
-    PDEVerificationSummary,
     BasePDEResult,
     ImplicitPDEResult,
-    WeakSolutionResult,
     KernelRepresentationResult,
+    PDEVerificationSummary,
     SeriesPDEResult,
     TransformPDEResult,
+    WeakSolutionResult,
 )
-from .verify import verify_solution_with_conditions, verify_kernel_representation
+from .verify import verify_kernel_representation, verify_solution_with_conditions
 
 
 class VerificationStrategy(Protocol):
     name: str
 
     def verify(
-        self,
-        equation,
-        result,
-        dep_function,
-        indep_vars,
-        *,
-        ics=None,
-        bcs=None,
-        assumptions=True,
+        self, equation, result, dep_function, indep_vars, *, ics=None, bcs=None, assumptions=True
     ) -> PDEVerificationSummary: ...
 
 
@@ -38,25 +30,11 @@ class ClassicalResidualVerifier:
     name: str = "classical_residual"
 
     def verify(
-        self,
-        equation,
-        result,
-        dep_function,
-        indep_vars,
-        *,
-        ics=None,
-        bcs=None,
-        assumptions=True,
+        self, equation, result, dep_function, indep_vars, *, ics=None, bcs=None, assumptions=True
     ):
         solution = getattr(result, "solution", result)
         return verify_solution_with_conditions(
-            equation,
-            solution,
-            dep_function,
-            indep_vars,
-            ics=ics,
-            bcs=bcs,
-            assumptions=assumptions,
+            equation, solution, dep_function, indep_vars, ics=ics, bcs=bcs, assumptions=assumptions
         )
 
 
@@ -65,15 +43,7 @@ class ImplicitSolutionVerifier:
     name: str = "implicit_relation"
 
     def verify(
-        self,
-        equation,
-        result,
-        dep_function,
-        indep_vars,
-        *,
-        ics=None,
-        bcs=None,
-        assumptions=True,
+        self, equation, result, dep_function, indep_vars, *, ics=None, bcs=None, assumptions=True
     ):
         # Generic implicit differentiation is expensive and method dependent.  Preserve any
         # method-specific verification supplied by the solver; otherwise report inconclusive.
@@ -98,15 +68,7 @@ class WeakSolutionVerifier:
     name: str = "weak_solution"
 
     def verify(
-        self,
-        equation,
-        result,
-        dep_function,
-        indep_vars,
-        *,
-        ics=None,
-        bcs=None,
-        assumptions=True,
+        self, equation, result, dep_function, indep_vars, *, ics=None, bcs=None, assumptions=True
     ):
         try:
             from .conservation_laws import verify_weak_conservation_law_solution
@@ -118,15 +80,10 @@ class WeakSolutionVerifier:
             )
             if structured is None:
                 structured = result
-            return verify_weak_conservation_law_solution(
-                structured, dep_function, indep_vars
-            )
+            return verify_weak_conservation_law_solution(structured, dep_function, indep_vars)
         except Exception as exc:
             return PDEVerificationSummary(
-                None,
-                "unverified",
-                mode=self.name,
-                message=f"weak verification unavailable: {exc}",
+                None, "unverified", mode=self.name, message=f"weak verification unavailable: {exc}"
             )
 
 
@@ -135,15 +92,7 @@ class KernelVerifier:
     name: str = "kernel"
 
     def verify(
-        self,
-        equation,
-        result,
-        dep_function,
-        indep_vars,
-        *,
-        ics=None,
-        bcs=None,
-        assumptions=True,
+        self, equation, result, dep_function, indep_vars, *, ics=None, bcs=None, assumptions=True
     ):
         kernel = getattr(result, "kernel", None) or getattr(result, "solution", result)
         try:
@@ -159,19 +108,13 @@ class KernelVerifier:
             verified = info.get("verified")
             return PDEVerificationSummary(
                 verified,
-                "verified"
-                if verified is True
-                else "failed"
-                if verified is False
-                else "unverified",
+                "verified" if verified is True else "failed" if verified is False else "unverified",
                 mode=self.name,
                 message="kernel/source and boundary checks",
                 boundary_residuals=tuple(info.get("boundary_residuals", ()) or ()),
             )
         except Exception as exc:
-            return PDEVerificationSummary(
-                None, "unverified", mode=self.name, message=str(exc)
-            )
+            return PDEVerificationSummary(None, "unverified", mode=self.name, message=str(exc))
 
 
 @dataclass(frozen=True)
@@ -179,15 +122,7 @@ class SeriesVerifier:
     name: str = "series"
 
     def verify(
-        self,
-        equation,
-        result,
-        dep_function,
-        indep_vars,
-        *,
-        ics=None,
-        bcs=None,
-        assumptions=True,
+        self, equation, result, dep_function, indep_vars, *, ics=None, bcs=None, assumptions=True
     ):
         # Finite/truncated series can satisfy the PDE and BCs exactly while approximating data.
         base = verify_solution_with_conditions(
@@ -219,15 +154,7 @@ class TransformVerifier:
     name: str = "transform_structural"
 
     def verify(
-        self,
-        equation,
-        result,
-        dep_function,
-        indep_vars,
-        *,
-        ics=None,
-        bcs=None,
-        assumptions=True,
+        self, equation, result, dep_function, indep_vars, *, ics=None, bcs=None, assumptions=True
     ):
         sol = getattr(result, "solution", result)
         has_transform = isinstance(sol, sp.Basic) and bool(
@@ -255,11 +182,7 @@ def select_verification_strategy(result: Any) -> VerificationStrategy:
         k in method for k in ("kernel", "green", "fundamental_solution")
     ):
         return KernelVerifier()
-    if (
-        isinstance(result, SeriesPDEResult)
-        or "series" in method
-        or "separation" in method
-    ):
+    if isinstance(result, SeriesPDEResult) or "series" in method or "separation" in method:
         return SeriesVerifier()
     if isinstance(result, TransformPDEResult) or any(
         k in method for k in ("transform", "fourier", "laplace")
@@ -274,13 +197,7 @@ def verify_result(
     """Verify a solver result with a representation-aware strategy."""
     strategy = select_verification_strategy(result)
     return strategy.verify(
-        equation,
-        result,
-        dep_function,
-        indep_vars,
-        ics=ics,
-        bcs=bcs,
-        assumptions=assumptions,
+        equation, result, dep_function, indep_vars, ics=ics, bcs=bcs, assumptions=assumptions
     )
 
 

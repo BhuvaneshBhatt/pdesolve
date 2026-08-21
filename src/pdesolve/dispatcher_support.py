@@ -4,15 +4,15 @@ from typing import Any
 
 import sympy as sp
 
-from .results import (
-    PDEExecutionTrace,
-    PDEVerificationSummary,
-    PDESolverTraceStep,
-    PDESolutionRecord,
-    BasePDEResult,
-)
-from .result_verification import verify_result
 from .normalization import NormalizationPolicy, normalize_solution
+from .result_verification import verify_result
+from .results import (
+    BasePDEResult,
+    PDEExecutionTrace,
+    PDESolutionRecord,
+    PDESolverTraceStep,
+    PDEVerificationSummary,
+)
 
 
 def as_verification_summary(
@@ -66,19 +66,11 @@ def as_verification_summary(
             verified = all(bits) if bits else None
         if required:
             status = (
-                "verified"
-                if verified is True
-                else "failed"
-                if verified is False
-                else "unverified"
+                "verified" if verified is True else "failed" if verified is False else "unverified"
             )
         else:
             status = ver.get("status") or (
-                "verified"
-                if verified is True
-                else "failed"
-                if verified is False
-                else "unverified"
+                "verified" if verified is True else "failed" if verified is False else "unverified"
             )
         return PDEVerificationSummary(
             verified=verified,

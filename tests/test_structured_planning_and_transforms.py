@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import sympy as sp
 
-from pdesolve import build_pde_problem, pdesolve, canonicalize_first_order_nonlinear_pde
-from pdesolve.classification import plan_pde_solution_methods
+from pdesolve import build_pde_problem, canonicalize_first_order_nonlinear_pde, pdesolve
 from pdesolve.benchmark_suite import get_method_family_regression_cases
+from pdesolve.classification import plan_pde_solution_methods
 
 
 def test_separation_framework_solver_consumes_plan_for_interval_heat():
@@ -21,7 +21,6 @@ def test_separation_framework_solver_consumes_plan_for_interval_heat():
         "heat_dirichlet_series",
         "series_solution",
         "closed_form",
-        "heat_dirichlet_series",
     } or "heat" in str(getattr(res, "method", ""))
 
 

@@ -1,14 +1,14 @@
 import sympy as sp
 
-from pdesolve.geometry import VectorFieldKD, DistributionKD
-from pdesolve.frobenius import local_frobenius_chart, adapted_basis_in_chart
 from pdesolve.diffinv import (
-    second_order_differential_invariants_scalar,
     commuting_distribution_differential_invariants_scalar,
+    second_order_differential_invariants_scalar,
 )
-from pdesolve.pde import (
-    build_scalar_jet_equation_from_sympy_pde,
+from pdesolve.frobenius import adapted_basis_in_chart, local_frobenius_chart
+from pdesolve.geometry import DistributionKD, VectorFieldKD
+from pdesolve.jet_space import (
     build_scalar_general_solved_pde_from_equation,
+    build_scalar_jet_equation_from_sympy_pde,
 )
 from pdesolve.reduction import reduce_scalar_by_frobenius_chart
 from pdesolve.workflows import repeated_reduction_workflow_scalar_kd_frobenius_default
@@ -54,15 +54,12 @@ def test_frobenius_backend_reduction_chart():
     x, y, t = sp.symbols("x y t", positive=True, real=True)
     ufun = sp.Function("u")
     pde = sp.Eq(
-        sp.diff(ufun(x, y, t), t),
-        sp.diff(ufun(x, y, t), x, 2) + sp.diff(ufun(x, y, t), y, 2),
+        sp.diff(ufun(x, y, t), t), sp.diff(ufun(x, y, t), x, 2) + sp.diff(ufun(x, y, t), y, 2)
     )
     jet, jpde = build_scalar_jet_equation_from_sympy_pde(
         (x, y, t), ufun, pde, max_order=2, dep_name="u"
     )
-    eq_obj, _ = build_scalar_general_solved_pde_from_equation(
-        jet, jpde, max_principal_order=2
-    )
+    eq_obj, _ = build_scalar_general_solved_pde_from_equation(jet, jpde, max_principal_order=2)
     dist = DistributionKD(
         (x, y, t),
         (
@@ -80,15 +77,12 @@ def test_repeated_workflow_frobenius_default_runs():
     x, y, t = sp.symbols("x y t", positive=True, real=True)
     ufun = sp.Function("u")
     pde = sp.Eq(
-        sp.diff(ufun(x, y, t), t),
-        sp.diff(ufun(x, y, t), x, 2) + sp.diff(ufun(x, y, t), y, 2),
+        sp.diff(ufun(x, y, t), t), sp.diff(ufun(x, y, t), x, 2) + sp.diff(ufun(x, y, t), y, 2)
     )
     jet, jpde = build_scalar_jet_equation_from_sympy_pde(
         (x, y, t), ufun, pde, max_order=2, dep_name="u"
     )
-    eq_obj, _ = build_scalar_general_solved_pde_from_equation(
-        jet, jpde, max_principal_order=2
-    )
+    eq_obj, _ = build_scalar_general_solved_pde_from_equation(jet, jpde, max_principal_order=2)
     res = repeated_reduction_workflow_scalar_kd_frobenius_default(
         eq_obj, max_steps=1, symmetry_degree=1, max_subset_size=2
     )

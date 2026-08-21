@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 import sympy as sp
 
-from ._classical_shared import _dep_and_vars, _safe_sub_profile_general
+from .classical_symbolic_helpers import _dep_and_vars, _safe_sub_profile_general
 
 
 @dataclass(frozen=True)
@@ -36,20 +37,14 @@ def solve_simply_supported_beam_ibvp(
     n = sp.Symbol("n", integer=True, positive=True)
     lam = (n * sp.pi / L) ** 2
     omega = sp.sqrt(4 * c * lam**2 - gamma**2) / 2
-    an = sp.sqrt(sp.Integer(2) / L) * sp.integrate(
-        f * sp.sin(n * sp.pi * x / L), (x, 0, L)
-    )
+    an = sp.sqrt(sp.Integer(2) / L) * sp.integrate(f * sp.sin(n * sp.pi * x / L), (x, 0, L))
     bn = (
         sp.sqrt(sp.Integer(2) / L)
         * sp.integrate((gamma * f / 2 + g) * sp.sin(n * sp.pi * x / L), (x, 0, L))
         / omega
     )
     basis = sp.sqrt(sp.Integer(2) / L) * sp.sin(n * sp.pi * x / L)
-    term = (
-        sp.exp(-gamma * t / 2)
-        * basis
-        * (an * sp.cos(omega * t) + bn * sp.sin(omega * t))
-    )
+    term = sp.exp(-gamma * t / 2) * basis * (an * sp.cos(omega * t) + bn * sp.sin(omega * t))
     series = sp.Sum(term, (n, 1, n_terms))
     return SpectralPDEResult(
         "simply_supported_beam_spectral",

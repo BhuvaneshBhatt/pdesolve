@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
 
 import sympy as sp
 
 from .geometry import DistributionKD, distribution_closure
-from .utils import expr_complexity
+from .symbolic_algebra_helpers import expr_complexity
 
 
 @dataclass
@@ -73,17 +73,10 @@ def score_chart_candidate(
         "involutive_affine_constant_derivative_coords": 5,
         "involutive_affine_full_rank_identity_chart": 6,
     }.get(method, 20)
-    return (
-        method_priority,
-        cx + jac_cx + cond_penalty,
-        len(validity_conditions),
-        len(transverse),
-    )
+    return (method_priority, cx + jac_cx + cond_penalty, len(validity_conditions), len(transverse))
 
 
-def explain_distribution(
-    distribution: DistributionKD,
-) -> DistributionExplainabilityReport:
+def explain_distribution(distribution: DistributionKD) -> DistributionExplainabilityReport:
     diag = distribution.diagnostics()
     closure = distribution_closure(distribution)
     reasons: list[str] = []
@@ -96,10 +89,7 @@ def explain_distribution(
         A = distribution.coefficient_matrix()
         cols = diag.minor_columns
         try:
-            if (
-                distribution.size <= distribution.dimension
-                and len(cols) == distribution.size
-            ):
+            if distribution.size <= distribution.dimension and len(cols) == distribution.size:
                 det = sp.simplify(A[:, cols].det())
                 if det != 0:
                     conditions.append(sp.Ne(det, 0))

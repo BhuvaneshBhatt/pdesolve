@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
 
 import sympy as sp
 
@@ -130,9 +130,7 @@ def invariant_differentiation_operators(
     invariants = chart.invariants
     transverse = chart.transverse
     if len(invariants) == 0:
-        return InvariantDifferentiationOperators(
-            tuple(), transverse, tuple(), chart.method
-        )
+        return InvariantDifferentiationOperators(tuple(), transverse, tuple(), chart.method)
     coords = tuple(invariants) + tuple(transverse)
     J = sp.Matrix([[sp.diff(c, v) for v in xs] for c in coords])
     try:
@@ -164,11 +162,9 @@ def _dependent_invariant_multi(u, s_exprs, a_list, beta_list):
     if not _u_action_compatibility(a_list, beta_list):
         raise ValueError("Dependent affine actions are not compatible.")
     if all(sp.simplify(a) == 0 for a in a_list):
-        return sp.expand(
-            u - sum(beta_list[j] * s_exprs[j] for j in range(len(s_exprs)))
-        )
+        return sp.expand(u - sum(beta_list[j] * s_exprs[j] for j in range(len(s_exprs))))
     kappa = None
-    for a, beta in zip(a_list, beta_list):
+    for a, beta in zip(a_list, beta_list, strict=True):
         if sp.simplify(a) != 0:
             cand = sp.simplify(beta / a)
             if kappa is None:
@@ -202,9 +198,7 @@ def second_order_differential_invariants_scalar(
         raise ValueError("Single-generator characteristic chart expected.")
     I0 = _dependent_invariant(u, ops.transverse_variables[0], a, beta)
     first = tuple(op.apply(I0) for op in ops.operators)
-    second = tuple(
-        tuple(op_i.apply(first[j]) for j in range(len(first))) for op_i in ops.operators
-    )
+    second = tuple(tuple(op_i.apply(first[j]) for j in range(len(first))) for op_i in ops.operators)
     return HigherDifferentialInvariantResult(
         base_invariants=ops.invariant_variables,
         dependent_invariant=I0,
@@ -243,9 +237,7 @@ def commuting_distribution_differential_invariants_scalar(
     coords = tuple(chart.invariants) + tuple(chart.transverse)
     xs = distribution.vars
     if len(chart.invariants) == 0:
-        ops = InvariantDifferentiationOperators(
-            tuple(), chart.transverse, tuple(), chart.method
-        )
+        ops = InvariantDifferentiationOperators(tuple(), chart.transverse, tuple(), chart.method)
         I0 = _dependent_invariant_multi(u, chart.transverse, a_list, beta_list)
         return HigherDifferentialInvariantResult(
             tuple(), I0, tuple(), tuple(), ops, f"{chart.method}_multi"
@@ -266,9 +258,7 @@ def commuting_distribution_differential_invariants_scalar(
 
     I0 = _dependent_invariant_multi(u, chart.transverse, a_list, beta_list)
     first = tuple(op.apply(I0) for op in ops.operators)
-    second = tuple(
-        tuple(op_i.apply(first[j]) for j in range(len(first))) for op_i in ops.operators
-    )
+    second = tuple(tuple(op_i.apply(first[j]) for j in range(len(first))) for op_i in ops.operators)
     return HigherDifferentialInvariantResult(
         base_invariants=ops.invariant_variables,
         dependent_invariant=I0,
@@ -353,11 +343,7 @@ def differential_invariants_scalar_up_to_order(
 
 
 def differential_invariants_commuting_distribution_scalar_up_to_order(
-    distribution: DistributionKD,
-    u: sp.Symbol,
-    a_list=None,
-    beta_list=None,
-    max_order: int = 3,
+    distribution: DistributionKD, u: sp.Symbol, a_list=None, beta_list=None, max_order: int = 3
 ) -> DifferentialInvariantTowerResult:
     if not distribution.is_commuting():
         raise ValueError(

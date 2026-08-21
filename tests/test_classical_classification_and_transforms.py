@@ -2,13 +2,13 @@ import sympy as sp
 
 from pdesolve.classical import (
     classify_linear_second_order_pde,
-    separate_variables,
-    solve_heat_equation_1d_fourier_transform,
-    solve_advection_equation_1d_fourier_transform,
-    detect_conservation_law_1d,
     conserved_mass_statement,
-    rankine_hugoniot_speed,
+    detect_conservation_law_1d,
     pdesolve,
+    rankine_hugoniot_speed,
+    separate_variables,
+    solve_advection_equation_1d_fourier_transform,
+    solve_heat_equation_1d_fourier_transform,
 )
 
 

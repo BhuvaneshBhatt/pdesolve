@@ -30,19 +30,11 @@ def test_classify_linear_second_order_pde_3vars_wave_and_ultrahyperbolic():
     u = sp.Function("u")
 
     wave3 = classify_linear_second_order_pde(
-        sp.Eq(
-            sp.diff(u(x, y, z), z, 2),
-            sp.diff(u(x, y, z), x, 2) + sp.diff(u(x, y, z), y, 2),
-        ),
+        sp.Eq(sp.diff(u(x, y, z), z, 2), sp.diff(u(x, y, z), x, 2) + sp.diff(u(x, y, z), y, 2)),
         u(x, y, z),
     )
     ultra = classify_linear_second_order_pde(
-        sp.Eq(
-            sp.diff(u(x, y, z), x, 2)
-            + sp.diff(u(x, y, z), y, 2)
-            - sp.diff(u(x, y, z), z, 2),
-            0,
-        ),
+        sp.Eq(sp.diff(u(x, y, z), x, 2) + sp.diff(u(x, y, z), y, 2) - sp.diff(u(x, y, z), z, 2), 0),
         u(x, y, z),
     )
 

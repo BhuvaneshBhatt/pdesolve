@@ -5,14 +5,14 @@ from typing import Any
 
 import sympy as sp
 
-from .results import CanonicalPDERepresentation, PDEProblemProfile
+from .boundary_model import build_boundary_model
+from .condition_analysis import analyze_conditions
 from .conditions import parse_conditions, summarize_condition_model
 from .domains import infer_domain_geometry, summarize_domain_geometry
-from .condition_analysis import analyze_conditions
+from .first_order_framework import canonicalize_first_order_nonlinear_pde
+from .results import CanonicalPDERepresentation, PDEProblemProfile
 from .separation_framework import build_separable_geometry_plan
 from .transform_framework import build_transform_method_plan
-from .boundary_model import build_boundary_model
-from .first_order_framework import canonicalize_first_order_nonlinear_pde
 
 
 @dataclass(frozen=True)
@@ -26,9 +26,7 @@ class PDERecognitionRecord:
 
 def _linearity_from_zero_expr(zero: sp.Expr, dep_expr: sp.Expr) -> str:
     derivs = [
-        d
-        for d in zero.atoms(sp.Derivative)
-        if getattr(d.expr, "func", None) == dep_expr.func
+        d for d in zero.atoms(sp.Derivative) if getattr(d.expr, "func", None) == dep_expr.func
     ]
     atoms = derivs + ([dep_expr] if zero.has(dep_expr) else [])
     if not atoms:
@@ -106,12 +104,8 @@ def build_canonical_representation(
     geom_meta = {"family": profile.canonical_family}
     if normalized_data is not None:
         try:
-            ic_meta["count"] = len(
-                getattr(normalized_data, "initial_conditions", ()) or ()
-            )
-            bc_meta["count"] = len(
-                getattr(normalized_data, "boundary_conditions", ()) or ()
-            )
+            ic_meta["count"] = len(getattr(normalized_data, "initial_conditions", ()) or ())
+            bc_meta["count"] = len(getattr(normalized_data, "boundary_conditions", ()) or ())
             dom = getattr(normalized_data, "domain", None)
             if dom is not None:
                 domain_meta["geometry"] = getattr(dom, "geometry", None)
@@ -124,31 +118,19 @@ def build_canonical_representation(
                         geom_meta["extents"] = getattr(geom, "extents", {})
         except Exception:
             pass
-    cmodel = parse_conditions(
-        ics, bcs, dep_expr=dep_expr or dep, indep_vars=tuple(vars_)
-    )
+    cmodel = parse_conditions(ics, bcs, dep_expr=dep_expr or dep, indep_vars=tuple(vars_))
     if cmodel.initial_conditions:
         ic_meta["count"] = len(cmodel.initial_conditions)
         time_slice["constant_time_values"] = tuple(
             sorted(
-                {
-                    c.location
-                    for c in cmodel.initial_conditions
-                    if c.location is not None
-                },
+                {c.location for c in cmodel.initial_conditions if c.location is not None},
                 key=sp.default_sort_key,
             )
         )
     if cmodel.boundary_conditions:
         bc_meta["count"] = len(cmodel.boundary_conditions)
         geom_meta["boundary_variables"] = tuple(
-            sorted(
-                {
-                    str(c.variable)
-                    for c in cmodel.boundary_conditions
-                    if c.variable is not None
-                }
-            )
+            sorted({str(c.variable) for c in cmodel.boundary_conditions if c.variable is not None})
         )
 
     geom = infer_domain_geometry(
@@ -157,24 +139,18 @@ def build_canonical_representation(
     condition_report = analyze_conditions(
         cmodel, geom, pde_order=profile.order, dependent_variables=(dep,)
     )
-    sep_plan = build_separable_geometry_plan(
-        geom, cmodel, family=profile.canonical_family
-    )
+    sep_plan = build_separable_geometry_plan(geom, cmodel, family=profile.canonical_family)
     boundary_model = build_boundary_model(geom, cmodel)
     first_order_model = None
     if profile.order == 1 and len(vars_) >= 2:
         try:
-            first_order_model = canonicalize_first_order_nonlinear_pde(
-                normalized, dep, vars_
-            )
+            first_order_model = canonicalize_first_order_nonlinear_pde(normalized, dep, vars_)
         except Exception:
             first_order_model = None
     weak_flags = tuple(
         sorted(
             {
-                "riemann_data"
-                if isinstance(ics, dict) and "riemann_data" in ics
-                else None,
+                "riemann_data" if isinstance(ics, dict) and "riemann_data" in ics else None,
                 "piecewise" if zero.has(sp.Piecewise) else None,
                 "multi_interface"
                 if zero.has(sp.Piecewise) and len(list(zero.atoms(sp.Piecewise))) > 0
@@ -271,11 +247,7 @@ def recognize_pde_structure(
     if profile.characteristic_data is not None and profile.first_order_linear is None:
         recs.append(
             PDERecognitionRecord(
-                "quasilinear_scalar_ivp",
-                True,
-                "quasilinear_implicit",
-                ("characteristics",),
-                {},
+                "quasilinear_scalar_ivp", True, "quasilinear_implicit", ("characteristics",), {}
             )
         )
     fam = profile.canonical_family
@@ -292,11 +264,7 @@ def recognize_pde_structure(
     elif fam == "wave_like":
         recs.append(
             PDERecognitionRecord(
-                "wave_like",
-                True,
-                "wave_dalembert",
-                ("dAlembert", "separation_of_variables"),
-                {},
+                "wave_like", True, "wave_dalembert", ("dAlembert", "separation_of_variables"), {}
             )
         )
     from .complete_integral_helpers import recognize_generalized_clairaut_pde
@@ -320,8 +288,4 @@ def recognize_pde_structure(
     return tuple(recs)
 
 
-__all__ = [
-    "PDERecognitionRecord",
-    "build_canonical_representation",
-    "recognize_pde_structure",
-]
+__all__ = ["PDERecognitionRecord", "build_canonical_representation", "recognize_pde_structure"]

@@ -21,11 +21,7 @@ class AdvancedGreenPlan:
 
 
 def _as_eq(eq_or_expr):
-    return (
-        eq_or_expr
-        if isinstance(eq_or_expr, sp.Equality)
-        else sp.Eq(sp.sympify(eq_or_expr), 0)
-    )
+    return eq_or_expr if isinstance(eq_or_expr, sp.Equality) else sp.Eq(sp.sympify(eq_or_expr), 0)
 
 
 def _dep_expr(dep_expr_or_func, vars_):
@@ -81,11 +77,7 @@ def _match_laplace_nd(op, dep, vars_):
     rem = sp.simplify(sp.expand(op - first * sum(second_terms)))
     if rem != 0 or any(first.has(v) for v in vars_):
         return None
-    return {
-        "family": "laplace_nd",
-        "scale": sp.simplify(first),
-        "dimension": len(vars_),
-    }
+    return {"family": "laplace_nd", "scale": sp.simplify(first), "dimension": len(vars_)}
 
 
 def _match_helmholtz_nd(op, dep, vars_):
@@ -218,7 +210,7 @@ def recognize_advanced_kernel_problem(eq_or_expr, dep_expr_or_func, indep_vars):
 
 def _laplace_free_nd(scale, coords, source):
     n = len(coords)
-    diffsq = sum((c - s) ** 2 for c, s in zip(coords, source))
+    diffsq = sum((c - s) ** 2 for c, s in zip(coords, source, strict=True))
     if n == 2:
         return sp.log(diffsq) / (4 * sp.pi * scale)
     omega_n = 2 * sp.pi ** (sp.Rational(n, 2)) / sp.gamma(sp.Rational(n, 2))
@@ -227,7 +219,7 @@ def _laplace_free_nd(scale, coords, source):
 
 def _helmholtz_free_nd(scale, lam, coords, source):
     n = len(coords)
-    r = sp.sqrt(sum((c - s) ** 2 for c, s in zip(coords, source)))
+    r = sp.sqrt(sum((c - s) ** 2 for c, s in zip(coords, source, strict=True)))
     if sp.simplify(lam) == 0:
         return _laplace_free_nd(scale, coords, source)
     h = -sp.I * sp.sqrt(lam)
@@ -243,7 +235,7 @@ def _heat_free_nd(a, space, t, source):
     spatial_source = source[: len(space)]
     tau = source[len(space)]
     n = len(space)
-    diffsq = sum((c - s) ** 2 for c, s in zip(space, spatial_source))
+    diffsq = sum((c - s) ** 2 for c, s in zip(space, spatial_source, strict=True))
     return (
         sp.Heaviside(t - tau)
         * sp.exp(-diffsq / (4 * a * (t - tau)))
@@ -254,32 +246,27 @@ def _heat_free_nd(a, space, t, source):
 def _wave_free_nd(c, space, t, source):
     spatial_source = source[: len(space)]
     tau = source[len(space)]
-    r = sp.sqrt(sum((c0 - s) ** 2 for c0, s in zip(space, spatial_source)))
+    r = sp.sqrt(sum((c0 - s) ** 2 for c0, s in zip(space, spatial_source, strict=True)))
     n = len(space)
     if n == 1:
-        return sp.Heaviside(c * (t - tau) - sp.Abs(space[0] - spatial_source[0])) / (
-            2 * c
-        )
+        return sp.Heaviside(c * (t - tau) - sp.Abs(space[0] - spatial_source[0])) / (2 * c)
     if n == 2:
         return sp.Heaviside((t - tau) - r / c) / (
             2 * sp.pi * c * sp.sqrt((t - tau) ** 2 - r**2 / c**2)
         )
     if n == 3:
         return sp.DiracDelta((t - tau) - r / c) / (4 * sp.pi * r)
-    raise NotImplementedError(
-        "Wave kernel currently supported for 1-3 spatial dimensions only."
-    )
+    raise NotImplementedError("Wave kernel currently supported for 1-3 spatial dimensions only.")
 
 
 def _laplace_half_plane(scale, x, y, xi, eta, *, boundary="dirichlet"):
     if boundary == "neumann":
         return -(
-            sp.log((x - xi) ** 2 + (y - eta) ** 2)
-            + sp.log((x - xi) ** 2 + (y + eta) ** 2)
+            sp.log((x - xi) ** 2 + (y - eta) ** 2) + sp.log((x - xi) ** 2 + (y + eta) ** 2)
         ) / (4 * sp.pi * scale)
-    return sp.log(
-        ((x - xi) ** 2 + (y + eta) ** 2) / ((x - xi) ** 2 + (y - eta) ** 2)
-    ) / (4 * sp.pi * scale)
+    return sp.log(((x - xi) ** 2 + (y + eta) ** 2) / ((x - xi) ** 2 + (y - eta) ** 2)) / (
+        4 * sp.pi * scale
+    )
 
 
 def _laplace_quadrant(scale, x, y, xi, eta, *, boundary="dirichlet"):
@@ -288,9 +275,7 @@ def _laplace_quadrant(scale, x, y, xi, eta, *, boundary="dirichlet"):
     rho3 = (x + xi) ** 2 + (y - eta) ** 2
     rho4 = (x + xi) ** 2 + (y + eta) ** 2
     if boundary == "neumann":
-        return -(sp.log(rho1) + sp.log(rho2) + sp.log(rho3) + sp.log(rho4)) / (
-            4 * sp.pi * scale
-        )
+        return -(sp.log(rho1) + sp.log(rho2) + sp.log(rho3) + sp.log(rho4)) / (4 * sp.pi * scale)
     return (sp.log(rho2 * rho3 / (rho1 * rho4))) / (4 * sp.pi * scale)
 
 
@@ -360,9 +345,7 @@ def _helmholtz_strip(scale, lam, x, y, xi, eta, a, *, boundary="dirichlet"):
     return (1 / (a * scale)) * sp.Sum(term, (n, 1, sp.oo))
 
 
-def _helmholtz_semi_infinite_strip(
-    scale, lam, x, y, xi, eta, a, *, boundary="dirichlet"
-):
+def _helmholtz_semi_infinite_strip(scale, lam, x, y, xi, eta, a, *, boundary="dirichlet"):
     n = sp.Symbol("n", integer=True, nonnegative=True)
     qn = sp.pi * n / a
     beta = sp.sqrt(qn**2 - lam)
@@ -394,17 +377,13 @@ def _mirror_point(coords, source, axis):
 
 def _heat_half_space(a, space, t, source, *, axis=-1, boundary="dirichlet"):
     base = _heat_free_nd(a, space, t, source)
-    image = _heat_free_nd(
-        a, space, t, _mirror_point(space, source[:-1], axis) + (source[-1],)
-    )
+    image = _heat_free_nd(a, space, t, _mirror_point(space, source[:-1], axis) + (source[-1],))
     return sp.simplify(base - image if boundary == "dirichlet" else base + image)
 
 
 def _wave_half_space(c, space, t, source, *, axis=-1, boundary="dirichlet"):
     base = _wave_free_nd(c, space, t, source)
-    image = _wave_free_nd(
-        c, space, t, _mirror_point(space, source[:-1], axis) + (source[-1],)
-    )
+    image = _wave_free_nd(c, space, t, _mirror_point(space, source[:-1], axis) + (source[-1],))
     return sp.simplify(base - image if boundary == "dirichlet" else base + image)
 
 
@@ -413,11 +392,7 @@ def _laplace_rectangle_dirichlet(scale, x, y, xi, eta, a, b):
     pn = sp.pi * n / a
     qm = sp.pi * m / b
     return (4 / (a * b * scale)) * sp.Sum(
-        sp.sin(pn * x)
-        * sp.sin(pn * xi)
-        * sp.sin(qm * y)
-        * sp.sin(qm * eta)
-        / (pn**2 + qm**2),
+        sp.sin(pn * x) * sp.sin(pn * xi) * sp.sin(qm * y) * sp.sin(qm * eta) / (pn**2 + qm**2),
         (n, 1, sp.oo),
         (m, 1, sp.oo),
     )
@@ -467,13 +442,7 @@ def _extract_extent(geom, name, default=None):
 
 
 def execute_advanced_green_plan(
-    eq_or_expr,
-    dep_expr_or_func,
-    indep_vars,
-    *,
-    bcs=None,
-    geometry=None,
-    assumptions=True,
+    eq_or_expr, dep_expr_or_func, indep_vars, *, bcs=None, geometry=None, assumptions=True
 ):
     vars_ = tuple(indep_vars)
     dep = _dep_expr(dep_expr_or_func, vars_)
@@ -530,9 +499,7 @@ def execute_advanced_green_plan(
                     _extract_extent(geom, str(y), (0, sp.Symbol("a", positive=True)))
                     or (0, sp.Symbol("a", positive=True))
                 )[1]
-                kernel = _laplace_semi_infinite_strip(
-                    scale, x, y, xi, eta, a, boundary=boundary
-                )
+                kernel = _laplace_semi_infinite_strip(scale, x, y, xi, eta, a, boundary=boundary)
             elif geom_kind == "rectangle":
                 a = _extract_extent(geom, "x", (0, sp.Symbol("a", positive=True)))[1]
                 b = _extract_extent(geom, "y", (0, sp.Symbol("b", positive=True)))[1]
@@ -542,9 +509,7 @@ def execute_advanced_green_plan(
         elif recog["dimension"] == 3 and geom_kind == "half_space":
             x, y, z = vars_[:3]
             xi, eta, zeta = source[:3]
-            kernel = _laplace3d_half_space(
-                scale, x, y, z, xi, eta, zeta, boundary=boundary
-            )
+            kernel = _laplace3d_half_space(scale, x, y, z, xi, eta, zeta, boundary=boundary)
         else:
             kernel = _laplace_free_nd(scale, vars_, source)
         rtype = (
@@ -560,21 +525,15 @@ def execute_advanced_green_plan(
             if geom_kind in {"full_space", "full_plane", "free"}:
                 kernel = _helmholtz_free_nd(scale, lam, vars_, source)
             elif geom_kind == "half_plane":
-                kernel = _helmholtz_half_plane(
-                    scale, lam, x, y, xi, eta, boundary=boundary
-                )
+                kernel = _helmholtz_half_plane(scale, lam, x, y, xi, eta, boundary=boundary)
             elif geom_kind == "quadrant":
-                kernel = _helmholtz_quadrant(
-                    scale, lam, x, y, xi, eta, boundary=boundary
-                )
+                kernel = _helmholtz_quadrant(scale, lam, x, y, xi, eta, boundary=boundary)
             elif geom_kind == "strip":
                 a = (
                     _extract_extent(geom, str(y), (0, sp.Symbol("a", positive=True)))
                     or (0, sp.Symbol("a", positive=True))
                 )[1]
-                kernel = _helmholtz_strip(
-                    scale, lam, x, y, xi, eta, a, boundary=boundary
-                )
+                kernel = _helmholtz_strip(scale, lam, x, y, xi, eta, a, boundary=boundary)
             elif geom_kind == "semi_infinite_strip":
                 a = (
                     _extract_extent(geom, str(y), (0, sp.Symbol("a", positive=True)))
@@ -588,9 +547,7 @@ def execute_advanced_green_plan(
                 b = _extract_extent(geom, "y", (0, sp.Symbol("b", positive=True)))[1]
                 kernel = _helmholtz_rectangle_dirichlet(scale, lam, x, y, xi, eta, a, b)
             else:
-                raise NotImplementedError(
-                    f"Unsupported Helmholtz geometry: {geom_kind}"
-                )
+                raise NotImplementedError(f"Unsupported Helmholtz geometry: {geom_kind}")
         else:
             kernel = _helmholtz_free_nd(scale, lam, vars_, source)
         rtype = (
@@ -599,34 +556,18 @@ def execute_advanced_green_plan(
             else GreenFunctionResult
         )
     elif family == "heat_nd":
-        if geom_kind in {"half_plane", "half_space"} and boundary in {
-            "dirichlet",
-            "neumann",
-        }:
+        if geom_kind in {"half_plane", "half_space"} and boundary in {"dirichlet", "neumann"}:
             kernel = _heat_half_space(
-                recog["a"],
-                recog["space"],
-                recog["time"],
-                source,
-                axis=-1,
-                boundary=boundary,
+                recog["a"], recog["space"], recog["time"], source, axis=-1, boundary=boundary
             )
             rtype = GreenFunctionResult
         else:
             kernel = _heat_free_nd(recog["a"], recog["space"], recog["time"], source)
             rtype = FundamentalSolutionResult
     elif family == "wave_nd":
-        if geom_kind in {"half_plane", "half_space"} and boundary in {
-            "dirichlet",
-            "neumann",
-        }:
+        if geom_kind in {"half_plane", "half_space"} and boundary in {"dirichlet", "neumann"}:
             kernel = _wave_half_space(
-                recog["c"],
-                recog["space"],
-                recog["time"],
-                source,
-                axis=-1,
-                boundary=boundary,
+                recog["c"], recog["space"], recog["time"], source, axis=-1, boundary=boundary
             )
             rtype = GreenFunctionResult
         else:
@@ -685,9 +626,7 @@ def execute_advanced_green_plan(
     )
 
 
-def solve_linear_ode_green_function(
-    eq_or_expr, dep_expr_or_func, var, *, conditions=None
-):
+def solve_linear_ode_green_function(eq_or_expr, dep_expr_or_func, var, *, conditions=None):
     x = var
     dep = _dep_expr(dep_expr_or_func, (x,))
     eq = _as_eq(eq_or_expr)
@@ -700,8 +639,7 @@ def solve_linear_ode_green_function(
         sol = sp.dsolve(eq, dep, ics=ics or None)
         kernel = sol.rhs if isinstance(sol, sp.Equality) else sol
         constants = sorted(
-            [s for s in kernel.free_symbols if s.name.startswith("C")],
-            key=lambda s: s.name,
+            [s for s in kernel.free_symbols if s.name.startswith("C")], key=lambda s: s.name
         )
         if constants:
             kernel = sp.simplify(kernel.subs({c: 0 for c in constants}))

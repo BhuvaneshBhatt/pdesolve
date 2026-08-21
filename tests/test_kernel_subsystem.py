@@ -1,11 +1,11 @@
 import sympy as sp
 
 from pdesolve import (
+    FundamentalSolutionResult,
+    GreenFunctionResult,
     pdesolve,
     solve_fundamental_solution,
     solve_green_function,
-    FundamentalSolutionResult,
-    GreenFunctionResult,
 )
 
 

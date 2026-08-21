@@ -29,8 +29,7 @@ class BenchmarkSuite:
 
     def all_cases(self):
         for cases in self.cases_by_family.values():
-            for case in cases:
-                yield case
+            yield from cases
 
     @property
     def family_counts(self) -> dict[str, int]:
@@ -42,9 +41,7 @@ class BenchmarkSuite:
 
     @property
     def stress_cases(self) -> tuple[BenchmarkCase, ...]:
-        return tuple(
-            case for case in self.all_cases() if case.stress_level != "standard"
-        )
+        return tuple(case for case in self.all_cases() if case.stress_level != "standard")
 
 
 def get_method_family_regression_cases():
@@ -52,18 +49,16 @@ def get_method_family_regression_cases():
 
 
 def build_benchmark_suite() -> BenchmarkSuite:
-    return BenchmarkSuite(
-        {k: tuple(v) for k, v in get_method_family_regression_cases().items()}
-    )
+    return BenchmarkSuite({k: tuple(v) for k, v in get_method_family_regression_cases().items()})
 
 
 def _normalize_solution_obj(sol: Any) -> Any:
     if hasattr(sol, "solutions"):
-        sols = getattr(sol, "solutions")
+        sols = sol.solutions
         if isinstance(sols, (list, tuple)) and len(sols) == 1:
             return _normalize_solution_obj(sols[0])
     if hasattr(sol, "solution"):
-        nested = getattr(sol, "solution")
+        nested = sol.solution
         if nested is not sol:
             return _normalize_solution_obj(nested)
     if hasattr(sol, "rhs") and hasattr(sol, "lhs"):
@@ -94,12 +89,10 @@ def _solution_matches_expected(actual: Any, expected: Any) -> bool:
         if isinstance(actual, dict) and isinstance(expected, dict):
             if set(actual.keys()) != set(expected.keys()):
                 return False
-            return all(
-                _solution_matches_expected(actual[k], expected[k]) for k in actual
-            )
+            return all(_solution_matches_expected(actual[k], expected[k]) for k in actual)
         if isinstance(actual, (list, tuple)) and isinstance(expected, (list, tuple)):
             return len(actual) == len(expected) and all(
-                _solution_matches_expected(a, e) for a, e in zip(actual, expected)
+                _solution_matches_expected(a, e) for a, e in zip(actual, expected, strict=True)
             )
         if (
             hasattr(actual, "lhs")
@@ -136,9 +129,7 @@ def run_benchmark_case(case: BenchmarkCase) -> BenchmarkOutcome:
     from .dispatcher import pdesolve
 
     try:
-        res = pdesolve(
-            case.equation, case.dependent, case.variables, ics=case.ics, bcs=case.bcs
-        )
+        res = pdesolve(case.equation, case.dependent, case.variables, ics=case.ics, bcs=case.bcs)
         if res is None:
             return BenchmarkOutcome(
                 case=case, success=False, method=None, message="solver returned None"
@@ -153,10 +144,7 @@ def run_benchmark_case(case: BenchmarkCase) -> BenchmarkOutcome:
         contains_verified = _contains_tokens(solution, case.solution_fragments)
         method_hint_verified = _method_matches_hints(method, case.expected_method_hints)
         success = (
-            (res is not None)
-            and exact_verified
-            and contains_verified
-            and method_hint_verified
+            (res is not None) and exact_verified and contains_verified and method_hint_verified
         )
         message_parts = []
         if not exact_verified:

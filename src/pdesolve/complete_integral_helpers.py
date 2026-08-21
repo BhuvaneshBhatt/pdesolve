@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 import sympy as sp
 from sympy.core.function import AppliedUndef
 
-from ._classical_shared import _dep_and_vars, _as_zero_expr, _expr_complexity
+from .classical_symbolic_helpers import _as_zero_expr, _dep_and_vars, _expr_complexity
 
 
 @dataclass(frozen=True)
@@ -27,24 +28,18 @@ def recognize_generalized_clairaut_pde(eq_or_expr, dep_expr_or_func, indep_vars=
     """Recognize first-order generalized Clairaut PDEs of the form
     U = sum_i x_i * p_i + phi(p_1,...,p_n), where p_i = u_{x_i}.
     """
-    _, vars_, U0, grads, F = _first_order_nonlinear_data(
-        eq_or_expr, dep_expr_or_func, indep_vars
-    )
-    affine = sp.expand(U0 - sum(v * g for v, g in zip(vars_, grads)))
+    _, vars_, U0, grads, F = _first_order_nonlinear_data(eq_or_expr, dep_expr_or_func, indep_vars)
+    affine = sp.expand(U0 - sum(v * g for v, g in zip(vars_, grads, strict=True)))
     phi = None
     ok = False
     # Either F = affine - phi or F = -affine + phi, depending on canonicalization sign.
     phi1 = sp.simplify(affine - F)
-    if sp.expand(F - (affine - phi1)) == 0 and phi1.free_symbols.isdisjoint(
-        set(vars_) | {U0}
-    ):
+    if sp.expand(F - (affine - phi1)) == 0 and phi1.free_symbols.isdisjoint(set(vars_) | {U0}):
         phi = sp.expand(phi1)
         ok = True
     else:
         phi2 = sp.simplify(F + affine)
-        if sp.expand(F - (-affine + phi2)) == 0 and phi2.free_symbols.isdisjoint(
-            set(vars_) | {U0}
-        ):
+        if sp.expand(F - (-affine + phi2)) == 0 and phi2.free_symbols.isdisjoint(set(vars_) | {U0}):
             phi = sp.expand(phi2)
             ok = True
     return GeneralizedClairautRecognition(
@@ -63,9 +58,7 @@ def solve_generalized_clairaut_complete_integral(
     by the complete integral family
     u = sum_i a_i x_i + phi(a).
     """
-    uexpr, vars_, _, _, _ = _first_order_nonlinear_data(
-        eq_or_expr, dep_expr_or_func, indep_vars
-    )
+    uexpr, vars_, _, _, _ = _first_order_nonlinear_data(eq_or_expr, dep_expr_or_func, indep_vars)
     rec = recognize_generalized_clairaut_pde(eq_or_expr, uexpr, vars_)
     if not rec.recognized:
         raise NotImplementedError(
@@ -76,11 +69,9 @@ def solve_generalized_clairaut_complete_integral(
     else:
         params = tuple(parameter_symbols)
         if len(params) != len(vars_):
-            raise ValueError(
-                "parameter_symbols must have one symbol per independent variable."
-            )
-    subs = dict(zip(rec.gradients, params))
-    rhs = sp.expand(sum(v * a for v, a in zip(vars_, params)) + rec.phi.xreplace(subs))
+            raise ValueError("parameter_symbols must have one symbol per independent variable.")
+    subs = dict(zip(rec.gradients, params, strict=True))
+    rhs = sp.expand(sum(v * a for v, a in zip(vars_, params, strict=True)) + rec.phi.xreplace(subs))
     sol = sp.Eq(uexpr, rhs)
     singular = detect_singular_solution_from_complete_integral(sol, params, uexpr)
     details = {"recognition": rec, "parameters": params}
@@ -115,12 +106,8 @@ def construct_envelope_from_complete_integral(solution_eq, parameter_symbols, de
     return tuple(dict.fromkeys(out)) or None
 
 
-def detect_singular_solution_from_complete_integral(
-    solution_eq, parameter_symbols, dep_expr
-):
-    env = construct_envelope_from_complete_integral(
-        solution_eq, parameter_symbols, dep_expr
-    )
+def detect_singular_solution_from_complete_integral(solution_eq, parameter_symbols, dep_expr):
+    env = construct_envelope_from_complete_integral(solution_eq, parameter_symbols, dep_expr)
     if not env:
         return None
     return env[0] if len(env) == 1 else env
@@ -203,9 +190,7 @@ def _pfaffian_exactness_matrix(p_fields, vars_):
 
 def _pfaffian_is_exact(p_fields, vars_):
     mat = _pfaffian_exactness_matrix(p_fields, vars_)
-    return all(
-        mat[i][j] == 0 for i in range(len(vars_)) for j in range(i + 1, len(vars_))
-    )
+    return all(mat[i][j] == 0 for i in range(len(vars_)) for j in range(i + 1, len(vars_)))
 
 
 def _integrate_pfaffian_in_order(p_fields, vars_, order):
@@ -227,9 +212,7 @@ def _one_form_is_exact(components, vars_):
     for i in range(len(vars_)):
         for j in range(i + 1, len(vars_)):
             if (
-                sp.simplify(
-                    sp.diff(components[i], vars_[j]) - sp.diff(components[j], vars_[i])
-                )
+                sp.simplify(sp.diff(components[i], vars_[j]) - sp.diff(components[j], vars_[i]))
                 != 0
             ):
                 return False
@@ -253,22 +236,16 @@ def _integrate_exact_one_form(components, vars_):
                     break
                 H = sp.expand(H + sp.integrate(mismatch, vars_[idx]))
                 used.add(vars_[idx])
-            if ok and all(
-                sp.simplify(sp.diff(H, vars_[i]) - components[i]) == 0 for i in range(n)
-            ):
+            if ok and all(sp.simplify(sp.diff(H, vars_[i]) - components[i]) == 0 for i in range(n)):
                 candidates.append(sp.expand(H))
         except Exception:
             pass
     if not candidates:
-        raise ValueError(
-            "Could not integrate exact Pfaffian one-form in the restricted solver."
-        )
+        raise ValueError("Could not integrate exact Pfaffian one-form in the restricted solver.")
     return min(candidates, key=_expr_complexity)
 
 
-def _build_implicit_solution_from_potential(
-    H, dep_expr, dep_symbol, *, constant_symbol=None
-):
+def _build_implicit_solution_from_potential(H, dep_expr, dep_symbol, *, constant_symbol=None):
     c0 = constant_symbol if constant_symbol is not None else sp.Symbol("C0", real=True)
     implicit_eq = sp.Eq(sp.expand(H.subs(dep_symbol, dep_expr)), c0)
     try:
@@ -370,9 +347,7 @@ def integrate_pfaffian_equation(
         raise ValueError("Need one derivative field per independent variable.")
 
     dep_symbol = dependent_symbol if dependent_symbol is not None else None
-    dep_present = dep_symbol is not None and any(
-        dep_symbol in pf.free_symbols for pf in p_fields
-    )
+    dep_present = dep_symbol is not None and any(dep_symbol in pf.free_symbols for pf in p_fields)
 
     # Exact explicit-gradient case first, but only when the derivative fields do
     # not depend on the dependent variable surrogate.
@@ -392,20 +367,15 @@ def integrate_pfaffian_equation(
 
     # Restricted additive fallback, likewise only in the explicit-gradient case.
     if (not dep_present) and all(
-        p_fields[i].free_symbols.isdisjoint(set(vars_) - {vars_[i]})
-        for i in range(len(vars_))
+        p_fields[i].free_symbols.isdisjoint(set(vars_) - {vars_[i]}) for i in range(len(vars_))
     ):
-        expr = sp.expand(
-            sum(sp.integrate(p_fields[i], vars_[i]) for i in range(len(vars_)))
-        )
+        expr = sp.expand(sum(sp.integrate(p_fields[i], vars_[i]) for i in range(len(vars_))))
         return sp.Eq(uexpr, expr)
 
     # Use the Pfaffian one-form du - p dx - q dy = 0 for the two-variable case.
     if len(vars_) == 2 and allow_implicit:
         x, y = vars_
-        dep_symbol = (
-            dependent_symbol if dependent_symbol is not None else sp.Symbol("U_pf")
-        )
+        dep_symbol = dependent_symbol if dependent_symbol is not None else sp.Symbol("U_pf")
         subs_dep = {uexpr: dep_symbol}
         M = sp.expand(-p_fields[0].xreplace(subs_dep))
         N = sp.expand(-p_fields[1].xreplace(subs_dep))
@@ -419,9 +389,7 @@ def integrate_pfaffian_equation(
                 H, uexpr, dep_symbol, constant_symbol=constant_symbol
             )
 
-        transformed = _simple_integrating_factor_pfaffian_2vars(
-            p_fields, vars_, dep_symbol
-        )
+        transformed = _simple_integrating_factor_pfaffian_2vars(p_fields, vars_, dep_symbol)
         if transformed is not None and _one_form_is_exact(transformed, ext_vars):
             H = _integrate_exact_one_form(transformed, ext_vars)
             return _build_implicit_solution_from_potential(
@@ -432,9 +400,7 @@ def integrate_pfaffian_equation(
 
 
 def _verification_entry_first_order(eq_or_expr, solution_eq, dep_expr, vars_):
-    ok, residual = _verify_first_order_solution(
-        eq_or_expr, solution_eq, dep_expr, vars_
-    )
+    ok, residual = _verify_first_order_solution(eq_or_expr, solution_eq, dep_expr, vars_)
     return {
         "solution": solution_eq,
         "verified": bool(ok),
@@ -451,8 +417,7 @@ def _complete_integral_result(method, solutions, details, eq_or_expr, dep_expr, 
             seen.add(sig)
             uniq.append(sol)
     verification = tuple(
-        _verification_entry_first_order(eq_or_expr, sol, dep_expr, vars_)
-        for sol in uniq
+        _verification_entry_first_order(eq_or_expr, sol, dep_expr, vars_) for sol in uniq
     )
     return CompleteIntegralResult(method, tuple(uniq), dict(details), verification)
 
@@ -495,9 +460,7 @@ def _safe_ratio(num, den):
 
 def _solve_scalar_first_order_ode(rhs, dep_symbol, indep_symbol):
     Y = sp.Function(f"{dep_symbol.name}_{indep_symbol.name}")
-    eq = sp.Eq(
-        sp.diff(Y(indep_symbol), indep_symbol), rhs.subs(dep_symbol, Y(indep_symbol))
-    )
+    eq = sp.Eq(sp.diff(Y(indep_symbol), indep_symbol), rhs.subs(dep_symbol, Y(indep_symbol)))
     try:
         sol = sp.dsolve(eq)
     except Exception:
@@ -641,9 +604,7 @@ def _charpit_try_dpdq_autonomous(F, aux, p, q, x, y, uexpr, vars_, eq_or_expr):
     if not p_candidates:
         p_candidates = [relation]
     sols = []
-    for pval in (
-        p_candidates if isinstance(p_candidates, (list, tuple)) else [p_candidates]
-    ):
+    for pval in p_candidates if isinstance(p_candidates, (list, tuple)) else [p_candidates]:
         if pval is None:
             continue
         try:
@@ -729,9 +690,7 @@ def _charpit_try_dqdu(F, aux, x, y, U0, p, q, uexpr, vars_, eq_or_expr):
     return sols
 
 
-def _charpit_try_dxdy_safe(
-    F, aux, x, y, U0, p, q, uexpr, vars_, eq_or_expr, parameter_symbol
-):
+def _charpit_try_dxdy_safe(F, aux, x, y, U0, p, q, uexpr, vars_, eq_or_expr, parameter_symbol):
     """
     Safe characteristic dx/dy branch for homogeneous first-order linear/quasilinear
     forms A(x,y) p + B(x,y) q = 0 with u constant on characteristics.
@@ -826,10 +785,7 @@ def _charpit_try_separated(F, x, y, U0, p, q, uexpr, vars_, eq_or_expr):
                 continue
             try:
                 cand = integrate_pfaffian_equation(
-                    [sp.expand(pexpr), sp.expand(qexpr)],
-                    uexpr,
-                    vars_,
-                    dependent_symbol=U0,
+                    [sp.expand(pexpr), sp.expand(qexpr)], uexpr, vars_, dependent_symbol=U0
                 )
             except Exception:
                 continue
@@ -1009,10 +965,8 @@ def _jacobi_try_additive_separation(F, vars_, grads, params):
     for term in terms:
         placed = False
         fs = term.free_symbols
-        for i, (v, gi) in enumerate(zip(vars_, grads)):
-            if fs.issubset({v, gi}) or (
-                gi in fs and all((sym in {v, gi}) for sym in fs)
-            ):
+        for i, (v, gi) in enumerate(zip(vars_, grads, strict=True)):
+            if fs.issubset({v, gi}) or (gi in fs and all((sym in {v, gi}) for sym in fs)):
                 groups[i].append(term)
                 placed = True
                 break
@@ -1042,7 +996,7 @@ def solve_jacobi_complete_integral(
         raise ValueError("Restricted Jacobi solver is for 3 or more variables.")
 
     if parameter_symbols is None:
-        params = sp.symbols("a0:%d" % max(n - 1, 1), real=True)
+        params = sp.symbols(f"a0:{max(n - 1, 1)}", real=True)
     else:
         params = tuple(parameter_symbols)
         if len(params) != n - 1:
@@ -1100,9 +1054,7 @@ def solve_jacobi_complete_integral(
             if root is None:
                 continue
             sol_expr = sp.expand(
-                sum(params[i] * vars_[i] for i in range(n - 1))
-                + sp.sympify(root) * vars_[-1]
-                + c0
+                sum(params[i] * vars_[i] for i in range(n - 1)) + sp.sympify(root) * vars_[-1] + c0
             )
             cand = sp.Eq(uexpr, sol_expr)
             ok, _ = _verify_first_order_solution(eq_or_expr, cand, uexpr, vars_)
@@ -1135,9 +1087,7 @@ def solve_complete_integral_pde(
         if isinstance(node, sp.Derivative) and node.expr == uexpr:
             order = max(order, sum(c for _, c in node.variable_count))
     if order != 1:
-        raise ValueError(
-            "Complete-integral methods are only implemented for first-order PDEs."
-        )
+        raise ValueError("Complete-integral methods are only implemented for first-order PDEs.")
     if len(vars_) == 2:
         return solve_charpit_complete_integral_2vars(eq_or_expr, uexpr, vars_, **kwargs)
     return solve_jacobi_complete_integral(eq_or_expr, uexpr, vars_, **kwargs)
@@ -1161,9 +1111,7 @@ class FirstOrderCauchyProblemResult:
     verification: dict
 
 
-def process_initial_curve_2d(
-    initial, dep_expr_or_func, indep_vars=None, *, parameter=None
-):
+def process_initial_curve_2d(initial, dep_expr_or_func, indep_vars=None, *, parameter=None):
     """
     Normalize a first-order initial condition into a parametric initial curve.
 
@@ -1176,16 +1124,12 @@ def process_initial_curve_2d(
     uexpr, vars_ = _dep_and_vars(dep_expr_or_func, indep_vars)
     if tuple(vars_)[:2] != tuple(vars_) or len(vars_) != 2:
         if len(vars_) != 2:
-            raise ValueError(
-                "Initial-curve processing is only implemented for two variables."
-            )
+            raise ValueError("Initial-curve processing is only implemented for two variables.")
     x, y = vars_
     if not isinstance(initial, sp.Equality):
         raise ValueError("Initial data must be an Equality.")
     lhs, rhs = initial.lhs, initial.rhs
-    if not (
-        isinstance(lhs, AppliedUndef) and lhs.func == uexpr.func and len(lhs.args) == 2
-    ):
+    if not (isinstance(lhs, AppliedUndef) and lhs.func == uexpr.func and len(lhs.args) == 2):
         raise ValueError("Initial condition must be of the form Eq(u(...,...), data).")
     a, b = lhs.args
 
@@ -1196,39 +1140,23 @@ def process_initial_curve_2d(
             if not isinstance(parameter, sp.Symbol)
             else parameter
         )
-        if (
-            (a.free_symbols - {s})
-            or (b.free_symbols - {s})
-            or (sp.sympify(rhs).free_symbols - {s})
-        ):
-            raise ValueError(
-                "Parametric initial curve must depend only on the supplied parameter."
-            )
-        return InitialCurve2D(
-            s, sp.expand(a), sp.expand(b), sp.expand(rhs), source=initial
-        )
+        if (a.free_symbols - {s}) or (b.free_symbols - {s}) or (sp.sympify(rhs).free_symbols - {s}):
+            raise ValueError("Parametric initial curve must depend only on the supplied parameter.")
+        return InitialCurve2D(s, sp.expand(a), sp.expand(b), sp.expand(rhs), source=initial)
 
     # Normalize the one-form before exactness and integrating-factor checks to keep equivalent Pfaffian forms comparable.
     if a == x and rhs.free_symbols.isdisjoint({y}):
-        return InitialCurve2D(
-            x, sp.expand(x), sp.expand(b), sp.expand(rhs), source=initial
-        )
+        return InitialCurve2D(x, sp.expand(x), sp.expand(b), sp.expand(rhs), source=initial)
     if b == y and rhs.free_symbols.isdisjoint({x}):
-        return InitialCurve2D(
-            y, sp.expand(a), sp.expand(y), sp.expand(rhs), source=initial
-        )
+        return InitialCurve2D(y, sp.expand(a), sp.expand(y), sp.expand(rhs), source=initial)
 
     # Fallback: if exactly one variable parametrizes all pieces.
     free = (a.free_symbols | b.free_symbols | sp.sympify(rhs).free_symbols) & {x, y}
     if len(free) == 1:
         s = list(free)[0]
-        return InitialCurve2D(
-            s, sp.expand(a), sp.expand(b), sp.expand(rhs), source=initial
-        )
+        return InitialCurve2D(s, sp.expand(a), sp.expand(b), sp.expand(rhs), source=initial)
 
-    raise NotImplementedError(
-        "Initial curve is outside the restricted supported forms."
-    )
+    raise NotImplementedError("Initial curve is outside the restricted supported forms.")
 
 
 def _free_function_atoms(expr):
@@ -1265,8 +1193,7 @@ def _fit_single_free_function_family_2d(
     # Replace occurrences of the same arbitrary function on the initial curve by 0 to isolate the non-free part.
     base_on_curve = sp.expand(
         rhs_on_curve.replace(
-            lambda e: isinstance(e, AppliedUndef) and e.func == Fsym,
-            lambda e: sp.Integer(0),
+            lambda e: isinstance(e, AppliedUndef) and e.func == Fsym, lambda e: sp.Integer(0)
         )
     )
     target = sp.expand(curve.u_data - base_on_curve)
@@ -1278,9 +1205,7 @@ def _fit_single_free_function_family_2d(
     except Exception:
         inv = []
     inv = list(inv) if isinstance(inv, (list, tuple)) else [inv]
-    inv = [
-        sol for sol in inv if sol is not None and s not in sp.sympify(sol).free_symbols
-    ]
+    inv = [sol for sol in inv if sol is not None and s not in sp.sympify(sol).free_symbols]
     if not inv:
         return None
     inv_s = min(inv, key=_expr_complexity)
@@ -1295,9 +1220,7 @@ def _curve_parameter_samples(curve: InitialCurve2D, count=3):
     return [{s: v} for v in samples]
 
 
-def fit_complete_integral_to_initial_curve(
-    solution_eq, initial, dep_expr_or_func, indep_vars=None
-):
+def fit_complete_integral_to_initial_curve(solution_eq, initial, dep_expr_or_func, indep_vars=None):
     """
     Restricted fitting of an explicit complete-integral/general-solution family to
     a two-dimensional initial curve.
@@ -1313,25 +1236,19 @@ def fit_complete_integral_to_initial_curve(
     x, y = vars_
     rhs = sp.expand(solution_eq.rhs)
 
-    fitted = _fit_single_free_function_family_2d(
-        solution_eq, curve, dep_expr_or_func, vars_
-    )
+    fitted = _fit_single_free_function_family_2d(solution_eq, curve, dep_expr_or_func, vars_)
     if fitted is not None:
         return fitted
 
     # Scalar-parameter fit.
-    params = sorted(
-        list((rhs.free_symbols - set(vars_)) - {curve.parameter}), key=lambda s: s.name
-    )
+    params = sorted(list((rhs.free_symbols - set(vars_)) - {curve.parameter}), key=lambda s: s.name)
     if len(params) == 0:
         test_rhs = sp.expand(rhs.subs({x: curve.x_curve, y: curve.y_curve}))
         if sp.simplify(test_rhs - curve.u_data) == 0:
             return solution_eq
         return None
 
-    expr_curve = sp.expand(
-        rhs.subs({x: curve.x_curve, y: curve.y_curve}) - curve.u_data
-    )
+    expr_curve = sp.expand(rhs.subs({x: curve.x_curve, y: curve.y_curve}) - curve.u_data)
 
     # Polynomial coefficient matching in the curve parameter when possible.
     try:
@@ -1377,13 +1294,7 @@ def _verify_initial_curve_solution(
 
 
 def solve_first_order_cauchy_problem_2d(
-    eq_or_expr,
-    initial,
-    dep_expr_or_func,
-    indep_vars=None,
-    *,
-    assumptions=True,
-    **kwargs,
+    eq_or_expr, initial, dep_expr_or_func, indep_vars=None, *, assumptions=True, **kwargs
 ):
     """
     Restricted first-order Cauchy-problem solver in two variables.
@@ -1412,14 +1323,15 @@ def solve_first_order_cauchy_problem_2d(
         families.extend(ci.solutions)
         details["attempts"].append(("complete_integral", ci.method, len(ci.solutions)))
     except Exception as exc:
-        details["attempts"].append(
-            ("complete_integral_failed", type(exc).__name__, str(exc))
-        )
+        details["attempts"].append(("complete_integral_failed", type(exc).__name__, str(exc)))
 
     # Fall back to linear/quasilinear family solvers that may return arbitrary functions.
-    from .classical_methods import PDEIVPResult, solve_first_order_linear_pde_pdsolve
+    from .classical_methods import (
+        PDEIVPResult,
+        solve_first_order_linear_pde_pdsolve,
+        solve_quasilinear_pde_characteristics_implicit,
+    )
     from .conservation_laws import solve_burgers_family
-    from .classical_methods import solve_quasilinear_pde_characteristics_implicit
 
     for name, fn in [
         ("first_order_linear_pdsolve", solve_first_order_linear_pde_pdsolve),

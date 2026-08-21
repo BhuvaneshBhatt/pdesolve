@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
 
 import sympy as sp
 from sympy.core.function import AppliedUndef
@@ -56,10 +56,7 @@ def _normalize_funcs(funcs: Sequence[sp.Function]) -> list[sp.FunctionClass]:
 
 
 def _ic_values(
-    ics: Sequence[sp.Equality],
-    funcs: list[sp.FunctionClass],
-    t: sp.Symbol,
-    x: sp.Symbol,
+    ics: Sequence[sp.Equality], funcs: list[sp.FunctionClass], t: sp.Symbol, x: sp.Symbol
 ) -> list[sp.Expr]:
     vals: list[sp.Expr | None] = [None] * len(funcs)
     for ic in ics:
@@ -99,9 +96,7 @@ def extract_canonical_linear_system_form(
         applied[fun] = found if found is not None else fun(*vars)
 
     ut_list = [sp.diff(applied[fun], t) for fun in funs]
-    solved = sp.solve(
-        [eq.lhs - eq.rhs for eq in eq_list], ut_list, dict=True, simplify=False
-    )
+    solved = sp.solve([eq.lhs - eq.rhs for eq in eq_list], ut_list, dict=True, simplify=False)
     if not solved:
         raise ValueError("Could not isolate the time derivatives.")
     sol_map = solved[0]
@@ -173,9 +168,7 @@ def solve_hyperbolic_system(
             chi = sp.simplify(x + lam * t)
             chars.append(chi)
             hom = sp.simplify(seed.subs(x, chi))
-            part = sp.integrate(
-                gterm.subs({t: tau, x: x + lam * (t - tau)}), (tau, 0, t)
-            )
+            part = sp.integrate(gterm.subs({t: tau, x: x + lam * (t - tau)}), (tau, 0, t))
             vsol.append(sp.simplify(hom + part))
         uvec = pmat * sp.Matrix([[term] for term in vsol])
         solver_kind = "diagonalization"
@@ -183,9 +176,7 @@ def solve_hyperbolic_system(
         eigs = tuple(sp.Matrix(amat).eigenvals().keys())
         chars = [sp.Symbol(f"chi_{i + 1}") for i in range(len(funs))]
         if any(sp.simplify(v) != 0 for v in gvec):
-            raise NotImplementedError(
-                "Non-diagonalizable forced systems are not yet supported."
-            )
+            raise NotImplementedError("Non-diagonalizable forced systems are not yet supported.")
         expA = sp.exp(t * sp.Matrix(amat))
         uvec = expA * ic_vec.subs(x, x)
         solver_kind = "matrix_exponential"

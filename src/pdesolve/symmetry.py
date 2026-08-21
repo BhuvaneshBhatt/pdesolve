@@ -4,14 +4,14 @@ from dataclasses import dataclass
 
 import sympy as sp
 
-from .pde import ScalarGeneralSolvedPDEKD
-from .utils import (
+from .jet_space import ScalarGeneralSolvedPDEKD
+from .performance import prolongation_coefficients_from_cache
+from .symbolic_algebra_helpers import (
     add_multiindex,
     multiindex_geq,
     multiindex_sum,
     substitute_free_parameters_zero,
 )
-from .performance import prolongation_coefficients_from_cache
 
 
 def monomials_in_vars(vars_, max_total_degree):
@@ -44,9 +44,9 @@ def _prolongation_coefficients_scalar_kd_uncached(jet, xis, phi):
                 D_axis_current = jet.total_derivative(current, axis)
                 correction = 0
                 for ell in range(jet.k):
-                    correction += jet.coord(
-                        add_multiindex(J, ell)
-                    ) * jet.total_derivative(xis[ell], axis)
+                    correction += jet.coord(add_multiindex(J, ell)) * jet.total_derivative(
+                        xis[ell], axis
+                    )
                 coeffs[Jn] = sp.expand(D_axis_current - correction)
     return coeffs
 
@@ -57,9 +57,9 @@ def prolongation_coefficients_scalar_kd(jet, xis, phi):
 
 def prolongation_action_scalar_kd(jet, expr, xis, phi):
     coeffs = prolongation_coefficients_scalar_kd(jet, xis, phi)
-    result = sum(
-        xis[i] * sp.diff(expr, jet.xs[i]) for i in range(jet.k)
-    ) + phi * sp.diff(expr, jet.u)
+    result = sum(xis[i] * sp.diff(expr, jet.xs[i]) for i in range(jet.k)) + phi * sp.diff(
+        expr, jet.u
+    )
     for J in jet.all_indices():
         if multiindex_sum(J) == 0:
             continue
@@ -67,9 +67,7 @@ def prolongation_action_scalar_kd(jet, expr, xis, phi):
     return sp.expand(result)
 
 
-def determining_equations_for_scalar_general_solved_pde_kd(
-    eq_obj: ScalarGeneralSolvedPDEKD,
-):
+def determining_equations_for_scalar_general_solved_pde_kd(eq_obj: ScalarGeneralSolvedPDEKD):
     jet = eq_obj.jet
     xs = jet.xs
     u = jet.u
@@ -79,9 +77,7 @@ def determining_equations_for_scalar_general_solved_pde_kd(
     phi = sp.Function("phi")(*args)
     raw = prolongation_action_scalar_kd(jet, eq_obj.equation(), xis, phi)
     expr = sp.expand(
-        raw.subs(
-            eq_obj.differential_consequence_substitutions(order_needed=jet.max_order)
-        )
+        raw.subs(eq_obj.differential_consequence_substitutions(order_needed=jet.max_order))
     )
     gens = [
         jet.coord(J)
@@ -114,9 +110,7 @@ class PolynomialSymmetrySolutionScalarGeneralKD:
     def basis_vectors(self):
         all_exprs = list(self.xi_solutions) + [self.phi_solution]
         free_symbols = set().union(*(expr.free_symbols for expr in all_exprs))
-        free_params = sorted(
-            [s for s in self.unknowns if s in free_symbols], key=lambda s: s.name
-        )
+        free_params = sorted([s for s in self.unknowns if s in free_symbols], key=lambda s: s.name)
         basis = []
         for p in free_params:
             Xis = [sp.expand(sp.diff(expr, p)) for expr in self.xi_solutions]
@@ -167,16 +161,12 @@ def solve_determining_equations_with_polynomial_ansatz_scalar_general_kd(
     xs = list(jet.xs)
     u = jet.u
     P = eq_obj.principal_multiindex
-    xi_funs, phi_fun, det_eqs = determining_equations_for_scalar_general_solved_pde_kd(
-        eq_obj
-    )
+    xi_funs, phi_fun, det_eqs = determining_equations_for_scalar_general_solved_pde_kd(eq_obj)
     ansatz_vars = [*xs, u] if include_dependent_var else [*xs]
     mons = monomials_in_vars(ansatz_vars, degree)
     xi_blocks = [sp.symbols(f"a{i}_0:{len(mons)}") for i in range(jet.k)]
     c = sp.symbols(f"c0:{len(mons)}")
-    xi_ans = [
-        sum(xi_blocks[i][r] * mons[r] for r in range(len(mons))) for i in range(jet.k)
-    ]
+    xi_ans = [sum(xi_blocks[i][r] * mons[r] for r in range(len(mons))) for i in range(jet.k)]
     phi_ans = sum(c[r] * mons[r] for r in range(len(mons)))
     repl = {xi_funs[i]: xi_ans[i] for i in range(jet.k)}
     repl[phi_fun] = phi_ans
@@ -205,7 +195,7 @@ def solve_determining_equations_with_polynomial_ansatz_scalar_general_kd(
         if preserve_free_parameters
         else substitute_free_parameters_zero(raw_solution_tuple)
     )
-    sub_unknowns = dict(zip(unknowns, solution_tuple))
+    sub_unknowns = dict(zip(unknowns, solution_tuple, strict=True))
     xi_solutions = [sp.expand(expr.subs(sub_unknowns)) for expr in xi_ans]
     phi_solution = sp.expand(phi_ans.subs(sub_unknowns))
     return PolynomialSymmetrySolutionScalarGeneralKD(

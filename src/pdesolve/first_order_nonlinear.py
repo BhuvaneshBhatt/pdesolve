@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 import sympy as sp
 
-from .first_order_linear import FirstOrderPDEResult, parse_linear_first_order
 from .first_order_framework import canonicalize_first_order_nonlinear_pde
-
+from .first_order_linear import FirstOrderPDEResult, parse_linear_first_order
 
 # Recognition ---------------------------------------------------------------
 
@@ -59,7 +58,7 @@ class InvariantReductionCandidate:
 
 def recognize_const_characteristics(
     eq: sp.Equality | sp.Expr, u: sp.Function, vars: tuple[sp.Symbol, sp.Symbol]
-) -> Optional[ConstantCharacteristicProfile]:
+) -> ConstantCharacteristicProfile | None:
     """Recognize ``a u_x + b u_y + d = 0`` with constant ``a,b,d``."""
     x, y = vars
     prof = parse_linear_first_order(eq, u, x, y)
@@ -70,12 +69,8 @@ def recognize_const_characteristics(
         return None
     if prof.a == 0 and prof.b == 0:
         return None
-    inv = (
-        x if prof.a == 0 else y if prof.b == 0 else sp.simplify(prof.b * x - prof.a * y)
-    )
-    return ConstantCharacteristicProfile(
-        a=prof.a, b=prof.b, source=prof.d, invariant=inv
-    )
+    inv = x if prof.a == 0 else y if prof.b == 0 else sp.simplify(prof.b * x - prof.a * y)
+    return ConstantCharacteristicProfile(a=prof.a, b=prof.b, source=prof.d, invariant=inv)
 
 
 # Solving ------------------------------------------------------------------
@@ -110,14 +105,12 @@ def solve_first_order_quasilinear_pde(
 # Advanced nonlinear analysis ----------------------------------------------
 
 
-def _build_eq_obj(
-    eq_or_expr, dep_expr_or_func, indep_vars=None, *, max_principal_order=3
-):
-    from ._classical_shared import _dep_and_vars
+def _build_eq_obj(eq_or_expr, dep_expr_or_func, indep_vars=None, *, max_principal_order=3):
     from .classical_methods import canonicalize_pde_problem
-    from .pde import (
-        build_scalar_jet_equation_from_sympy_pde,
+    from .classical_symbolic_helpers import _dep_and_vars
+    from .jet_space import (
         build_scalar_general_solved_pde_from_equation,
+        build_scalar_jet_equation_from_sympy_pde,
     )
 
     dep_expr, vars_ = _dep_and_vars(dep_expr_or_func, indep_vars)
@@ -136,12 +129,12 @@ def _build_eq_obj(
 
 
 def analyze_first_order_nonlinear_pde(eq_or_expr, dep_expr_or_func, indep_vars=None):
-    from ._classical_shared import _dep_and_vars, _as_zero_expr
     from .classical_methods import (
         _infer_pde_order,
-        detect_first_order_linear_form_2vars,
         characteristic_form_first_order_2vars,
+        detect_first_order_linear_form_2vars,
     )
+    from .classical_symbolic_helpers import _as_zero_expr, _dep_and_vars
 
     dep_expr, vars_ = _dep_and_vars(dep_expr_or_func, indep_vars)
     zero = _as_zero_expr(eq_or_expr)
@@ -153,9 +146,7 @@ def analyze_first_order_nonlinear_pde(eq_or_expr, dep_expr_or_func, indep_vars=N
     canonical = None
     if is_first and len(vars_) >= 2:
         try:
-            canonical = canonicalize_first_order_nonlinear_pde(
-                eq_or_expr, dep_expr, vars_
-            )
+            canonical = canonicalize_first_order_nonlinear_pde(eq_or_expr, dep_expr, vars_)
             det["canonical_first_order"] = canonical
             det["recognized_family"] = canonical.recognized_family
             det["canonical_metadata"] = canonical.metadata
@@ -167,31 +158,20 @@ def analyze_first_order_nonlinear_pde(eq_or_expr, dep_expr_or_func, indep_vars=N
         except Exception as exc:
             det["first_order_linear_error"] = str(exc)
         try:
-            char_form = characteristic_form_first_order_2vars(
-                eq_or_expr, dep_expr, vars_
-            )
+            char_form = characteristic_form_first_order_2vars(eq_or_expr, dep_expr, vars_)
             is_quasi = bool(getattr(char_form, "is_quasilinear", False)) or (
-                canonical is not None
-                and canonical.recognized_family == "quasilinear_first_order"
+                canonical is not None and canonical.recognized_family == "quasilinear_first_order"
             )
             det["characteristic_form"] = char_form
         except Exception as exc:
             det["characteristic_data_error"] = str(exc)
-    family = (
-        getattr(canonical, "recognized_family", None) if canonical is not None else None
-    )
+    family = getattr(canonical, "recognized_family", None) if canonical is not None else None
     cons = family if family == "scalar_conservation_law" else None
-    burgers = (
-        "burgers" if cons == "scalar_conservation_law" and zero.has(dep_expr) else None
-    )
+    burgers = "burgers" if cons == "scalar_conservation_law" and zero.has(dep_expr) else None
     rec: list[str] = []
     if is_first and not is_lin:
         if family == "scalar_conservation_law":
-            rec += [
-                "conservation_law",
-                "quasilinear_implicit",
-                "first_order_nonlinear_auto",
-            ]
+            rec += ["conservation_law", "quasilinear_implicit", "first_order_nonlinear_auto"]
         elif family == "generalized_clairaut":
             rec += [
                 "generalized_clairaut_complete_integral",
@@ -235,36 +215,26 @@ def analyze_first_order_nonlinear_pde(eq_or_expr, dep_expr_or_func, indep_vars=N
 
 
 def enumerate_invariant_reduction_candidates(
-    eq_or_expr,
-    dep_expr_or_func,
-    indep_vars=None,
-    *,
-    degree=1,
-    max_subset_size=2,
-    max_degree=2,
+    eq_or_expr, dep_expr_or_func, indep_vars=None, *, degree=1, max_subset_size=2, max_degree=2
 ):
-    from .symmetry import (
-        solve_determining_equations_with_polynomial_ansatz_scalar_general_kd,
-    )
+    from .frobenius import local_frobenius_chart
     from .reduction import (
-        search_symbolic_linear_combinations_for_reduction_scalar_kd,
         auto_reduce_best_commuting_subalgebra_scalar_kd,
         auto_reduce_best_symbolic_match_scalar_kd,
         reduce_scalar_by_frobenius_chart,
+        search_symbolic_linear_combinations_for_reduction_scalar_kd,
     )
-    from .workflows import _obvious_translation_distribution
-    from .frobenius import local_frobenius_chart
-    from .utils import expr_complexity
+    from .symbolic_algebra_helpers import expr_complexity
+    from .symmetry import solve_determining_equations_with_polynomial_ansatz_scalar_general_kd
     from .verify import verify_reduction
+    from .workflows import _obvious_translation_distribution
 
     _, _, _, eq_obj, info = _build_eq_obj(eq_or_expr, dep_expr_or_func, indep_vars)
     out: list[InvariantReductionCandidate] = []
     for deg in range(int(degree), int(max_degree) + 1):
         try:
-            sym_sol = (
-                solve_determining_equations_with_polynomial_ansatz_scalar_general_kd(
-                    eq_obj, degree=deg, include_dependent_var=True
-                )
+            sym_sol = solve_determining_equations_with_polynomial_ansatz_scalar_general_kd(
+                eq_obj, degree=deg, include_dependent_var=True
             )
             basis = sym_sol.basis_vectors()
             matches = tuple(
@@ -280,19 +250,14 @@ def enumerate_invariant_reduction_candidates(
                 )
             )
             red = auto_reduce_best_commuting_subalgebra_scalar_kd(
-                eq_obj,
-                list(matches),
-                max_generators=min(eq_obj.jet.k - 1, max_subset_size),
+                eq_obj, list(matches), max_generators=min(eq_obj.jet.k - 1, max_subset_size)
             )
             if red is not None:
                 ver = verify_reduction(eq_obj, red)
                 score = (
                     100
                     - int(
-                        sum(
-                            expr_complexity(v)
-                            for v in red.invariants + red.transverse_parameters
-                        )
+                        sum(expr_complexity(v) for v in red.invariants + red.transverse_parameters)
                     )
                     + (10 if ver.valid else 0)
                 )
@@ -324,9 +289,7 @@ def enumerate_invariant_reduction_candidates(
                 ver = verify_reduction(eq_obj, red2)
                 score = (
                     90
-                    - int(
-                        sum(expr_complexity(v) for v in red2.invariants + tuple(trans))
-                    )
+                    - int(sum(expr_complexity(v) for v in red2.invariants + tuple(trans)))
                     + (8 if ver.valid else 0)
                 )
                 out.append(
@@ -362,9 +325,7 @@ def enumerate_invariant_reduction_candidates(
             ver = verify_reduction(eq_obj, red3, chart)
             score = (
                 80
-                - int(
-                    sum(expr_complexity(v) for v in chart.invariants + chart.transverse)
-                )
+                - int(sum(expr_complexity(v) for v in chart.invariants + chart.transverse))
                 + (6 if ver.valid else 0)
             )
             out.append(
@@ -421,8 +382,8 @@ def solve_via_invariant_reduction(
     max_symmetry_steps=2,
     max_degree=2,
 ):
-    from ._classical_shared import _dep_and_vars
     from .classical_methods import PDEIVPResult, solve_reduced_equation_auto
+    from .classical_symbolic_helpers import _dep_and_vars
 
     dep_expr, vars_ = _dep_and_vars(dep_expr_or_func, indep_vars)
     cands = enumerate_invariant_reduction_candidates(
@@ -458,25 +419,16 @@ def solve_via_invariant_reduction(
 
 
 def solve_first_order_nonlinear_auto(
-    eq_or_expr,
-    dep_expr_or_func,
-    indep_vars=None,
-    *,
-    ics=None,
-    bcs=None,
-    assumptions=True,
-    **kwargs,
+    eq_or_expr, dep_expr_or_func, indep_vars=None, *, ics=None, bcs=None, assumptions=True, **kwargs
 ):
-    from ._classical_shared import _dep_and_vars
+    from .classical_symbolic_helpers import _dep_and_vars
     from .problem import build_pde_problem
     from .solver_execution import solve_with_canonical_problem
 
     dep_expr, vars_ = _dep_and_vars(dep_expr_or_func, indep_vars)
     analysis = analyze_first_order_nonlinear_pde(eq_or_expr, dep_expr, vars_)
     if not analysis.is_first_order:
-        raise NotImplementedError(
-            "First-order nonlinear auto solver expects a first-order PDE."
-        )
+        raise NotImplementedError("First-order nonlinear auto solver expects a first-order PDE.")
 
     problem = build_pde_problem(
         eq_or_expr, dep_expr, vars_, ics=ics, bcs=bcs, assumptions=assumptions

@@ -1,4 +1,5 @@
 import sympy as sp
+
 import pdesolve as rle
 
 
@@ -14,9 +15,7 @@ def test_charpit_autonomous_complete_integral_eikonal_like():
 def test_jacobi_autonomous_complete_integral_3vars():
     x, y, z = sp.symbols("x y z", real=True)
     u = sp.Function("u")
-    eq = sp.Eq(
-        sp.diff(u(x, y, z), x) ** 2, sp.diff(u(x, y, z), y) + sp.diff(u(x, y, z), z)
-    )
+    eq = sp.Eq(sp.diff(u(x, y, z), x) ** 2, sp.diff(u(x, y, z), y) + sp.diff(u(x, y, z), z))
     res = rle.solve_jacobi_complete_integral(eq, u(x, y, z), (x, y, z))
     assert res.solutions
 

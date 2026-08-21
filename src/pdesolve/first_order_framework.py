@@ -7,9 +7,9 @@ import sympy as sp
 
 from .complete_integral_helpers import (
     recognize_generalized_clairaut_pde,
-    solve_generalized_clairaut_complete_integral,
     solve_charpit_complete_integral_2vars,
     solve_complete_integral_pde,
+    solve_generalized_clairaut_complete_integral,
 )
 from .conservation_laws import (
     canonicalize_scalar_conservation_law_1d,
@@ -54,19 +54,13 @@ def _extract_initial_profile(problem, uexpr, vars_):
     for cond in getattr(cm, "conditions", ()):
         role = getattr(cond, "role", "")
         eq = getattr(cond, "equation", None)
-        if role not in {"initial", "initial_derivative"} or not isinstance(
-            eq, sp.Equality
-        ):
+        if role not in {"initial", "initial_derivative"} or not isinstance(eq, sp.Equality):
             continue
         lhs, rhs = eq.lhs, eq.rhs
         if lhs == uexpr and x is not None and t is not None:
             if lhs.args == (x, lhs.args[1]) and not lhs.args[1].has(x):
                 return rhs, lhs.args[1]
-            if (
-                lhs.args == (lhs.args[0], t)
-                and lhs.args[0] == x
-                and not lhs.args[1].has(x)
-            ):
+            if lhs.args == (lhs.args[0], t) and lhs.args[0] == x and not lhs.args[1].has(x):
                 return rhs, lhs.args[1]
         # direct matching on time-slice u(x, t0)
         if (
@@ -132,14 +126,9 @@ def canonicalize_first_order_nonlinear_pde(eq, uexpr, vars_):
 
 
 def execute_first_order_plan(
-    problem,
-    classical_mod=None,
-    canonical: CanonicalFirstOrderPDE | None = None,
-    **kwargs,
+    problem, classical_mod=None, canonical: CanonicalFirstOrderPDE | None = None, **kwargs
 ):
-    classical_mod = classical_mod or __import__(
-        "pdesolve.classical_methods", fromlist=["dummy"]
-    )
+    classical_mod = classical_mod or __import__("pdesolve.classical_methods", fromlist=["dummy"])
     canonical = (
         canonical
         or (
@@ -171,9 +160,7 @@ def execute_first_order_plan(
                 sp.Eq(uexpr.func(x, curve_value), initial_profile), uexpr, vars_
             )
         result = solve_scalar_conservation_law_ivp(
-            cf.normalized_equation
-            if cf is not None and cf.normalized_equation is not None
-            else eq,
+            cf.normalized_equation if cf is not None and cf.normalized_equation is not None else eq,
             uexpr,
             vars_,
             initial_conditions=init,
@@ -181,11 +168,7 @@ def execute_first_order_plan(
         return result
     if fam == "quasilinear_first_order":
         return classical_mod.solve_quasilinear_pde_characteristics_implicit(
-            eq,
-            uexpr,
-            vars_,
-            initial_profile=initial_profile,
-            initial_curve_value=curve_value,
+            eq, uexpr, vars_, initial_profile=initial_profile, initial_curve_value=curve_value
         )
     if fam == "autonomous_charpit":
         try:
@@ -194,11 +177,7 @@ def execute_first_order_plan(
             pass
     try:
         return solve_complete_integral_pde(
-            eq,
-            uexpr,
-            vars_,
-            assumptions=getattr(problem, "assumptions", True),
-            **kwargs,
+            eq, uexpr, vars_, assumptions=getattr(problem, "assumptions", True), **kwargs
         )
     except Exception:
         pass

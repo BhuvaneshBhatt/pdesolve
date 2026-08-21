@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import sympy as sp
 from sympy.assumptions import assuming
 
-from ._classical_shared import _as_zero_expr, _dep_and_vars
+from .classical_symbolic_helpers import _as_zero_expr, _dep_and_vars
 
 
 @dataclass(frozen=True)
@@ -31,9 +31,7 @@ class LinearSecondOrderPDEClassification:
     normalized_equation: sp.Equality
 
 
-def _extract_linear_second_order_coefficient_matrix(
-    eq_or_expr, dep_expr_or_func, indep_vars=None
-):
+def _extract_linear_second_order_coefficient_matrix(eq_or_expr, dep_expr_or_func, indep_vars=None):
     """
     Extract the symmetric principal coefficient matrix for a scalar linear
     second-order PDE in n independent variables.
@@ -77,9 +75,7 @@ def _extract_linear_second_order_coefficient_matrix(
     try:
         poly = sp.Poly(expr, *linear_vars, domain="EX")
     except Exception as exc:
-        raise ValueError(
-            "Could not treat PDE as polynomial in derivative placeholders."
-        ) from exc
+        raise ValueError("Could not treat PDE as polynomial in derivative placeholders.") from exc
 
     if poly.total_degree() > 1:
         raise ValueError("PDE is not linear in u and its derivatives up to order 2.")
@@ -182,9 +178,7 @@ def classify_linear_second_order_pde(
     for ev, mult in eig_dict.items():
         eigs.extend([ev] * int(mult))
 
-    sign_pattern = tuple(
-        _sign_with_assumptions(ev, assumptions=assumptions) for ev in eigs
-    )
+    sign_pattern = tuple(_sign_with_assumptions(ev, assumptions=assumptions) for ev in eigs)
     classification = _classify_signature(sign_pattern)
 
     return LinearSecondOrderPDEClassification(
@@ -209,9 +203,7 @@ def classify_second_order_linear_pde_2vars(
         eq_or_expr, dep_expr_or_func, indep_vars
     )
     if len(vars_) != 2:
-        raise ValueError(
-            "Second-order type classification is for two independent variables."
-        )
+        raise ValueError("Second-order type classification is for two independent variables.")
     A = sp.expand(A_mat[0, 0])
     B = sp.expand(2 * A_mat[0, 1])
     C = sp.expand(A_mat[1, 1])
@@ -233,9 +225,7 @@ def classify_second_order_linear_pde_2vars(
             else:
                 cls = "symbolic"
 
-    return SecondOrderLinearType2D(
-        tuple(vars_), uexpr, A, B, C, discriminant, cls, normalized
-    )
+    return SecondOrderLinearType2D(tuple(vars_), uexpr, A, B, C, discriminant, cls, normalized)
 
 
 __all__ = [

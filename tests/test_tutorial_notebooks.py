@@ -2,7 +2,6 @@ from pathlib import Path
 
 import nbformat
 
-
 ROOT = Path(__file__).resolve().parents[1]
 TUTORIAL_DIR = ROOT / "notebooks" / "tutorials"
 EXPECTED = {
@@ -30,15 +29,11 @@ def test_family_tutorials_have_required_pedagogical_and_executable_sections():
         TUTORIAL_DIR.glob("1[01]_*.ipynb")
     ):
         nb = nbformat.read(path, as_version=4)
-        markdown = "\n".join(
-            cell.source for cell in nb.cells if cell.cell_type == "markdown"
-        )
+        markdown = "\n".join(cell.source for cell in nb.cells if cell.cell_type == "markdown")
         code = "\n".join(cell.source for cell in nb.cells if cell.cell_type == "code")
         assert "Derivation" in markdown, path.name
         assert "Variation and exercises" in markdown, path.name
-        assert "show_plan" in code or "extract_canonical_linear_system_form" in code, (
-            path.name
-        )
+        assert "show_plan" in code or "extract_canonical_linear_system_form" in code, path.name
         assert "assert " in code, path.name
         assert "plt." in code, path.name
 

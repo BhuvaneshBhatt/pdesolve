@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import sympy as sp
 
-from ._classical_shared import _dep_and_vars
 from .classical_first_order import PDEIVPResult
+from .classical_symbolic_helpers import _dep_and_vars
 
 
 def solve_wave_equation_1d_ivp(
@@ -54,9 +54,7 @@ def solve_wave_equation_1d_ivp(
         _apply_profile(initial_displacement, x - c * t)
         + _apply_profile(initial_displacement, x + c * t)
     ) / 2
-    gterm = sp.Integral(
-        _apply_profile(initial_velocity, s), (s, x - c * t, x + c * t)
-    ) / (2 * c)
+    gterm = sp.Integral(_apply_profile(initial_velocity, s), (s, x - c * t, x + c * t)) / (2 * c)
     sol = sp.expand(fterm + gterm)
 
     return PDEIVPResult(
@@ -105,14 +103,7 @@ def solve_heat_equation_1d_whole_line_ivp(
 
 
 def solve_heat_equation_1d_dirichlet_series(
-    dep_expr_or_func,
-    *,
-    x=None,
-    t=None,
-    diffusivity=1,
-    length=sp.pi,
-    initial_profile=None,
-    terms=6,
+    dep_expr_or_func, *, x=None, t=None, diffusivity=1, length=sp.pi, initial_profile=None, terms=6
 ):
     """
     Fourier-sine series solution of
@@ -145,9 +136,7 @@ def solve_heat_equation_1d_dirichlet_series(
     series = 0
     for n in range(1, int(terms) + 1):
         bn = 2 / L * sp.Integral(phi * sp.sin(n * sp.pi * xi / L), (xi, 0, L))
-        series += (
-            bn * sp.sin(n * sp.pi * x / L) * sp.exp(-kappa * (n * sp.pi / L) ** 2 * t)
-        )
+        series += bn * sp.sin(n * sp.pi * x / L) * sp.exp(-kappa * (n * sp.pi / L) ** 2 * t)
 
     return PDEIVPResult(
         method="heat_dirichlet_sine_series",

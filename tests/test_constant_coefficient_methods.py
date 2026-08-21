@@ -2,18 +2,16 @@ import sympy as sp
 
 from pdesolve.classical import pdesolve_constant_coefficient
 from pdesolve.constant_coeff import (
+    _cc_operator_apply_from_terms,
     build_constant_coefficient_homogeneous_solution,
     detect_linear_constant_coefficient_pde,
     invert_constant_coefficient_operator_on_forcing,
-    _cc_operator_apply_from_terms,
 )
 
 
 def _residual(eq, expr, uexpr, vars_):
     ccpde = detect_linear_constant_coefficient_pde(eq, uexpr, vars_)
-    return sp.simplify(
-        _cc_operator_apply_from_terms(ccpde.operator_terms, expr, vars_) - ccpde.rhs
-    )
+    return sp.simplify(_cc_operator_apply_from_terms(ccpde.operator_terms, expr, vars_) - ccpde.rhs)
 
 
 def test_point_condition_fit_reports_linear_algebra_strategy_and_method_family():
@@ -73,9 +71,6 @@ def test_constant_coefficient_solver_reports_method_families():
     report = res.details["method_family_report"]
     assert report["selected_method"] == res.method
     assert report["particular_method"] is not None
-    assert report["particular_method_family"] in {
-        "exponential",
-        "exponential_amplitude",
-    }
+    assert report["particular_method_family"] in {"exponential", "exponential_amplitude"}
     assert report["homogeneous_method_family"] == "homogeneous"
     assert sp.simplify(_residual(eq, res.solution.rhs, u(x, t), (x, t))) == 0

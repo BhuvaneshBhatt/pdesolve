@@ -1,4 +1,5 @@
 import sympy as sp
+
 from pdesolve import recognize_evolution_pde, solve_unified_transform
 
 

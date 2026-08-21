@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 from types import MappingProxyType
+from typing import Any
 
 import sympy as sp
 
@@ -129,12 +129,8 @@ class BasePDEResult:
     warnings: tuple[str, ...] = ()
 
     def __post_init__(self):
-        object.__setattr__(
-            self, "verification", MappingProxyType(dict(self.verification or {}))
-        )
-        object.__setattr__(
-            self, "metadata", MappingProxyType(dict(self.metadata or {}))
-        )
+        object.__setattr__(self, "verification", MappingProxyType(dict(self.verification or {})))
+        object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata or {})))
 
 
 @dataclass(frozen=True)

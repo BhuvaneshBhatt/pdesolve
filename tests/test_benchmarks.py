@@ -1,6 +1,6 @@
 import sympy as sp
 
-from pdesolve.benchmarks import BENCHMARK_CASES, run_benchmark_suite, run_benchmark_case
+from pdesolve.benchmarks import BENCHMARK_CASES, run_benchmark_case, run_benchmark_suite
 
 
 def _eq_expr(eq):
@@ -44,38 +44,19 @@ def test_expected_reduced_equations_regressions():
     multi = run_benchmark_case("commuting_multi_symmetry_reduction")
 
     # Reuse the same symbols/assumptions that appear in the actual reduced equations.
-    z1_adv = next(
-        s for s in advection.details["reduced_equation"].free_symbols if s.name == "z1"
-    )
-    z1_re = next(
-        s for s in reaction.details["reduced_equation"].free_symbols if s.name == "z1"
-    )
-    z1_h = next(
-        s for s in heat.details["reduced_equation"].free_symbols if s.name == "z1"
-    )
-    z2_h = next(
-        s for s in heat.details["reduced_equation"].free_symbols if s.name == "z2"
-    )
-    z1_m = next(
-        s for s in multi.details["reduced_equation"].free_symbols if s.name == "z1"
-    )
-    c_re = next(
-        s for s in reaction.details["reduced_equation"].free_symbols if s.name == "c"
-    )
-    c_h = next(
-        s for s in heat.details["reduced_equation"].free_symbols if s.name == "c"
-    )
+    z1_adv = next(s for s in advection.details["reduced_equation"].free_symbols if s.name == "z1")
+    z1_re = next(s for s in reaction.details["reduced_equation"].free_symbols if s.name == "z1")
+    z1_h = next(s for s in heat.details["reduced_equation"].free_symbols if s.name == "z1")
+    z2_h = next(s for s in heat.details["reduced_equation"].free_symbols if s.name == "z2")
+    z1_m = next(s for s in multi.details["reduced_equation"].free_symbols if s.name == "z1")
+    c_re = next(s for s in reaction.details["reduced_equation"].free_symbols if s.name == "c")
+    c_h = next(s for s in heat.details["reduced_equation"].free_symbols if s.name == "c")
 
     f = sp.Function("f")
 
-    assert _eq_equiv(
-        advection.details["reduced_equation"], sp.Eq(sp.diff(f(z1_adv), z1_adv), 0)
-    )
+    assert _eq_equiv(advection.details["reduced_equation"], sp.Eq(sp.diff(f(z1_adv), z1_adv), 0))
     expected_reaction = sp.Eq(
-        f(z1_re) ** 2
-        - f(z1_re)
-        - sp.diff(f(z1_re), (z1_re, 2))
-        - sp.diff(f(z1_re), z1_re) / c_re,
+        f(z1_re) ** 2 - f(z1_re) - sp.diff(f(z1_re), (z1_re, 2)) - sp.diff(f(z1_re), z1_re) / c_re,
         0,
     )
     assert _eq_equiv(reaction.details["reduced_equation"], expected_reaction)
@@ -86,6 +67,4 @@ def test_expected_reduced_equations_regressions():
         0,
     )
     assert _eq_equiv(heat.details["reduced_equation"], expected_heat)
-    assert _eq_equiv(
-        multi.details["reduced_equation"], sp.Eq(sp.diff(f(z1_m), z1_m), 0)
-    )
+    assert _eq_equiv(multi.details["reduced_equation"], sp.Eq(sp.diff(f(z1_m), z1_m), 0))

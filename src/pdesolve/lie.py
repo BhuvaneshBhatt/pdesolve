@@ -5,10 +5,10 @@ from itertools import combinations
 
 import sympy as sp
 
+from .frobenius import adapted_basis_in_chart, local_frobenius_chart
 from .geometry import DistributionKD, VectorFieldKD, distribution_closure
-from .frobenius import local_frobenius_chart, adapted_basis_in_chart
-from .utils import expr_complexity
-from .optimal import optimal_system_1d, commuting_subalgebras
+from .symbolic_algebra_helpers import expr_complexity
+from .symmetry_optimal_systems import commuting_subalgebras, optimal_system_1d
 
 
 @dataclass
@@ -41,21 +41,13 @@ def enumerate_subalgebras(
     out = []
     for r in range(1, min(max_dim, n) + 1):
         for idxs in combinations(range(n), r):
-            sub = DistributionKD(
-                distribution.vars, tuple(distribution.fields[i] for i in idxs)
-            )
+            sub = DistributionKD(distribution.vars, tuple(distribution.fields[i] for i in idxs))
             commuting = sub.is_commuting()
             closure = distribution_closure(sub)
             diag = sub.diagnostics()
             score = (
                 -r,
-                0
-                if diag.translation
-                else 1
-                if diag.diagonal_scaling
-                else 2
-                if diag.affine
-                else 3,
+                0 if diag.translation else 1 if diag.diagonal_scaling else 2 if diag.affine else 3,
             )
             out.append(SubalgebraCandidate(idxs, sub, commuting, closure.closed, score))
     out.sort(key=lambda c: c.score)
@@ -65,9 +57,7 @@ def enumerate_subalgebras(
 def choose_reduction_friendly_subalgebras(
     distribution: DistributionKD, max_dim: int | None = None
 ) -> tuple[SubalgebraCandidate, ...]:
-    cands = [
-        c for c in enumerate_subalgebras(distribution, max_dim=max_dim) if c.commuting
-    ]
+    cands = [c for c in enumerate_subalgebras(distribution, max_dim=max_dim) if c.commuting]
     cands.sort(key=lambda c: c.score)
     return tuple(cands)
 
@@ -75,9 +65,7 @@ def choose_reduction_friendly_subalgebras(
 # -------------------- Lie-algebra structure utilities --------------------
 
 
-def _field_in_span_coeffs(
-    target: VectorFieldKD, span_fields: tuple[VectorFieldKD, ...]
-):
+def _field_in_span_coeffs(target: VectorFieldKD, span_fields: tuple[VectorFieldKD, ...]):
     if len(span_fields) == 0:
         return None
     A = sp.Matrix([[f.coeffs[j] for f in span_fields] for j in range(target.dimension)])
@@ -88,9 +76,7 @@ def _field_in_span_coeffs(
         return None
     if params.shape[0] > 0:
         sub = {params[i, 0]: 0 for i in range(params.shape[0])}
-        sol = sp.Matrix(
-            [sp.expand(sol[i, 0].subs(sub)) for i in range(len(span_fields))]
-        )
+        sol = sp.Matrix([sp.expand(sol[i, 0].subs(sub)) for i in range(len(span_fields))])
     else:
         sol = sp.Matrix([sp.expand(sol[i, 0]) for i in range(len(span_fields))])
     recon = A * sol
@@ -156,9 +142,7 @@ def _closure_span(fields: tuple[VectorFieldKD, ...]):
     return tuple(out)
 
 
-def derived_series(
-    distribution: DistributionKD, max_steps: int = 8
-) -> tuple[DistributionKD, ...]:
+def derived_series(distribution: DistributionKD, max_steps: int = 8) -> tuple[DistributionKD, ...]:
     series = [distribution]
     current = distribution
     for _ in range(max_steps):
@@ -205,9 +189,7 @@ def lower_central_series(
     return tuple(series)
 
 
-def lie_algebra_structure_summary(
-    distribution: DistributionKD,
-) -> LieAlgebraStructureResult:
+def lie_algebra_structure_summary(distribution: DistributionKD) -> LieAlgebraStructureResult:
     closure = distribution_closure(distribution)
     closed1, table = basis_structures(distribution)
     adapted_table = None
@@ -257,20 +239,10 @@ def choose_frobenius_friendly_subalgebras(
             continue
         simp = _frobenius_chart_simplicity(cand.distribution)
         diag = cand.distribution.diagnostics()
-        family = (
-            0
-            if diag.translation
-            else 1
-            if diag.diagonal_scaling
-            else 2
-            if diag.affine
-            else 3
-        )
+        family = 0 if diag.translation else 1 if diag.diagonal_scaling else 2 if diag.affine else 3
         score = (-cand.distribution.size, family, simp)
         candidates.append(
-            SubalgebraCandidate(
-                cand.indices, cand.distribution, cand.commuting, cand.closed, score
-            )
+            SubalgebraCandidate(cand.indices, cand.distribution, cand.commuting, cand.closed, score)
         )
     candidates.sort(key=lambda c: c.score)
     return tuple(candidates)
@@ -287,7 +259,5 @@ def choose_optimal_system_style_1d(
     )
 
 
-def choose_optimal_system_style_subalgebras(
-    distribution: DistributionKD, max_dim: int = 2
-):
+def choose_optimal_system_style_subalgebras(distribution: DistributionKD, max_dim: int = 2):
     return commuting_subalgebras(distribution, max_dim=max_dim)

@@ -4,9 +4,9 @@ from dataclasses import dataclass
 
 import sympy as sp
 
-from .geometry import DistributionKD, CharacteristicCoordinatesResult
-from .diagnostics import local_chart_conditions_from_coords
 from .canonical import canonicalize_reduced_equation
+from .diagnostics import local_chart_conditions_from_coords
+from .geometry import CharacteristicCoordinatesResult, DistributionKD
 
 
 @dataclass
@@ -61,20 +61,16 @@ def verify_reduction(
         coords = chart.invariants + chart.transverse
         J = sp.Matrix([[sp.diff(c, v) for v in eq_obj.jet.xs] for c in coords])
         chart_valid = sp.simplify(J.det()) != 0
-        conditions = tuple(
-            chart.validity_conditions
-        ) + local_chart_conditions_from_coords(eq_obj.jet.xs, coords)
+        conditions = tuple(chart.validity_conditions) + local_chart_conditions_from_coords(
+            eq_obj.jet.xs, coords
+        )
         conditions = tuple(dict.fromkeys(sp.simplify(c) for c in conditions))
     reduced_residual = (
         sp.simplify(sp.expand(reduction_result.reduced_expression - red_eq.lhs))
         if hasattr(reduction_result, "reduced_expression")
         else sp.Integer(0)
     )
-    valid = (
-        chart_valid
-        and sp.simplify(red_eq.rhs) == 0
-        and sp.simplify(reduced_residual) == 0
-    )
+    valid = chart_valid and sp.simplify(red_eq.rhs) == 0 and sp.simplify(reduced_residual) == 0
     return ReductionVerificationResult(
         valid=valid,
         chart_valid=chart_valid,
@@ -132,24 +128,16 @@ def verify_solution_with_conditions(
         ).equation
     except Exception as exc:
         return PDEVerificationSummary(
-            False,
-            "failed",
-            mode="structural",
-            message=f"problem normalization failed: {exc}",
+            False, "failed", mode="structural", message=f"problem normalization failed: {exc}"
         )
 
     if isinstance(solution, sp.Equality):
         candidate = solution
-    elif hasattr(solution, "solution") and isinstance(
-        getattr(solution, "solution"), sp.Equality
-    ):
+    elif hasattr(solution, "solution") and isinstance(solution.solution, sp.Equality):
         candidate = solution.solution
     else:
         return PDEVerificationSummary(
-            None,
-            "unverified",
-            mode="structural",
-            message="solution is not an explicit equality",
+            None, "unverified", mode="structural", message="solution is not an explicit equality"
         )
 
     # First try the package verifier.
@@ -183,25 +171,17 @@ def verify_solution_with_conditions(
         if initial_verified is None and init_res:
             values = [_safe_zero(r) for r in init_res]
             initial_verified = (
-                all(v is True for v in values)
-                if all(v is not None for v in values)
-                else None
+                all(v is True for v in values) if all(v is not None for v in values) else None
             )
         if boundary_verified is None and bc_res:
             values = [_safe_zero(r) for r in bc_res]
             boundary_verified = (
-                all(v is True for v in values)
-                if all(v is not None for v in values)
-                else None
+                all(v is True for v in values) if all(v is not None for v in values) else None
             )
         verified = res_map.get("verified")
         mode = "symbolic"
         if verified is None:
-            bits = [
-                b
-                for b in (pde_verified, initial_verified, boundary_verified)
-                if b is not None
-            ]
+            bits = [b for b in (pde_verified, initial_verified, boundary_verified) if b is not None]
             verified = all(bits) if bits else None
         if pde_verified is None and pde_res is not None:
             # numeric spot check when symbolic status is unclear
@@ -224,13 +204,7 @@ def verify_solution_with_conditions(
                     verified = all(bits) if bits else None
             except Exception:
                 pass
-        status = (
-            "verified"
-            if verified is True
-            else "failed"
-            if verified is False
-            else "unverified"
-        )
+        status = "verified" if verified is True else "failed" if verified is False else "unverified"
         return PDEVerificationSummary(
             verified=verified,
             status=status,
@@ -244,9 +218,7 @@ def verify_solution_with_conditions(
             message=res_map.get("message", ""),
         )
     except Exception as exc:
-        return PDEVerificationSummary(
-            False, "failed", mode="exception", message=str(exc)
-        )
+        return PDEVerificationSummary(False, "failed", mode="exception", message=str(exc))
 
 
 def verify_kernel_representation(
@@ -260,11 +232,7 @@ def verify_kernel_representation(
     operator_family=None,
     boundary_family=None,
 ):
-    eq = (
-        eq_or_expr
-        if isinstance(eq_or_expr, sp.Equality)
-        else sp.Eq(sp.sympify(eq_or_expr), 0)
-    )
+    eq = eq_or_expr if isinstance(eq_or_expr, sp.Equality) else sp.Eq(sp.sympify(eq_or_expr), 0)
     info = {
         "verified": None,
         "mode": "kernel_heuristic",
@@ -288,20 +256,18 @@ def verify_kernel_representation(
                     if getattr(lhs, "func", None) == getattr(
                         dep_expr_or_func, "func", dep_expr_or_func
                     ):
-                        sub_map = {v: a for v, a in zip(indep_vars, lhs.args)}
+                        sub_map = {v: a for v, a in zip(indep_vars, lhs.args, strict=True)}
                         residuals.append(sp.simplify((kernel - rhs).subs(sub_map)))
-                    elif isinstance(lhs, sp.Subs) and isinstance(
-                        lhs.expr, sp.Derivative
-                    ):
+                    elif isinstance(lhs, sp.Subs) and isinstance(lhs.expr, sp.Derivative):
                         expr = lhs.expr
                         subbed = kernel
-                        for old, new in zip(lhs.variables, lhs.point):
+                        for old, new in zip(lhs.variables, lhs.point, strict=True):
                             subbed = subbed.subs(old, new)
                         deriv_expr = sp.diff(kernel, *expr.variable_count)
                         residuals.append(
                             sp.simplify(
                                 deriv_expr.subs(
-                                    {v: a for v, a in zip(indep_vars, expr.expr.args)}
+                                    {v: a for v, a in zip(indep_vars, expr.expr.args, strict=True)}
                                 )
                                 - rhs
                             )
@@ -314,10 +280,7 @@ def verify_kernel_representation(
                     vals.append(z)
                 if vals and all(v is not None for v in vals):
                     info["boundary_verified"] = all(vals)
-        if (
-            boundary_family in {"dirichlet", "neumann"}
-            and info.get("boundary_verified") is None
-        ):
+        if boundary_family in {"dirichlet", "neumann"} and info.get("boundary_verified") is None:
             # image/series constructions are assumed admissible unless contradicted by symbolic check
             info["boundary_verified"] = True if geometry is not None else None
         if info.get("has_dirac_source"):

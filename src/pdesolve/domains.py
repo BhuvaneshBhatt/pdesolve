@@ -83,35 +83,22 @@ def infer_domain_geometry(
         if a is -sp.oo or a == -sp.oo:
             if b is sp.oo or b == sp.oo:
                 return FullLineDomain(
-                    "full_line",
-                    vars_[:1],
-                    {str(vars_[0]): (a, b)},
-                    {"source": "explicit_domain"},
+                    "full_line", vars_[:1], {str(vars_[0]): (a, b)}, {"source": "explicit_domain"}
                 )
         if b is sp.oo or b == sp.oo:
             return HalfLineDomain(
-                "half_line",
-                vars_[:1],
-                {str(vars_[0]): (a, b)},
-                {"source": "explicit_domain"},
+                "half_line", vars_[:1], {str(vars_[0]): (a, b)}, {"source": "explicit_domain"}
             )
         return IntervalDomain(
-            "interval",
-            vars_[:1],
-            {str(vars_[0]): (a, b)},
-            {"source": "explicit_domain"},
+            "interval", vars_[:1], {str(vars_[0]): (a, b)}, {"source": "explicit_domain"}
         )
     if isinstance(domain, sp.ProductSet) and len(vars_) >= len(domain.args):
         intervals = list(domain.args)
         if all(isinstance(item, sp.Interval) for item in intervals):
-            ext = {str(v): (item.start, item.end) for v, item in zip(vars_, intervals)}
-            bounded = [
-                item for item in intervals if item.start != -sp.oo and item.end != sp.oo
-            ]
+            ext = {str(v): (item.start, item.end) for v, item in zip(vars_, intervals, strict=True)}
+            bounded = [item for item in intervals if item.start != -sp.oo and item.end != sp.oo]
             if len(intervals) == 2 and len(bounded) == 2:
-                return RectangleDomain(
-                    "rectangle", vars_[:2], ext, {"source": "explicit_domain"}
-                )
+                return RectangleDomain("rectangle", vars_[:2], ext, {"source": "explicit_domain"})
             return DomainGeometry(
                 "product", vars_[: len(intervals)], ext, {"source": "explicit_domain"}
             )
@@ -132,30 +119,21 @@ def infer_domain_geometry(
             and len(vars_) >= 2
         ):
             return HalfPlaneDomain(
-                "half_plane",
-                vars_[:2],
-                {str(vars_[1]): (0, sp.oo)},
-                {"source": "bc_dict"},
+                "half_plane", vars_[:2], {str(vars_[1]): (0, sp.oo)}, {"source": "bc_dict"}
             )
         if (
             btype in {"half_space", "dirichlet_half_space", "neumann_half_space"}
             and len(vars_) >= 3
         ):
             return HalfSpaceDomain(
-                "half_space",
-                vars_[:3],
-                {str(vars_[2]): (0, sp.oo)},
-                {"source": "bc_dict"},
+                "half_space", vars_[:3], {str(vars_[2]): (0, sp.oo)}, {"source": "bc_dict"}
             )
         if btype in {"strip", "infinite_strip"} and len(vars_) >= 2:
             return RectangleDomain(
                 "strip",
                 vars_[:2],
                 {
-                    str(vars_[1]): (
-                        bcs.get("y0", 0),
-                        bcs.get("y1", sp.Symbol("a", positive=True)),
-                    ),
+                    str(vars_[1]): (bcs.get("y0", 0), bcs.get("y1", sp.Symbol("a", positive=True))),
                     str(vars_[0]): (-sp.oo, sp.oo),
                 },
                 {"source": "bc_dict"},
@@ -166,10 +144,7 @@ def infer_domain_geometry(
                 vars_[:2],
                 {
                     str(vars_[0]): (0, sp.oo),
-                    str(vars_[1]): (
-                        bcs.get("y0", 0),
-                        bcs.get("y1", sp.Symbol("a", positive=True)),
-                    ),
+                    str(vars_[1]): (bcs.get("y0", 0), bcs.get("y1", sp.Symbol("a", positive=True))),
                 },
                 {"source": "bc_dict"},
             )
@@ -198,30 +173,18 @@ def infer_domain_geometry(
             )
         if (
             btype
-            in {
-                "dirichlet_homogeneous_interval",
-                "neumann_homogeneous_interval",
-                "robin_interval",
-            }
+            in {"dirichlet_homogeneous_interval", "neumann_homogeneous_interval", "robin_interval"}
             and vars_
         ):
             return IntervalDomain(
                 "interval",
                 vars_[:1],
-                {
-                    str(vars_[0]): (
-                        bcs.get("x0", 0),
-                        bcs.get("x1", bcs.get("length", sp.pi)),
-                    )
-                },
+                {str(vars_[0]): (bcs.get("x0", 0), bcs.get("x1", bcs.get("length", sp.pi)))},
                 {"source": "bc_dict"},
             )
         if btype == "disk" and len(vars_) >= 2:
             return DiskDomain(
-                "disk",
-                vars_[:2],
-                {"r": (0, bcs.get("radius", 1))},
-                {"source": "bc_dict"},
+                "disk", vars_[:2], {"r": (0, bcs.get("radius", 1))}, {"source": "bc_dict"}
             )
     if condition_model is not None and len(vars_) >= 1:
         has_time = len(vars_) >= 2 and any(
@@ -236,26 +199,13 @@ def infer_domain_geometry(
             second_locs = _sorted_locs(condition_model.boundary_conditions, vars_[1])
             if len(first_locs) >= 2 and len(second_locs) == 0:
                 has_time = True
-        time_var = (
-            (condition_model.metadata or {}).get("time_variable") if has_time else None
-        )
+        time_var = (condition_model.metadata or {}).get("time_variable") if has_time else None
         if has_time and time_var is None and len(vars_) >= 2:
             time_var = vars_[-1]
         spatial_vars = tuple(v for v in vars_ if v != time_var) if has_time else vars_
-        loc_map = {
-            sv: _sorted_locs(condition_model.boundary_conditions, sv)
-            for sv in spatial_vars
-        }
-        extents = {
-            str(sv): (vals[0], vals[-1])
-            for sv, vals in loc_map.items()
-            if len(vals) >= 2
-        }
-        if (
-            has_time
-            and len(spatial_vars) == 1
-            and not condition_model.boundary_conditions
-        ):
+        loc_map = {sv: _sorted_locs(condition_model.boundary_conditions, sv) for sv in spatial_vars}
+        extents = {str(sv): (vals[0], vals[-1]) for sv, vals in loc_map.items() if len(vals) >= 2}
+        if has_time and len(spatial_vars) == 1 and not condition_model.boundary_conditions:
             sv = spatial_vars[0]
             return FullLineDomain(
                 "full_line",
@@ -322,20 +272,14 @@ def infer_domain_geometry(
                 )
             if len(ylocs) == 1 and ylocs[0] == 0 and len(xlocs) == 0:
                 return HalfPlaneDomain(
-                    "half_plane",
-                    spatial_vars,
-                    {str(yvar): (0, sp.oo)},
-                    {"source": "conditions"},
+                    "half_plane", spatial_vars, {str(yvar): (0, sp.oo)}, {"source": "conditions"}
                 )
         if len(spatial_vars) == 3:
             zvar = spatial_vars[-1]
             zlocs = loc_map.get(zvar, ())
             if len(zlocs) == 1 and zlocs[0] == 0:
                 return HalfSpaceDomain(
-                    "half_space",
-                    spatial_vars,
-                    {str(zvar): (0, sp.oo)},
-                    {"source": "conditions"},
+                    "half_space", spatial_vars, {str(zvar): (0, sp.oo)}, {"source": "conditions"}
                 )
     if len(vars_) >= 2:
         return DomainGeometry("unspecified_spacetime", vars_)
@@ -346,18 +290,11 @@ def infer_domain_geometry(
 
 def summarize_domain_geometry(domain: DomainGeometry | None) -> dict[str, Any]:
     if domain is None:
-        return {
-            "kind": "unspecified",
-            "axes": (),
-            "bounded_axes": (),
-            "is_spacetime": False,
-        }
+        return {"kind": "unspecified", "axes": (), "bounded_axes": (), "is_spacetime": False}
     bounded_axes = tuple(
         k
         for k, v in (domain.extents or {}).items()
-        if isinstance(v, tuple)
-        and len(v) == 2
-        and all(val not in (-sp.oo, sp.oo) for val in v)
+        if isinstance(v, tuple) and len(v) == 2 and all(val not in (-sp.oo, sp.oo) for val in v)
     )
     return {
         "kind": domain.kind,

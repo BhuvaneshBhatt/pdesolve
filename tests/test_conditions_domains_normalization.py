@@ -1,6 +1,7 @@
 import sympy as sp
 
 from pdesolve import build_pde_problem, pdesolve, plan_canonical_problem
+from pdesolve.classical import solve_heat_equation_1d_half_line_transform
 from pdesolve.conditions import (
     DirichletCondition,
     NeumannCondition,
@@ -9,14 +10,8 @@ from pdesolve.conditions import (
     classify_condition_equation,
     parse_conditions,
 )
-from pdesolve.domains import (
-    HalfLineDomain,
-    IntervalDomain,
-    RectangleDomain,
-    infer_domain_geometry,
-)
+from pdesolve.domains import HalfLineDomain, IntervalDomain, RectangleDomain, infer_domain_geometry
 from pdesolve.normalization import NormalizationPolicy, normalize_solution
-from pdesolve.classical import solve_heat_equation_1d_half_line_transform
 from pdesolve.solver_execution import is_registered_method
 
 

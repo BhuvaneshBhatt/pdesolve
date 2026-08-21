@@ -1,12 +1,12 @@
 import sympy as sp
 
 from pdesolve.classical import (
+    build_quasilinear_characteristic_odes,
     plan_pde_solution_methods,
     solve_heat_equation_1d_laplace_fourier_formal,
-    solve_rectangle_dirichlet_laplace_series,
     solve_heat_equation_1d_robin_series,
+    solve_rectangle_dirichlet_laplace_series,
     solve_reduced_equation_auto,
-    build_quasilinear_characteristic_odes,
 )
 
 

@@ -5,11 +5,7 @@ from typing import Any
 
 import sympy as sp
 
-from .conditions import (
-    ConditionModel,
-    classify_condition_equation,
-    summarize_condition_model,
-)
+from .conditions import ConditionModel, classify_condition_equation, summarize_condition_model
 from .domains import DomainGeometry
 
 
@@ -115,11 +111,7 @@ def _geometry_issues(model, geometry, spatial_vars):
                 )
             )
     if geometry.kind == "rectangle":
-        sides = {
-            (str(cond.variable), cond.location)
-            for cond in bcs
-            if cond.location is not None
-        }
+        sides = {(str(cond.variable), cond.location) for cond in bcs if cond.location is not None}
         if bcs and len(sides) < 4:
             issues.append(
                 ConditionIssue(
@@ -128,13 +120,7 @@ def _geometry_issues(model, geometry, spatial_vars):
                     "Rectangle geometry usually expects four boundary components.",
                     {
                         "sides": tuple(
-                            sorted(
-                                sides,
-                                key=lambda item: (
-                                    item[0],
-                                    sp.default_sort_key(item[1]),
-                                ),
-                            )
+                            sorted(sides, key=lambda item: (item[0], sp.default_sort_key(item[1])))
                         )
                     },
                 )
@@ -158,13 +144,7 @@ def _geometry_issues(model, geometry, spatial_vars):
                     "Two-dimensional spatial boundary data does not cover all rectangle boundary components.",
                     {
                         "sides": tuple(
-                            sorted(
-                                sides,
-                                key=lambda item: (
-                                    item[0],
-                                    sp.default_sort_key(item[1]),
-                                ),
-                            )
+                            sorted(sides, key=lambda item: (item[0], sp.default_sort_key(item[1])))
                         )
                     },
                 )
@@ -189,11 +169,7 @@ def _duplicate_issues(model, time_var, spatial_vars):
                     "duplicate_condition_slot",
                     "warning",
                     "Multiple conditions occupy the same canonical slot.",
-                    {
-                        "kind": kind,
-                        "variable": cond.variable,
-                        "location": cond.location,
-                    },
+                    {"kind": kind, "variable": cond.variable, "location": cond.location},
                 )
             )
         seen.add(key)
@@ -251,9 +227,7 @@ def analyze_conditions(
     time_var = model.metadata.get("time_variable")
     if time_var is None and len(indep) >= 2:
         time_var = indep[-1]
-    spatial_vars = (
-        tuple(v for v in indep if v != time_var) if time_var is not None else indep
-    )
+    spatial_vars = tuple(v for v in indep if v != time_var) if time_var is not None else indep
     summary = summarize_condition_model(model)
 
     issues, slices = _initial_slice_issues(model, summary)

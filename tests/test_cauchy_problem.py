@@ -1,7 +1,8 @@
 import sympy as sp
+
 from pdesolve.classical import (
-    process_initial_curve_2d,
     fit_complete_integral_to_initial_curve,
+    process_initial_curve_2d,
     solve_first_order_cauchy_problem_2d,
 )
 

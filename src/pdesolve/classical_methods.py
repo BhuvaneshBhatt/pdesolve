@@ -1,65 +1,106 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 import sympy as sp
 from sympy.assumptions import assuming
 from sympy.solvers.pde import classify_pde, pdsolve
 
-from ._classical_shared import (
+from .classical_beam import (
+    SpectralPDEResult as SpectralPDEResult,
+)
+from .classical_beam import (
+    solve_simply_supported_beam_ibvp as solve_simply_supported_beam_ibvp,
+)
+from .classical_classification import (
+    LinearSecondOrderPDEClassification as LinearSecondOrderPDEClassification,
+)
+from .classical_classification import (
+    SecondOrderLinearType2D as SecondOrderLinearType2D,
+)
+from .classical_classification import (
+    classify_linear_second_order_pde as classify_linear_second_order_pde,
+)
+from .classical_classification import (
+    classify_second_order_linear_pde_2vars as classify_second_order_linear_pde_2vars,
+)
+from .classical_evolution import (
+    solve_heat_equation_1d_dirichlet_series as solve_heat_equation_1d_dirichlet_series,
+)
+from .classical_evolution import (
+    solve_heat_equation_1d_whole_line_ivp as solve_heat_equation_1d_whole_line_ivp,
+)
+from .classical_evolution import (
+    solve_wave_equation_1d_ivp as solve_wave_equation_1d_ivp,
+)
+from .classical_first_order import (
+    FirstOrderCharacteristicForm as FirstOrderCharacteristicForm,
+)
+from .classical_first_order import (
+    PDEIVPResult as PDEIVPResult,
+)
+from .classical_first_order import (
+    characteristic_form_first_order_2vars as characteristic_form_first_order_2vars,
+)
+from .classical_first_order import (
+    solve_first_order_pde_characteristic as solve_first_order_pde_characteristic,
+)
+from .classical_first_order import (
+    solve_transport_ivp as solve_transport_ivp,
+)
+from .classical_separation import (
+    SeparationOfVariablesResult as SeparationOfVariablesResult,
+)
+from .classical_separation import (
+    separate_variables as separate_variables,
+)
+from .classical_symbolic_helpers import (
     _as_zero_expr,
     _dep_and_vars,
     _safe_sub_profile,
     _safe_sub_profile_general,
 )
+from .classical_transforms import (
+    TransformMethodResult as TransformMethodResult,
+)
+from .classical_transforms import (
+    solve_advection_equation_1d_fourier_transform as solve_advection_equation_1d_fourier_transform,
+)
+from .classical_transforms import (
+    solve_heat_equation_1d_fourier_transform as solve_heat_equation_1d_fourier_transform,
+)
+from .constant_coeff import (
+    PDEGeneralSolutionResult,
+    _polynomial_particular,
+)
+from .constant_coeff import (
+    detect_linear_constant_coefficient_pde as detect_linear_constant_coefficient_pde,
+)
+from .constant_coeff import (
+    pdesolve_constant_coefficient as solve_linear_constant_coefficient_pde,
+)
 from .family_recognizers import (
     PDEBoundaryCondition1D as PDEBoundaryCondition1D,
+)
+from .family_recognizers import (
     PDEInitialCondition1D as PDEInitialCondition1D,
+)
+from .family_recognizers import (
     PDEVerificationReport,
     SeparationResult,
     _canonical_linear_pde_1d_xt,
     _normalize_condition_dicts,
+)
+from .family_recognizers import (
     detect_burgers_family as detect_burgers_family,
+)
+from .family_recognizers import (
     detect_scalar_conservation_law_family as detect_scalar_conservation_law_family,
+)
+from .family_recognizers import (
     recognize_pde_family as recognize_pde_family,
-)
-from .constant_coeff import (
-    PDEGeneralSolutionResult,
-    detect_linear_constant_coefficient_pde as detect_linear_constant_coefficient_pde,
-    _polynomial_particular,
-    pdesolve_constant_coefficient as solve_linear_constant_coefficient_pde,
-)
-from .classical_first_order import (
-    FirstOrderCharacteristicForm as FirstOrderCharacteristicForm,
-    PDEIVPResult as PDEIVPResult,
-    characteristic_form_first_order_2vars as characteristic_form_first_order_2vars,
-    solve_first_order_pde_characteristic as solve_first_order_pde_characteristic,
-    solve_transport_ivp as solve_transport_ivp,
-)
-from .classical_classification import (
-    LinearSecondOrderPDEClassification as LinearSecondOrderPDEClassification,
-    SecondOrderLinearType2D as SecondOrderLinearType2D,
-    classify_linear_second_order_pde as classify_linear_second_order_pde,
-    classify_second_order_linear_pde_2vars as classify_second_order_linear_pde_2vars,
-)
-from .classical_evolution import (
-    solve_heat_equation_1d_dirichlet_series as solve_heat_equation_1d_dirichlet_series,
-    solve_heat_equation_1d_whole_line_ivp as solve_heat_equation_1d_whole_line_ivp,
-    solve_wave_equation_1d_ivp as solve_wave_equation_1d_ivp,
-)
-from .classical_beam import (
-    SpectralPDEResult as SpectralPDEResult,
-    solve_simply_supported_beam_ibvp as solve_simply_supported_beam_ibvp,
-)
-from .classical_separation import (
-    SeparationOfVariablesResult as SeparationOfVariablesResult,
-    separate_variables as separate_variables,
-)
-from .classical_transforms import (
-    TransformMethodResult as TransformMethodResult,
-    solve_advection_equation_1d_fourier_transform as solve_advection_equation_1d_fourier_transform,
-    solve_heat_equation_1d_fourier_transform as solve_heat_equation_1d_fourier_transform,
 )
 
 
@@ -107,9 +148,7 @@ def detect_conservation_law_1d(eq_or_expr, dep_expr_or_func, indep_vars=None):
     try:
         poly = sp.Poly(zero, ux, ut, domain="EX")
     except Exception as exc:
-        raise ValueError(
-            "Could not treat PDE as polynomial in first derivatives."
-        ) from exc
+        raise ValueError("Could not treat PDE as polynomial in first derivatives.") from exc
     if poly.total_degree() > 1:
         raise NotImplementedError(
             "Current conservation-law detector expects linear dependence on first derivatives."
@@ -120,9 +159,7 @@ def detect_conservation_law_1d(eq_or_expr, dep_expr_or_func, indep_vars=None):
     rest = sp.expand(zero.subs({ut: 0, ux: 0}))
 
     if sp.simplify(A - 1) != 0:
-        raise NotImplementedError(
-            "Current detector expects unit density coefficient on u_t."
-        )
+        raise NotImplementedError("Current detector expects unit density coefficient on u_t.")
 
     # Need B = ∂Phi/∂u and rest = ∂Phi/∂x with u held constant.
     usym = sp.Symbol("_ucons")
@@ -132,9 +169,7 @@ def detect_conservation_law_1d(eq_or_expr, dep_expr_or_func, indep_vars=None):
     partial_x_hold = sp.diff(Phi_u_hold, x)
     correction = sp.simplify(rest_hold - partial_x_hold)
     if correction.has(usym):
-        raise NotImplementedError(
-            "Could not reconstruct a scalar flux independent of path in u."
-        )
+        raise NotImplementedError("Could not reconstruct a scalar flux independent of path in u.")
     Phi_hold = sp.expand(Phi_u_hold + sp.integrate(correction, x))
     Phi_expr = sp.expand(Phi_hold.subs({usym: uexpr}))
     check = sp.simplify(
@@ -150,9 +185,7 @@ def detect_conservation_law_1d(eq_or_expr, dep_expr_or_func, indep_vars=None):
         dep_function=uexpr,
         density=uexpr,
         flux=Phi_expr,
-        normalized_equation=sp.Eq(
-            ut + sp.diff(Phi_expr, x) + sp.diff(Phi_expr, uexpr) * ux, 0
-        ),
+        normalized_equation=sp.Eq(ut + sp.diff(Phi_expr, x) + sp.diff(Phi_expr, uexpr) * ux, 0),
         details={"type": "scalar_conservation_law", "rho": uexpr, "flux": Phi_expr},
     )
 
@@ -253,9 +286,7 @@ def detect_first_order_linear_form_2vars(
     try:
         poly = sp.Poly(zero, ux, uy, uexpr, domain="EX")
     except Exception as exc:
-        raise ValueError(
-            "Could not treat PDE as polynomial in first derivatives and u."
-        ) from exc
+        raise ValueError("Could not treat PDE as polynomial in first derivatives and u.") from exc
     if poly.total_degree() > 1:
         raise ValueError("Equation is not linear in first derivatives and u.")
 
@@ -278,9 +309,7 @@ def detect_first_order_linear_form_2vars(
 
 
 def solve_first_order_linear_pde_pdsolve(eq_or_expr, dep_expr_or_func, indep_vars=None):
-    form = detect_first_order_linear_form_2vars(
-        eq_or_expr, dep_expr_or_func, indep_vars
-    )
+    form = detect_first_order_linear_form_2vars(eq_or_expr, dep_expr_or_func, indep_vars)
     try:
         hints = classify_pde(form.normalized_equation)
     except Exception:
@@ -299,18 +328,13 @@ def solve_first_order_linear_pde_pdsolve(eq_or_expr, dep_expr_or_func, indep_var
 
 
 def _reduce_and_solve_by_symmetry(
-    eq_or_expr,
-    dep_expr_or_func,
-    indep_vars=None,
-    *,
-    assumptions=True,
-    max_symmetry_steps=2,
+    eq_or_expr, dep_expr_or_func, indep_vars=None, *, assumptions=True, max_symmetry_steps=2
 ):
     """Best-effort symmetry-first solve hook that reduces and then solves the reduced equation."""
     uexpr, vars_ = _dep_and_vars(dep_expr_or_func, indep_vars)
-    from .pde import (
-        build_scalar_jet_equation_from_sympy_pde,
+    from .jet_space import (
         build_scalar_general_solved_pde_from_equation,
+        build_scalar_jet_equation_from_sympy_pde,
     )
     from .workflows import repeated_reduction_workflow_scalar_kd_frobenius_default
 
@@ -329,9 +353,7 @@ def _reduce_and_solve_by_symmetry(
     )
     final_eq = workflow.final_equation
     if final_eq is None:
-        raise NotImplementedError(
-            "Symmetry workflow did not produce a reduced equation."
-        )
+        raise NotImplementedError("Symmetry workflow did not produce a reduced equation.")
     solved = solve_reduced_equation_auto(
         final_eq, assumptions=assumptions, max_symmetry_steps=max_symmetry_steps
     )
@@ -343,14 +365,7 @@ def _reduce_and_solve_by_symmetry(
 
 
 def solve_heat_equation_1d_neumann_series(
-    dep_expr_or_func,
-    *,
-    x=None,
-    t=None,
-    diffusivity=1,
-    length=sp.pi,
-    initial_profile=None,
-    terms=6,
+    dep_expr_or_func, *, x=None, t=None, diffusivity=1, length=sp.pi, initial_profile=None, terms=6
 ):
     uexpr, vars_ = _dep_and_vars(
         dep_expr_or_func, (x, t) if x is not None and t is not None else None
@@ -371,9 +386,7 @@ def solve_heat_equation_1d_neumann_series(
     series = a0
     for n in range(1, int(terms) + 1):
         an = 2 / L * sp.Integral(phi * sp.cos(n * sp.pi * xi / L), (xi, 0, L))
-        series += (
-            an * sp.cos(n * sp.pi * x / L) * sp.exp(-kappa * (n * sp.pi / L) ** 2 * t)
-        )
+        series += an * sp.cos(n * sp.pi * x / L) * sp.exp(-kappa * (n * sp.pi / L) ** 2 * t)
     return PDEIVPResult(
         method="heat_neumann_cosine_series",
         solution=sp.Eq(uexpr, sp.simplify(series)),
@@ -487,11 +500,7 @@ def solve_wave_equation_1d_dirichlet_series(
     series = 0
     for n in range(1, int(terms) + 1):
         bn = 2 / L * sp.Integral(f * sp.sin(n * sp.pi * xi / L), (xi, 0, L))
-        cn = (
-            2
-            / (c * n * sp.pi)
-            * sp.Integral(g * sp.sin(n * sp.pi * xi / L), (xi, 0, L))
-        )
+        cn = 2 / (c * n * sp.pi) * sp.Integral(g * sp.sin(n * sp.pi * xi / L), (xi, 0, L))
         series += (
             bn * sp.cos(c * n * sp.pi * t / L) + L * cn * sp.sin(c * n * sp.pi * t / L)
         ) * sp.sin(n * sp.pi * x / L)
@@ -512,9 +521,7 @@ def solve_wave_equation_1d_laplace_transform_formal(
     initial_velocity=None,
     laplace_variable=None,
 ):
-    _, vars_ = _dep_and_vars(
-        dep_expr_or_func, (x, t) if x is not None and t is not None else None
-    )
+    _, vars_ = _dep_and_vars(dep_expr_or_func, (x, t) if x is not None and t is not None else None)
     x, t = vars_
     s = (
         sp.Symbol("s", positive=True, real=True)
@@ -560,17 +567,9 @@ def solve_wave_equation_1d_laplace_transform_formal(
 
 
 def solve_heat_equation_1d_laplace_transform_formal(
-    dep_expr_or_func,
-    *,
-    x=None,
-    t=None,
-    diffusivity=1,
-    initial_profile=None,
-    laplace_variable=None,
+    dep_expr_or_func, *, x=None, t=None, diffusivity=1, initial_profile=None, laplace_variable=None
 ):
-    _, vars_ = _dep_and_vars(
-        dep_expr_or_func, (x, t) if x is not None and t is not None else None
-    )
+    _, vars_ = _dep_and_vars(dep_expr_or_func, (x, t) if x is not None and t is not None else None)
     x, t = vars_
     s = (
         sp.Symbol("s", positive=True, real=True)
@@ -605,17 +604,12 @@ def separate_variables_structured(
     eq_or_expr, dep_expr_or_func, indep_vars=None, *, assumptions=True, bcs=None
 ):
     """Deeper separation helper with basis hints from boundary data."""
-    sep = separate_variables(
-        eq_or_expr, dep_expr_or_func, indep_vars, assumptions=assumptions
-    )
+    sep = separate_variables(eq_or_expr, dep_expr_or_func, indep_vars, assumptions=assumptions)
     _, norm_bcs = _normalize_condition_dicts(None, bcs)
     basis_hint = None
     if len(norm_bcs) == 2:
         kinds = {bc.kind for bc in norm_bcs}
-        vals = [
-            sp.simplify(bc.value if not callable(bc.value) else bc.value(0))
-            for bc in norm_bcs
-        ]
+        vals = [sp.simplify(bc.value if not callable(bc.value) else bc.value(0)) for bc in norm_bcs]
         if kinds == {"dirichlet"} and all(v == 0 for v in vals):
             basis_hint = "sine"
         elif kinds == {"neumann"} and all(v == 0 for v in vals):
@@ -636,9 +630,7 @@ def separate_variables_structured(
     )
 
 
-def solve_inviscid_burgers_ivp_implicit(
-    dep_expr_or_func, *, x=None, t=None, initial_profile=None
-):
+def solve_inviscid_burgers_ivp_implicit(dep_expr_or_func, *, x=None, t=None, initial_profile=None):
     uexpr, vars_ = _dep_and_vars(
         dep_expr_or_func, (x, t) if x is not None and t is not None else None
     )
@@ -649,9 +641,7 @@ def solve_inviscid_burgers_ivp_implicit(
     g = (
         initial_profile(xi)
         if callable(initial_profile)
-        else sp.sympify(initial_profile).subs(
-            list(sp.sympify(initial_profile).free_symbols)[0], xi
-        )
+        else sp.sympify(initial_profile).subs(list(sp.sympify(initial_profile).free_symbols)[0], xi)
         if isinstance(initial_profile, sp.Expr)
         and len(sp.sympify(initial_profile).free_symbols) == 1
         else sp.sympify(initial_profile)
@@ -669,9 +659,7 @@ def construct_burgers_rarefaction(u_left, u_right, *, x=None, t=None):
     t = sp.Symbol("t", positive=True, real=True) if t is None else sp.sympify(t)
     xi = sp.simplify(x / t)
     return sp.Piecewise(
-        (u_left, xi <= u_left),
-        (xi, sp.And(xi >= u_left, xi <= u_right)),
-        (u_right, True),
+        (u_left, xi <= u_left), (xi, sp.And(xi >= u_left, xi <= u_right)), (u_right, True)
     )
 
 
@@ -730,9 +718,7 @@ def verify_pde_solution_with_data(
                 val = sp.diff(rhs, x).subs(x, bc.location)
                 target = bc.value(t) if callable(bc.value) else sp.sympify(bc.value)
             else:
-                val = (sp.diff(rhs, x) + sp.sympify(bc.coefficient) * rhs).subs(
-                    x, bc.location
-                )
+                val = (sp.diff(rhs, x) + sp.sympify(bc.coefficient) * rhs).subs(x, bc.location)
                 target = bc.value(t) if callable(bc.value) else sp.sympify(bc.value)
             boundary_residuals.append(sp.simplify(val - target))
     verified = sp.simplify(pde_resid) == 0 and all(
@@ -798,9 +784,7 @@ def normalize_problem_data(
     from .domains import infer_domain_geometry
 
     norm_ics, norm_bcs = _normalize_condition_dicts(ics, bcs)
-    cond_model = parse_conditions(
-        ics, bcs, dep_expr=dep_expr, indep_vars=tuple(indep_vars or ())
-    )
+    cond_model = parse_conditions(ics, bcs, dep_expr=dep_expr, indep_vars=tuple(indep_vars or ()))
 
     extra_bcs = []
     if isinstance(bcs, dict):
@@ -822,9 +806,7 @@ def normalize_problem_data(
             lcoef = left[0] if isinstance(left, (tuple, list)) else 1
             rcoef = right[0] if isinstance(right, (tuple, list)) else 1
             lval = left[1] if isinstance(left, (tuple, list)) and len(left) > 1 else 0
-            rval = (
-                right[1] if isinstance(right, (tuple, list)) and len(right) > 1 else 0
-            )
+            rval = right[1] if isinstance(right, (tuple, list)) and len(right) > 1 else 0
             extra_bcs.extend(
                 [
                     PDEBoundaryCondition1D(0, "robin", lval, coefficient=lcoef),
@@ -832,13 +814,9 @@ def normalize_problem_data(
                 ]
             )
         elif btype == "dirichlet_half_line":
-            extra_bcs.append(
-                PDEBoundaryCondition1D(0, "dirichlet", bcs.get("boundary_value", 0))
-            )
+            extra_bcs.append(PDEBoundaryCondition1D(0, "dirichlet", bcs.get("boundary_value", 0)))
         elif btype == "neumann_half_line":
-            extra_bcs.append(
-                PDEBoundaryCondition1D(0, "neumann", bcs.get("boundary_value", 0))
-            )
+            extra_bcs.append(PDEBoundaryCondition1D(0, "neumann", bcs.get("boundary_value", 0)))
 
     dom = _normalize_domain(domain, bcs=bcs, ics=ics)
     inferred = infer_domain_geometry(
@@ -896,14 +874,7 @@ def pde_problem_equivalence_signature(
 
 
 def verify_solution_record(
-    eq_or_expr,
-    solution,
-    dep_expr_or_func,
-    indep_vars=None,
-    *,
-    ics=None,
-    bcs=None,
-    assumptions=True,
+    eq_or_expr, solution, dep_expr_or_func, indep_vars=None, *, ics=None, bcs=None, assumptions=True
 ):
     try:
         res = verify_pde_solution_with_data(
@@ -920,29 +891,19 @@ def verify_solution_record(
         return {"verified": False, "error": str(exc)}
 
 
-def build_quasilinear_characteristic_system_2vars(
-    eq_or_expr, dep_expr_or_func, indep_vars=None
-):
-    form = characteristic_form_first_order_2vars(
-        eq_or_expr, dep_expr_or_func, indep_vars
-    )
+def build_quasilinear_characteristic_system_2vars(eq_or_expr, dep_expr_or_func, indep_vars=None):
+    form = characteristic_form_first_order_2vars(eq_or_expr, dep_expr_or_func, indep_vars)
     x, y = form.indep_vars
     z = sp.Symbol("s", real=True)
     u = sp.Symbol("U", real=True)
     A = sp.expand(
-        form.A.subs(
-            {form.dep_function: u, x: sp.Function("X")(z), y: sp.Function("Y")(z)}
-        )
+        form.A.subs({form.dep_function: u, x: sp.Function("X")(z), y: sp.Function("Y")(z)})
     )
     B = sp.expand(
-        form.B.subs(
-            {form.dep_function: u, x: sp.Function("X")(z), y: sp.Function("Y")(z)}
-        )
+        form.B.subs({form.dep_function: u, x: sp.Function("X")(z), y: sp.Function("Y")(z)})
     )
     C = sp.expand(
-        form.C.subs(
-            {form.dep_function: u, x: sp.Function("X")(z), y: sp.Function("Y")(z)}
-        )
+        form.C.subs({form.dep_function: u, x: sp.Function("X")(z), y: sp.Function("Y")(z)})
     )
     X = sp.Function("X")
     Y = sp.Function("Y")
@@ -950,21 +911,15 @@ def build_quasilinear_characteristic_system_2vars(
     return (
         sp.Eq(
             sp.diff(X(z), z),
-            A.subs(u, U(z)).subs(
-                {sp.Function("X")(z): X(z), sp.Function("Y")(z): Y(z)}
-            ),
+            A.subs(u, U(z)).subs({sp.Function("X")(z): X(z), sp.Function("Y")(z): Y(z)}),
         ),
         sp.Eq(
             sp.diff(Y(z), z),
-            B.subs(u, U(z)).subs(
-                {sp.Function("X")(z): X(z), sp.Function("Y")(z): Y(z)}
-            ),
+            B.subs(u, U(z)).subs({sp.Function("X")(z): X(z), sp.Function("Y")(z): Y(z)}),
         ),
         sp.Eq(
             sp.diff(U(z), z),
-            C.subs(u, U(z)).subs(
-                {sp.Function("X")(z): X(z), sp.Function("Y")(z): Y(z)}
-            ),
+            C.subs(u, U(z)).subs({sp.Function("X")(z): X(z), sp.Function("Y")(z): Y(z)}),
         ),
     )
 
@@ -972,11 +927,7 @@ def build_quasilinear_characteristic_system_2vars(
 def solve_scalar_conservation_law_riemann_burgers(u_left, u_right, *, x=None, t=None):
     x = sp.Symbol("x", real=True) if x is None else sp.sympify(x)
     t = sp.Symbol("t", positive=True, real=True) if t is None else sp.sympify(t)
-    if (
-        sp.simplify(u_left - u_right) <= 0
-        if all(v.is_number for v in [u_left, u_right])
-        else False
-    ):
+    if sp.simplify(u_left - u_right) <= 0 if all(v.is_number for v in [u_left, u_right]) else False:
         return PDEIVPResult(
             "burgers_riemann_rarefaction",
             construct_burgers_rarefaction(u_left, u_right, x=x, t=t),
@@ -985,9 +936,7 @@ def solve_scalar_conservation_law_riemann_burgers(u_left, u_right, *, x=None, t=
     s = sp.simplify((sp.sympify(u_left) + sp.sympify(u_right)) / 2)
     sol = sp.Piecewise((u_left, x < s * t), (u_right, True))
     return PDEIVPResult(
-        "burgers_riemann_shock",
-        sol,
-        {"left": u_left, "right": u_right, "shock_speed": s},
+        "burgers_riemann_shock", sol, {"left": u_left, "right": u_right, "shock_speed": s}
     )
 
 
@@ -1012,9 +961,7 @@ def solve_wave_equation_1d_mixed_series(
     c = sp.sympify(wave_speed)
     L = sp.sympify(length)
     xi = sp.Symbol("xi", real=True)
-    f = _safe_sub_profile(
-        initial_displacement if initial_displacement is not None else 0, xi
-    )
+    f = _safe_sub_profile(initial_displacement if initial_displacement is not None else 0, xi)
     g = _safe_sub_profile(initial_velocity if initial_velocity is not None else 0, xi)
     series = 0
     for n in range(int(terms)):
@@ -1022,9 +969,7 @@ def solve_wave_equation_1d_mixed_series(
         basis = sp.sin(lam * xi)
         bn = 2 / L * sp.Integral(f * basis, (xi, 0, L))
         cn = 2 / (c * L * lam) * sp.Integral(g * basis, (xi, 0, L))
-        series += (bn * sp.cos(c * lam * t) + cn * sp.sin(c * lam * t)) * sp.sin(
-            lam * x
-        )
+        series += (bn * sp.cos(c * lam * t) + cn * sp.sin(c * lam * t)) * sp.sin(lam * x)
     return PDEIVPResult(
         "wave_mixed_series",
         sp.Eq(uexpr, sp.simplify(series)),
@@ -1159,10 +1104,7 @@ def _normalize_problem_conditions(indep_vars, ics=None, bcs=None):
         if "initial_displacement" in ics:
             ic_specs.append(
                 InitialConditionSpec(
-                    "displacement",
-                    x,
-                    ics["initial_displacement"],
-                    ics.get("curve_value", 0),
+                    "displacement", x, ics["initial_displacement"], ics.get("curve_value", 0)
                 )
             )
         if "initial_velocity" in ics:
@@ -1178,9 +1120,7 @@ def _normalize_problem_conditions(indep_vars, ics=None, bcs=None):
             bc_specs.append(BoundaryConditionSpec("dirichlet", x, 0, 0))
             bc_specs.append(BoundaryConditionSpec("dirichlet", x, L, 0))
         elif bctype == "half_line_dirichlet":
-            bc_specs.append(
-                BoundaryConditionSpec("dirichlet", x, 0, bcs.get("value", 0))
-            )
+            bc_specs.append(BoundaryConditionSpec("dirichlet", x, 0, bcs.get("value", 0)))
         elif bctype == "half_line_neumann":
             bc_specs.append(BoundaryConditionSpec("neumann", x, 0, bcs.get("value", 0)))
         elif bctype == "rectangle_dirichlet" and len(vars_) >= 2:
@@ -1198,14 +1138,7 @@ def _normalize_problem_conditions(indep_vars, ics=None, bcs=None):
 
 
 def plan_pde_solution(
-    eq_or_expr,
-    dep_expr_or_func,
-    indep_vars=None,
-    *,
-    ics=None,
-    bcs=None,
-    assumptions=True,
-    **kwargs,
+    eq_or_expr, dep_expr_or_func, indep_vars=None, *, ics=None, bcs=None, assumptions=True, **kwargs
 ):
     problem, profile, candidates = preprocess_pde_problem(
         eq_or_expr,
@@ -1253,9 +1186,7 @@ def plan_pde_solution(
         )
     if (
         problem.initial_conditions
-        and any(
-            ic.kind in {"profile", "displacement"} for ic in problem.initial_conditions
-        )
+        and any(ic.kind in {"profile", "displacement"} for ic in problem.initial_conditions)
         and problem.domain
         and problem.domain.geometry in {"whole_line", "half_line"}
     ):
@@ -1274,14 +1205,7 @@ def plan_pde_solution(
 
 
 def solve_rectangle_dirichlet_laplace_series(
-    dep_expr_or_func,
-    *,
-    x=None,
-    y=None,
-    x_length=sp.pi,
-    y_length=sp.pi,
-    boundary_top=None,
-    terms=6,
+    dep_expr_or_func, *, x=None, y=None, x_length=sp.pi, y_length=sp.pi, boundary_top=None, terms=6
 ):
     """
     Solve Laplace u_xx + u_yy = 0 on 0<x<Lx, 0<y<Ly with homogeneous
@@ -1300,9 +1224,7 @@ def solve_rectangle_dirichlet_laplace_series(
         bn = sp.Symbol(f"b{n}")
         # If explicit profile provided, use Fourier sine coefficient; else leave symbolic.
         if isinstance(g, sp.Expr) and x in g.free_symbols:
-            bn = sp.simplify(
-                2 / Lx * sp.integrate(g * sp.sin(n * sp.pi * x / Lx), (x, 0, Lx))
-            )
+            bn = sp.simplify(2 / Lx * sp.integrate(g * sp.sin(n * sp.pi * x / Lx), (x, 0, Lx)))
         term = (
             bn
             * sp.sin(n * sp.pi * x / Lx)
@@ -1395,16 +1317,10 @@ def solve_wave_equation_1d_laplace_sine_transform_formal(
     L = sp.sympify(length)
     Un = sp.Function("Un")(n, s)
     omega_n = n * sp.pi * c / L
-    ode = sp.Eq(
-        (s**2 + omega_n**2) * Un, sp.Function("F_n")(n) * s + sp.Function("G_n")(n)
-    )
+    ode = sp.Eq((s**2 + omega_n**2) * Un, sp.Function("F_n")(n) * s + sp.Function("G_n")(n))
     inv = sp.Sum(sp.Function("u_n")(n, t) * sp.sin(n * sp.pi * x / L), (n, 1, sp.oo))
     return PDETransformResult(
-        "laplace_sine_wave_formal",
-        ode,
-        (s,),
-        sp.Eq(uexpr, inv),
-        {"wave_speed": c, "length": L},
+        "laplace_sine_wave_formal", ode, (s,), sp.Eq(uexpr, inv), {"wave_speed": c, "length": L}
     )
 
 
@@ -1419,18 +1335,14 @@ def solve_burgers_ivp_characteristic_formal(
     )
 
 
-def build_quasilinear_characteristic_odes(
-    eq_or_expr, dep_expr_or_func, indep_vars=None
-):
+def build_quasilinear_characteristic_odes(eq_or_expr, dep_expr_or_func, indep_vars=None):
     """
     Build characteristic ODEs for a 2D quasilinear first-order PDE
         A(x,t,u) u_x + B(x,t,u) u_t = C(x,t,u)
     as
         dx/ds = A, dt/ds = B, du/ds = C.
     """
-    form = characteristic_form_first_order_2vars(
-        eq_or_expr, dep_expr_or_func, indep_vars
-    )
+    form = characteristic_form_first_order_2vars(eq_or_expr, dep_expr_or_func, indep_vars)
     x, t = form.indep_vars
     s = sp.Symbol("s", real=True)
     X = sp.Function("X")
@@ -1469,9 +1381,7 @@ def validate_problem_data_conditions(problem: PDEProblemSpec):
     return {"warnings": tuple(warnings), "tags": tuple(sorted(tags))}
 
 
-def canonicalize_pde_problem(
-    eq_or_expr, dep_expr_or_func, indep_vars=None, *, assumptions=True
-):
+def canonicalize_pde_problem(eq_or_expr, dep_expr_or_func, indep_vars=None, *, assumptions=True):
     """Return a canonical PDE object with a normalized equation and stable signature."""
     uexpr, vars_ = _dep_and_vars(dep_expr_or_func, indep_vars)
     zero = _as_zero_expr(eq_or_expr)
@@ -1578,9 +1488,7 @@ def _normalize_domain(domain=None, bcs=None, ics=None):
     return None
 
 
-def analyze_problem_data(
-    dep_expr_or_func, indep_vars=None, *, ics=None, bcs=None, domain=None
-):
+def analyze_problem_data(dep_expr_or_func, indep_vars=None, *, ics=None, bcs=None, domain=None):
     _, vars_ = _dep_and_vars(dep_expr_or_func, indep_vars)
     dom = _normalize_domain(domain, bcs, ics)
     norm_ics, norm_bcs = _normalize_condition_dicts(ics, bcs)
@@ -1599,9 +1507,7 @@ def analyze_problem_data(
                 if bc.kind == "dirichlet" and callable(bc.value) is False:
                     try:
                         residuals.append(
-                            sp.simplify(
-                                init_expr.subs(x, bc.location) - sp.sympify(bc.value)
-                            )
+                            sp.simplify(init_expr.subs(x, bc.location) - sp.sympify(bc.value))
                         )
                     except Exception:
                         pass
@@ -1609,8 +1515,7 @@ def analyze_problem_data(
                     try:
                         residuals.append(
                             sp.simplify(
-                                sp.diff(init_expr, x).subs(x, bc.location)
-                                - sp.sympify(bc.value)
+                                sp.diff(init_expr, x).subs(x, bc.location) - sp.sympify(bc.value)
                             )
                         )
                     except Exception:
@@ -1626,13 +1531,7 @@ def analyze_problem_data(
 
 
 def build_transform_representation(
-    eq_or_expr,
-    dep_expr_or_func,
-    indep_vars=None,
-    *,
-    method="auto",
-    assumptions=True,
-    **kwargs,
+    eq_or_expr, dep_expr_or_func, indep_vars=None, *, method="auto", assumptions=True, **kwargs
 ):
     uexpr, vars_ = _dep_and_vars(dep_expr_or_func, indep_vars)
     if len(vars_) != 2:
@@ -1685,9 +1584,7 @@ def build_transform_representation(
             t=t,
             speed=kwargs.get("speed", 1),
             reaction=kwargs.get("reaction", 0),
-            initial_profile=(kwargs.get("ics") or {}).get(
-                "initial_profile", sp.Function("phi")(x)
-            ),
+            initial_profile=(kwargs.get("ics") or {}).get("initial_profile", sp.Function("phi")(x)),
         )
         return TransformProblemRepresentation(
             method=res.method,
@@ -1732,13 +1629,7 @@ def build_transform_representation(
 
 
 def solve_heat_equation_1d_half_line_neumann_transform(
-    dep_expr_or_func,
-    *,
-    x=None,
-    t=None,
-    diffusivity=1,
-    initial_profile=None,
-    fourier_variable=None,
+    dep_expr_or_func, *, x=None, t=None, diffusivity=1, initial_profile=None, fourier_variable=None
 ):
     return solve_heat_equation_1d_half_line_transform(
         dep_expr_or_func,
@@ -1788,33 +1679,11 @@ def solve_laplace_rectangle_dirichlet_series(
     sol = sp.Integer(0)
     for m in range(1, int(terms) + 1):
         bm = (
-            2
-            / a
-            * sp.Integral(
-                bottom_expr.subs(x, eta) * sp.sin(m * sp.pi * eta / a), (eta, 0, a)
-            )
+            2 / a * sp.Integral(bottom_expr.subs(x, eta) * sp.sin(m * sp.pi * eta / a), (eta, 0, a))
         )
-        tm = (
-            2
-            / a
-            * sp.Integral(
-                top_expr.subs(x, eta) * sp.sin(m * sp.pi * eta / a), (eta, 0, a)
-            )
-        )
-        lm = (
-            2
-            / b
-            * sp.Integral(
-                left_expr.subs(y, eta) * sp.sin(m * sp.pi * eta / b), (eta, 0, b)
-            )
-        )
-        rm = (
-            2
-            / b
-            * sp.Integral(
-                right_expr.subs(y, eta) * sp.sin(m * sp.pi * eta / b), (eta, 0, b)
-            )
-        )
+        tm = 2 / a * sp.Integral(top_expr.subs(x, eta) * sp.sin(m * sp.pi * eta / a), (eta, 0, a))
+        lm = 2 / b * sp.Integral(left_expr.subs(y, eta) * sp.sin(m * sp.pi * eta / b), (eta, 0, b))
+        rm = 2 / b * sp.Integral(right_expr.subs(y, eta) * sp.sin(m * sp.pi * eta / b), (eta, 0, b))
         sol += (
             bm
             * sp.sinh(m * sp.pi * (b - y) / a)
@@ -1822,10 +1691,7 @@ def solve_laplace_rectangle_dirichlet_series(
             * sp.sin(m * sp.pi * x / a)
         )
         sol += (
-            tm
-            * sp.sinh(m * sp.pi * y / a)
-            / sp.sinh(m * sp.pi * b / a)
-            * sp.sin(m * sp.pi * x / a)
+            tm * sp.sinh(m * sp.pi * y / a) / sp.sinh(m * sp.pi * b / a) * sp.sin(m * sp.pi * x / a)
         )
         sol += (
             lm
@@ -1834,10 +1700,7 @@ def solve_laplace_rectangle_dirichlet_series(
             * sp.sin(m * sp.pi * y / b)
         )
         sol += (
-            rm
-            * sp.sinh(m * sp.pi * x / b)
-            / sp.sinh(m * sp.pi * a / b)
-            * sp.sin(m * sp.pi * y / b)
+            rm * sp.sinh(m * sp.pi * x / b) / sp.sinh(m * sp.pi * a / b) * sp.sin(m * sp.pi * y / b)
         )
     return PDEIVPResult(
         method="laplace_rectangle_dirichlet_series",
@@ -1847,13 +1710,7 @@ def solve_laplace_rectangle_dirichlet_series(
 
 
 def separate_variables_with_conditions(
-    eq_or_expr,
-    dep_expr_or_func,
-    indep_vars=None,
-    *,
-    assumptions=True,
-    bcs=None,
-    domain=None,
+    eq_or_expr, dep_expr_or_func, indep_vars=None, *, assumptions=True, bcs=None, domain=None
 ):
     uexpr, vars_ = _dep_and_vars(dep_expr_or_func, indep_vars)
     fam = recognize_pde_family(eq_or_expr, uexpr, vars_, assumptions=assumptions)
@@ -1878,13 +1735,7 @@ def separate_variables_with_conditions(
 
 
 def solve_reduced_equation_auto(
-    reduced_eq,
-    *,
-    ics=None,
-    bcs=None,
-    assumptions=True,
-    max_symmetry_steps=2,
-    domain=None,
+    reduced_eq, *, ics=None, bcs=None, assumptions=True, max_symmetry_steps=2, domain=None
 ):
     """
     Solve a reduced equation using the available canonical methods.
@@ -1897,9 +1748,7 @@ def solve_reduced_equation_auto(
     if isinstance(reduced_eq, sp.Equality) and not any(
         isinstance(node, sp.Derivative) for node in sp.preorder_traversal(reduced_eq)
     ):
-        return PDEIVPResult(
-            "algebraic_reduced_solution", reduced_eq, {"already_solved": True}
-        )
+        return PDEIVPResult("algebraic_reduced_solution", reduced_eq, {"already_solved": True})
 
     deps = []
     for node in sp.preorder_traversal(reduced_eq):
@@ -1966,11 +1815,7 @@ def _solve_via_symmetry_workflow(
     domain=None,
 ):
     res = _reduce_and_solve_by_symmetry(
-        norm_eq,
-        uexpr,
-        vars_,
-        assumptions=assumptions,
-        max_symmetry_steps=max_symmetry_steps,
+        norm_eq, uexpr, vars_, assumptions=assumptions, max_symmetry_steps=max_symmetry_steps
     )
     if isinstance(res, PDEIVPResult) and isinstance(res.solution, sp.Equality):
         return res
@@ -2044,9 +1889,9 @@ def preprocess_pde_problem(
     except Exception as exc:
         details["canonical_family_error"] = str(exc)
     try:
-        from .pde import (
-            build_scalar_jet_equation_from_sympy_pde,
+        from .jet_space import (
             build_scalar_general_solved_pde_from_equation,
+            build_scalar_jet_equation_from_sympy_pde,
         )
 
         jet, pde = build_scalar_jet_equation_from_sympy_pde(
@@ -2079,12 +1924,7 @@ def preprocess_pde_problem(
 
 
 def analyze_pde_problem(
-    eq_or_expr,
-    dep_expr_or_func,
-    indep_vars=None,
-    *,
-    assumptions=True,
-    max_principal_order=3,
+    eq_or_expr, dep_expr_or_func, indep_vars=None, *, assumptions=True, max_principal_order=3
 ):
     return preprocess_pde_problem(
         eq_or_expr,
@@ -2196,9 +2036,7 @@ def build_pde_solution_plan(
         prefer_separation=prefer_separation,
         prefer_symmetry=prefer_symmetry,
     )
-    data = analyze_problem_data(
-        dep_expr_or_func, indep_vars, ics=ics, bcs=bcs, domain=domain
-    )
+    data = analyze_problem_data(dep_expr_or_func, indep_vars, ics=ics, bcs=bcs, domain=domain)
     fam = getattr(profile, "canonical_family", None)
     enhfam = None
     try:
@@ -2210,9 +2048,7 @@ def build_pde_solution_plan(
     steps = []
     if prefer_symmetry:
         steps.append(
-            PDEPlanStep(
-                "symmetry_reduction", "caller explicitly prefers symmetry reduction", 10
-            )
+            PDEPlanStep("symmetry_reduction", "caller explicitly prefers symmetry reduction", 10)
         )
     if (
         prefer_transform
@@ -2263,9 +2099,7 @@ def build_pde_solution_plan(
                 )
         if ics and ("initial_displacement" in ics or "initial_velocity" in ics):
             steps.append(
-                PDEPlanStep(
-                    "wave_laplace_transform", "prefer transform on wave-type IVP", 8
-                )
+                PDEPlanStep("wave_laplace_transform", "prefer transform on wave-type IVP", 8)
             )
             steps.append(PDEPlanStep("wave_dalembert", "classical wave IVP formula", 9))
     if data.domain is not None and data.domain.geometry == "interval":
@@ -2369,13 +2203,9 @@ def _wrap_pde_result_record(
     if isinstance(raw_result, PDESolutionRecord):
         return raw_result
     actual_method = getattr(raw_result, "method", method_name)
-    solution = (
-        raw_result.solution if isinstance(raw_result, PDEIVPResult) else raw_result
-    )
+    solution = raw_result.solution if isinstance(raw_result, PDEIVPResult) else raw_result
     details = (
-        dict(getattr(raw_result, "details", {}))
-        if isinstance(raw_result, PDEIVPResult)
-        else {}
+        dict(getattr(raw_result, "details", {})) if isinstance(raw_result, PDEIVPResult) else {}
     )
     verification = {"verified": None}
     if isinstance(solution, sp.Equality) and dep_expr_or_func is not None:
@@ -2418,26 +2248,16 @@ def solve_heat_equation_1d_laplace_fourier_formal(
     laplace_variable=None,
     fourier_variable=None,
 ):
-    _, vars_ = _dep_and_vars(
-        dep_expr_or_func, (x, t) if x is not None and t is not None else None
-    )
+    _, vars_ = _dep_and_vars(dep_expr_or_func, (x, t) if x is not None and t is not None else None)
     x, t = vars_
     s = (
         sp.Symbol("s", positive=True, real=True)
         if laplace_variable is None
         else sp.sympify(laplace_variable)
     )
-    k = (
-        sp.Symbol("k", real=True)
-        if fourier_variable is None
-        else sp.sympify(fourier_variable)
-    )
+    k = sp.Symbol("k", real=True) if fourier_variable is None else sp.sympify(fourier_variable)
     Uhat = sp.Function("Uhat")(k, s)
-    phi = (
-        sp.Integer(0)
-        if initial_profile is None
-        else _safe_sub_profile(initial_profile, x)
-    )
+    phi = sp.Integer(0) if initial_profile is None else _safe_sub_profile(initial_profile, x)
     phihat = sp.fourier_transform(phi, x, k)
     alg = sp.Eq((s + sp.sympify(diffusivity) * k**2) * Uhat, phihat)
     return TransformProblemRepresentation(
@@ -2463,26 +2283,13 @@ def solve_advection_reaction_fourier_formal(
     initial_profile=None,
     fourier_variable=None,
 ):
-    _, vars_ = _dep_and_vars(
-        dep_expr_or_func, (x, t) if x is not None and t is not None else None
-    )
+    _, vars_ = _dep_and_vars(dep_expr_or_func, (x, t) if x is not None and t is not None else None)
     x, t = vars_
-    k = (
-        sp.Symbol("k", real=True)
-        if fourier_variable is None
-        else sp.sympify(fourier_variable)
-    )
+    k = sp.Symbol("k", real=True) if fourier_variable is None else sp.sympify(fourier_variable)
     Uhat = sp.Function("Uhat")(k, t)
-    phi = (
-        sp.Integer(0)
-        if initial_profile is None
-        else _safe_sub_profile(initial_profile, x)
-    )
+    phi = sp.Integer(0) if initial_profile is None else _safe_sub_profile(initial_profile, x)
     phihat = sp.fourier_transform(phi, x, k)
-    ode = sp.Eq(
-        sp.diff(Uhat, t) + (sp.sympify(reaction) + sp.I * sp.sympify(speed) * k) * Uhat,
-        0,
-    )
+    ode = sp.Eq(sp.diff(Uhat, t) + (sp.sympify(reaction) + sp.I * sp.sympify(speed) * k) * Uhat, 0)
     return TransformProblemRepresentation(
         method="fourier_advection_reaction_formal",
         transformed_equation=ode,
@@ -2492,9 +2299,7 @@ def solve_advection_reaction_fourier_formal(
             "transformed_unknown": Uhat,
             "initial_transform": phihat,
             "explicit_solution": sp.Eq(
-                Uhat,
-                phihat
-                * sp.exp(-(sp.sympify(reaction) + sp.I * sp.sympify(speed) * k) * t),
+                Uhat, phihat * sp.exp(-(sp.sympify(reaction) + sp.I * sp.sympify(speed) * k) * t)
             ),
         },
     )
@@ -2557,9 +2362,7 @@ def extract_conservation_form_auto(eq_or_expr, dep_expr_or_func, indep_vars=None
     try:
         poly = sp.Poly(zero, ux, ut, domain="EX")
     except Exception as exc:
-        raise ValueError(
-            "Could not treat PDE as polynomial in first derivatives."
-        ) from exc
+        raise ValueError("Could not treat PDE as polynomial in first derivatives.") from exc
     if poly.total_degree() > 1:
         raise NotImplementedError(
             "Automatic conservation-form extraction expects linear dependence on first derivatives."
@@ -2570,9 +2373,7 @@ def extract_conservation_form_auto(eq_or_expr, dep_expr_or_func, indep_vars=None
     rest = sp.expand(zero.subs({ut: 0, ux: 0}))
 
     if sp.simplify(A) == 0:
-        raise NotImplementedError(
-            "Equation is not evolutionary in u_t after linearization."
-        )
+        raise NotImplementedError("Equation is not evolutionary in u_t after linearization.")
 
     # Normalize by A when possible.
     if not A.free_symbols.isdisjoint({ux, ut}):
@@ -2610,9 +2411,7 @@ def extract_conservation_form_auto(eq_or_expr, dep_expr_or_func, indep_vars=None
         - S_expr
     )
     if sp.simplify(reconstructed - (ut + Bn * ux + Rn)) != 0:
-        raise NotImplementedError(
-            "Could not verify automatically extracted conservation form."
-        )
+        raise NotImplementedError("Could not verify automatically extracted conservation form.")
 
     return ConservationFormExtraction(
         indep_vars=(x, t),
@@ -2620,9 +2419,7 @@ def extract_conservation_form_auto(eq_or_expr, dep_expr_or_func, indep_vars=None
         density=uexpr,
         flux=F_expr,
         source=S_expr,
-        normalized_equation=sp.Eq(
-            ut + sp.diff(F_expr, x) + sp.diff(F_expr, uexpr) * ux, S_expr
-        ),
+        normalized_equation=sp.Eq(ut + sp.diff(F_expr, x) + sp.diff(F_expr, uexpr) * ux, S_expr),
         details={"A": A, "B_normalized": Bn, "rest_normalized": Rn},
     )
 
@@ -2646,9 +2443,7 @@ def build_quasilinear_characteristic_system_2vars_robust(
     conditions:
         x(0,xi), t(0,xi), u(0,xi).
     """
-    form = characteristic_form_first_order_2vars(
-        eq_or_expr, dep_expr_or_func, indep_vars
-    )
+    form = characteristic_form_first_order_2vars(eq_or_expr, dep_expr_or_func, indep_vars)
     x, t = form.indep_vars
     s = sp.Symbol("s", real=True) if parameter is None else sp.sympify(parameter)
     xi = sp.Symbol("xi", real=True)
@@ -2665,11 +2460,7 @@ def build_quasilinear_characteristic_system_2vars_robust(
     B = sp.expand(form.B.subs(repl))
     C = sp.expand(form.C.subs(repl))
 
-    x0 = (
-        _safe_sub_profile_general(initial_curve[0], xi)
-        if initial_curve is not None
-        else xi
-    )
+    x0 = _safe_sub_profile_general(initial_curve[0], xi) if initial_curve is not None else xi
     t0 = (
         _safe_sub_profile_general(initial_curve[1], xi)
         if initial_curve is not None
@@ -2726,9 +2517,7 @@ def solve_viscous_burgers_cole_hopf_formal(
     )
 
 
-def entropy_select_riemann_branch_scalar(
-    flux, u_left, u_right, *, u_symbol=None, assumptions=True
-):
+def entropy_select_riemann_branch_scalar(flux, u_left, u_right, *, u_symbol=None, assumptions=True):
     """
     Entropy-aware branch selection for scalar conservation laws with flux f(u).
 
@@ -2764,9 +2553,7 @@ def entropy_select_riemann_branch_scalar(
         "u_symbol": u,
         "convexity_sign": convexity,
         "ordering_sign": diff_sign,
-        "shock_speed": rankine_hugoniot_speed(f, ul, ur, u_symbol=u)
-        if branch == "shock"
-        else None,
+        "shock_speed": rankine_hugoniot_speed(f, ul, ur, u_symbol=u) if branch == "shock" else None,
         "left_speed": sp.simplify(sp.diff(f, u).subs(u, ul)),
         "right_speed": sp.simplify(sp.diff(f, u).subs(u, ur)),
     }
@@ -2818,9 +2605,7 @@ def solve_burgers_family(
             "burgers_family_recognition", recog.normalized_equation, {"family": recog}
         )
 
-    return PDEIVPResult(
-        "burgers_family_recognition", recog.normalized_equation, {"family": recog}
-    )
+    return PDEIVPResult("burgers_family_recognition", recog.normalized_equation, {"family": recog})
 
 
 def solve_scalar_conservation_law_riemann_general(
@@ -2840,9 +2625,7 @@ def solve_scalar_conservation_law_riemann_general(
     if sel["branch"] == "shock":
         s = sel["shock_speed"]
         sol = sp.Piecewise((ul, x < s * t), (ur, True))
-        return PDEIVPResult(
-            "scalar_conservation_riemann_shock", sol, {"selection": sel}
-        )
+        return PDEIVPResult("scalar_conservation_riemann_shock", sol, {"selection": sel})
 
     try:
         inv_candidates = sp.solve(sp.Eq(fp, xi), u, dict=False)
@@ -2864,33 +2647,20 @@ def solve_scalar_conservation_law_riemann_general(
     left_speed = sel["left_speed"]
     right_speed = sel["right_speed"]
     sol = sp.Piecewise(
-        (ul, xi <= left_speed),
-        (chosen, sp.And(xi >= left_speed, xi <= right_speed)),
-        (ur, True),
+        (ul, xi <= left_speed), (chosen, sp.And(xi >= left_speed, xi <= right_speed)), (ur, True)
     )
-    return PDEIVPResult(
-        "scalar_conservation_riemann_rarefaction", sol, {"selection": sel}
-    )
+    return PDEIVPResult("scalar_conservation_riemann_rarefaction", sol, {"selection": sel})
 
 
 def solve_quasilinear_pde_characteristics_implicit(
-    eq_or_expr,
-    dep_expr_or_func,
-    indep_vars=None,
-    *,
-    initial_profile=None,
-    initial_curve_value=0,
+    eq_or_expr, dep_expr_or_func, indep_vars=None, *, initial_profile=None, initial_curve_value=0
 ):
-    form = characteristic_form_first_order_2vars(
-        eq_or_expr, dep_expr_or_func, indep_vars
-    )
+    form = characteristic_form_first_order_2vars(eq_or_expr, dep_expr_or_func, indep_vars)
     x, t = form.indep_vars
     uexpr = form.dep_function
 
     if initial_profile is None:
-        raise ValueError(
-            "initial_profile is required for implicit characteristic solving."
-        )
+        raise ValueError("initial_profile is required for implicit characteristic solving.")
 
     nonautonomous = False
     for coeff in (form.A, form.B, form.C):
@@ -3053,29 +2823,15 @@ def fit_constant_coefficient_solution_2d(
 
 
 def solve_linear_constant_coefficient_pde_bvp_2d(
-    eq_or_expr,
-    dep_expr_or_func,
-    indep_vars=None,
-    *,
-    ics=None,
-    bcs=None,
-    assumptions=True,
+    eq_or_expr, dep_expr_or_func, indep_vars=None, *, ics=None, bcs=None, assumptions=True
 ):
     """Canonical-first restricted BVP/IVP fitting wrapper for 2D constant-coefficient PDEs."""
     uexpr, vars_ = _dep_and_vars(dep_expr_or_func, indep_vars)
     base = solve_linear_constant_coefficient_pde(
-        eq_or_expr,
-        uexpr,
-        vars_,
-        ics=None,
-        bcs=None,
-        assumptions=assumptions,
-        canonical_first=True,
+        eq_or_expr, uexpr, vars_, ics=None, bcs=None, assumptions=assumptions, canonical_first=True
     )
     if isinstance(base, PDEGeneralSolutionResult):
-        fitted = fit_constant_coefficient_solution_2d(
-            base, uexpr, vars_, ics=ics, bcs=bcs
-        )
+        fitted = fit_constant_coefficient_solution_2d(base, uexpr, vars_, ics=ics, bcs=bcs)
         if fitted is not None:
             return fitted
     return base

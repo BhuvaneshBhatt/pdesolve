@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 import sympy as sp
 
-from ._classical_shared import _dep_and_vars, _as_zero_expr
+from .classical_symbolic_helpers import _as_zero_expr, _dep_and_vars
 
 
 def _core():
@@ -99,29 +99,21 @@ def _normalize_condition_dicts(ics=None, bcs=None):
                     dx_order = count
             if dx_order == 1:
                 norm_bcs.append(
-                    PDEBoundaryCondition1D(
-                        x if not x.has(*lhs.expr.args) else 0, "neumann", eq.rhs
-                    )
+                    PDEBoundaryCondition1D(x if not x.has(*lhs.expr.args) else 0, "neumann", eq.rhs)
                 )
 
     if isinstance(ics, dict):
         if "initial_profile" in ics:
             norm_ics.append(
-                PDEInitialCondition1D(
-                    ics.get("curve_value", 0), ics["initial_profile"], 0
-                )
+                PDEInitialCondition1D(ics.get("curve_value", 0), ics["initial_profile"], 0)
             )
         if "initial_displacement" in ics:
             norm_ics.append(
-                PDEInitialCondition1D(
-                    ics.get("curve_value", 0), ics["initial_displacement"], 0
-                )
+                PDEInitialCondition1D(ics.get("curve_value", 0), ics["initial_displacement"], 0)
             )
         if "initial_velocity" in ics:
             norm_ics.append(
-                PDEInitialCondition1D(
-                    ics.get("curve_value", 0), ics["initial_velocity"], 1
-                )
+                PDEInitialCondition1D(ics.get("curve_value", 0), ics["initial_velocity"], 1)
             )
         for key in ("equations", "equation", "initial_equation"):
             payload = ics.get(key)
@@ -162,9 +154,7 @@ def _normalize_condition_dicts(ics=None, bcs=None):
             lcoef = left[0] if isinstance(left, (tuple, list)) else 1
             rcoef = right[0] if isinstance(right, (tuple, list)) else 1
             lval = left[1] if isinstance(left, (tuple, list)) and len(left) > 1 else 0
-            rval = (
-                right[1] if isinstance(right, (tuple, list)) and len(right) > 1 else 0
-            )
+            rval = right[1] if isinstance(right, (tuple, list)) and len(right) > 1 else 0
             norm_bcs.extend(
                 [
                     PDEBoundaryCondition1D(0, "robin", lval, coefficient=lcoef),
@@ -187,14 +177,10 @@ def _normalize_condition_dicts(ics=None, bcs=None):
     return tuple(norm_ics), tuple(norm_bcs)
 
 
-def _canonical_linear_pde_1d_xt(
-    eq_or_expr, dep_expr_or_func, indep_vars=None, *, assumptions=True
-):
+def _canonical_linear_pde_1d_xt(eq_or_expr, dep_expr_or_func, indep_vars=None, *, assumptions=True):
     uexpr, vars_ = _dep_and_vars(dep_expr_or_func, indep_vars)
     if len(vars_) != 2:
-        raise ValueError(
-            "Expected exactly two variables for canonical 1+1 PDE detection."
-        )
+        raise ValueError("Expected exactly two variables for canonical 1+1 PDE detection.")
     x, t = vars_
     zero = _as_zero_expr(eq_or_expr)
     ux = sp.diff(uexpr, x)
@@ -209,13 +195,7 @@ def _canonical_linear_pde_1d_xt(
     residual = sp.expand(zero.subs({uxx: 0, utt: 0, ut: 0, ux: 0, uexpr: 0}))
     c_u = sp.expand(sp.diff(zero.subs({uxx: 0, utt: 0, ut: 0, ux: 0}), uexpr))
     test = sp.expand(
-        zero
-        - c_uxx * uxx
-        - c_utt * utt
-        - c_ut * ut
-        - c_ux * ux
-        - c_u * uexpr
-        - residual
+        zero - c_uxx * uxx - c_utt * utt - c_ut * ut - c_ux * ux - c_u * uexpr - residual
     )
     if test != 0:
         return None
@@ -264,15 +244,10 @@ def _canonical_linear_pde_1d_xt(
         c_uyy = sp.expand(sp.diff(zero, uyy))
         c_uy = sp.expand(sp.diff(zero, sp.diff(uexpr, y)))
         residual2 = sp.expand(
-            zero.subs(
-                {uxx: 0, uyy: 0, sp.diff(uexpr, x): 0, sp.diff(uexpr, y): 0, uexpr: 0}
-            )
+            zero.subs({uxx: 0, uyy: 0, sp.diff(uexpr, x): 0, sp.diff(uexpr, y): 0, uexpr: 0})
         )
         c_u2 = sp.expand(
-            sp.diff(
-                zero.subs({uxx: 0, uyy: 0, sp.diff(uexpr, x): 0, sp.diff(uexpr, y): 0}),
-                uexpr,
-            )
+            sp.diff(zero.subs({uxx: 0, uyy: 0, sp.diff(uexpr, x): 0, sp.diff(uexpr, y): 0}), uexpr)
         )
         test2 = sp.expand(
             zero
@@ -304,9 +279,7 @@ def _canonical_linear_pde_1d_xt(
     return None
 
 
-def _recognize_base_family(
-    eq_or_expr, dep_expr_or_func, indep_vars=None, *, assumptions=True
-):
+def _recognize_base_family(eq_or_expr, dep_expr_or_func, indep_vars=None, *, assumptions=True):
     """Recognize a few important scalar PDE families in 1+1 or 2D."""
     uexpr, vars_ = _dep_and_vars(dep_expr_or_func, indep_vars)
     zero_eq = _core().canonicalize_pde_problem(eq_or_expr, uexpr, vars_).equation
@@ -318,33 +291,21 @@ def _recognize_base_family(
         uxx = sp.diff(uexpr, x, 2)
         utt = sp.diff(uexpr, t, 2)
         # Burgers / viscous Burgers: u_t + u u_x = nu u_xx
-        if (
-            sp.simplify(sp.diff(zero, ut) - 1) == 0
-            and sp.simplify(sp.diff(zero, uxx)) != 0
-        ):
+        if sp.simplify(sp.diff(zero, ut) - 1) == 0 and sp.simplify(sp.diff(zero, uxx)) != 0:
             coeff_uxx = -sp.expand(sp.diff(zero, uxx))
             rest = sp.expand(zero - ut + coeff_uxx * uxx)
             if sp.simplify(rest - uexpr * ux) == 0:
-                fam = (
-                    "viscous_burgers"
-                    if sp.simplify(coeff_uxx) != 0
-                    else "inviscid_burgers"
-                )
+                fam = "viscous_burgers" if sp.simplify(coeff_uxx) != 0 else "inviscid_burgers"
                 return PDEFamilyRecognition(fam, zero_eq, {"viscosity": coeff_uxx})
         # Telegraph: u_tt + a u_t = c^2 u_xx + b u
-        if (
-            sp.simplify(sp.diff(zero, utt) - 1) == 0
-            and sp.simplify(sp.diff(zero, uxx)) != 0
-        ):
+        if sp.simplify(sp.diff(zero, utt) - 1) == 0 and sp.simplify(sp.diff(zero, uxx)) != 0:
             c2 = -sp.expand(sp.diff(zero, uxx))
             a = sp.expand(sp.diff(zero.subs({utt: 0, uxx: 0}), ut))
             b = -sp.expand(sp.diff(zero.subs({utt: 0, uxx: 0, ut: 0}), uexpr))
             rest = sp.expand(zero - utt + c2 * uxx - a * ut + b * uexpr)
             if sp.simplify(rest) == 0:
                 return PDEFamilyRecognition(
-                    "telegraph_like",
-                    zero_eq,
-                    {"wave_speed_sq": c2, "damping": a, "mass": b},
+                    "telegraph_like", zero_eq, {"wave_speed_sq": c2, "damping": a, "mass": b}
                 )
         # Klein-Gordon/Helmholtz/Laplace/Poisson style
         cls = None
@@ -360,22 +321,15 @@ def _recognize_base_family(
             "parabolic",
             "ultrahyperbolic",
         }:
-            params = {
-                "classification": cls.classification,
-                "matrix": cls.coefficient_matrix,
-            }
+            params = {"classification": cls.classification, "matrix": cls.coefficient_matrix}
             if cls.classification == "elliptic" and len(vars_) == 2:
                 params["family_hint"] = "laplace_helmholtz_poisson_like"
             return PDEFamilyRecognition("linear_second_order", zero_eq, params)
     return None
 
 
-def recognize_pde_family(
-    eq_or_expr, dep_expr_or_func, indep_vars=None, *, assumptions=True
-):
-    base = _recognize_base_family(
-        eq_or_expr, dep_expr_or_func, indep_vars, assumptions=assumptions
-    )
+def recognize_pde_family(eq_or_expr, dep_expr_or_func, indep_vars=None, *, assumptions=True):
+    base = _recognize_base_family(eq_or_expr, dep_expr_or_func, indep_vars, assumptions=assumptions)
     uexpr, vars_ = _dep_and_vars(dep_expr_or_func, indep_vars)
     zero_eq = _core().canonicalize_pde_problem(eq_or_expr, uexpr, vars_).equation
     zero = _as_zero_expr(zero_eq)
@@ -440,9 +394,7 @@ def recognize_pde_family(
                         },
                     )
                 return PDEFamilyRecognition(
-                    "transport_reaction",
-                    zero_eq,
-                    {"time_coeff": A, "transport": B, "reaction": D},
+                    "transport_reaction", zero_eq, {"time_coeff": A, "transport": B, "reaction": D}
                 )
         except Exception:
             pass
@@ -466,9 +418,7 @@ def recognize_pde_family(
     return base
 
 
-def detect_scalar_conservation_law_family(
-    eq_or_expr, dep_expr_or_func, indep_vars=None
-):
+def detect_scalar_conservation_law_family(eq_or_expr, dep_expr_or_func, indep_vars=None):
     cons = _core().detect_conservation_law_1d(eq_or_expr, dep_expr_or_func, indep_vars)
     uexpr = cons.dep_function
     x, t = cons.indep_vars
@@ -520,9 +470,7 @@ def detect_burgers_family(eq_or_expr, dep_expr_or_func, indep_vars=None):
     Cux_hold = sp.expand(Cux.subs({uexpr: usym}))
     if sp.simplify(sp.diff(Cux_hold, usym, 2)) != 0:
         return None
-    alpha_hold = (
-        sp.simplify(Cux_hold / usym) if usym in Cux_hold.free_symbols else sp.Integer(0)
-    )
+    alpha_hold = sp.simplify(Cux_hold / usym) if usym in Cux_hold.free_symbols else sp.Integer(0)
     if alpha_hold.has(x, t):
         return None
 
@@ -530,7 +478,5 @@ def detect_burgers_family(eq_or_expr, dep_expr_or_func, indep_vars=None):
     forcing = sp.simplify(-rest / A)
     family = "viscous_burgers" if sp.simplify(nu) != 0 else "inviscid_burgers"
     return PDEFamilyRecognition(
-        family,
-        sp.Eq(sp.expand(zero), 0),
-        {"alpha": alpha_hold, "nu": nu, "forcing": forcing},
+        family, sp.Eq(sp.expand(zero), 0), {"alpha": alpha_hold, "nu": nu, "forcing": forcing}
     )

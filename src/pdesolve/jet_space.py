@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
 
 import sympy as sp
 
-from .utils import (
+from .symbolic_algebra_helpers import (
     add_multiindex,
     enumerate_nonzero_multiindices,
     equation_to_zero_expr,
@@ -24,9 +24,7 @@ class ScalarJetSpaceKD:
     Coordinates are indexed by multi-indices J.
     """
 
-    def __init__(
-        self, indep_vars: Sequence[sp.Symbol], dep_name: str = "u", max_order: int = 3
-    ):
+    def __init__(self, indep_vars: Sequence[sp.Symbol], dep_name: str = "u", max_order: int = 3):
         self.xs = tuple(indep_vars)
         self.k = len(self.xs)
         self.dep_name = dep_name
@@ -184,18 +182,12 @@ def build_scalar_general_solved_pde_from_equation(
     best = (
         choose_principal_multiindex_scalar_kd(jet, zero_expr, max_principal_order)
         if principal_multiindex is None
-        else score_principal_multiindex_candidate(
-            jet, zero_expr, tuple(principal_multiindex)
-        )
+        else score_principal_multiindex_candidate(jet, zero_expr, tuple(principal_multiindex))
     )
     if best.solved_rhs is None:
-        raise ValueError(
-            f"Could not solve PDE for principal derivative {best.derivative_symbol}."
-        )
+        raise ValueError(f"Could not solve PDE for principal derivative {best.derivative_symbol}.")
     return ScalarGeneralSolvedPDEKD(
-        jet=jet,
-        G=sp.expand(best.solved_rhs),
-        principal_multiindex=best.principal_multiindex,
+        jet=jet, G=sp.expand(best.solved_rhs), principal_multiindex=best.principal_multiindex
     ), best
 
 
@@ -290,9 +282,7 @@ def score_principal_multiindex_candidate(jet, zero_expr, P):
     details["rhs_contains_principal_family"] = chosen_pool is invalid
     details["rhs_complexity"] = expr_complexity(rhs)
     details["remaining_generator_count"] = sum(
-        1
-        for J in jet.all_indices()
-        if multiindex_sum(J) >= 1 and not multiindex_geq(J, P)
+        1 for J in jet.all_indices() if multiindex_sum(J) >= 1 and not multiindex_geq(J, P)
     )
 
     score += 5 if valid else 1

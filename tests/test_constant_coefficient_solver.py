@@ -3,9 +3,9 @@ import sympy as sp
 from pdesolve.classical import (
     detect_linear_constant_coefficient_pde,
     particular_solution_polynomial_rhs_inverse_operator,
+    pdesolve,
     solve_linear_constant_coefficient_pde,
     solve_simply_supported_beam_ibvp,
-    pdesolve,
 )
 
 
@@ -13,12 +13,7 @@ def test_detect_linear_constant_coefficient_pde_and_operator_poly():
     x, t = sp.symbols("x t", real=True)
     u = sp.Function("u")
     ccpde = detect_linear_constant_coefficient_pde(
-        sp.Eq(
-            sp.diff(u(x, t), t, 2)
-            - 2 * sp.diff(u(x, t), x, t)
-            - 3 * sp.diff(u(x, t), x, 2),
-            0,
-        ),
+        sp.Eq(sp.diff(u(x, t), t, 2) - 2 * sp.diff(u(x, t), x, t) - 3 * sp.diff(u(x, t), x, 2), 0),
         u(x, t),
         (x, t),
     )

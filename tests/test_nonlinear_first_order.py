@@ -1,14 +1,14 @@
 import sympy as sp
 
 from pdesolve.classical import (
-    extract_conservation_form_auto,
-    detect_burgers_family,
-    solve_scalar_conservation_law_riemann_general,
-    entropy_select_riemann_branch_scalar,
-    solve_viscous_burgers_cole_hopf_formal,
     build_quasilinear_characteristic_system_2vars_robust,
-    solve_quasilinear_pde_characteristics_implicit,
+    detect_burgers_family,
+    entropy_select_riemann_branch_scalar,
+    extract_conservation_form_auto,
     pdesolve,
+    solve_quasilinear_pde_characteristics_implicit,
+    solve_scalar_conservation_law_riemann_general,
+    solve_viscous_burgers_cole_hopf_formal,
 )
 
 
@@ -24,9 +24,7 @@ def test_extract_conservation_form_auto_burgers():
 def test_detect_burgers_family_viscous():
     x, t, nu = sp.symbols("x t nu", positive=True, real=True)
     u = sp.Function("u")
-    eq = sp.Eq(
-        sp.diff(u(x, t), t) + u(x, t) * sp.diff(u(x, t), x), nu * sp.diff(u(x, t), x, 2)
-    )
+    eq = sp.Eq(sp.diff(u(x, t), t) + u(x, t) * sp.diff(u(x, t), x), nu * sp.diff(u(x, t), x, 2))
     fam = detect_burgers_family(eq, u, (x, t))
     assert fam is not None
     assert fam.family == "viscous_burgers"
@@ -38,9 +36,7 @@ def test_general_riemann_solver_convex_flux():
     flux = usym**2 / 2
     sel = entropy_select_riemann_branch_scalar(flux, 0, 1, u_symbol=usym)
     assert sel["branch"] == "rarefaction"
-    res = solve_scalar_conservation_law_riemann_general(
-        flux, 1, 0, x=x, t=t, u_symbol=usym
-    )
+    res = solve_scalar_conservation_law_riemann_general(flux, 1, 0, x=x, t=t, u_symbol=usym)
     assert res.method == "scalar_conservation_riemann_shock"
 
 
@@ -69,11 +65,7 @@ def test_quasilinear_implicit_solver_and_dispatch():
     x, t = sp.symbols("x t", real=True)
     u = sp.Function("u")
     eq = sp.Eq(sp.diff(u(x, t), t) + u(x, t) * sp.diff(u(x, t), x), 0)
-    res = solve_quasilinear_pde_characteristics_implicit(
-        eq, u, (x, t), initial_profile=x**2
-    )
+    res = solve_quasilinear_pde_characteristics_implicit(eq, u, (x, t), initial_profile=x**2)
     assert res.method == "quasilinear_implicit_characteristics"
-    auto = pdesolve(
-        eq, u, (x, t), method="quasilinear_implicit", ics={"initial_profile": x**2}
-    )
+    auto = pdesolve(eq, u, (x, t), method="quasilinear_implicit", ics={"initial_profile": x**2})
     assert auto.method == "quasilinear_implicit_characteristics"

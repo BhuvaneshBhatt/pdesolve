@@ -5,18 +5,11 @@ from typing import Any
 
 import sympy as sp
 
-from .conditions import (
-    ConditionModel,
-    summarize_condition_model,
-    classify_condition_equation,
-)
+from .conditions import ConditionModel, classify_condition_equation, summarize_condition_model
 from .domains import DomainGeometry
-from .results import SeriesPDEResult, EigenfunctionExpansionResult
+from .results import EigenfunctionExpansionResult, SeriesPDEResult
 from .separation_general import separate_product_pde
-from .sturm_liouville import (
-    SturmLiouvilleProblem,
-    solve_regular_constant_sturm_liouville,
-)
+from .sturm_liouville import SturmLiouvilleProblem, solve_regular_constant_sturm_liouville
 
 
 @dataclass(frozen=True)
@@ -55,28 +48,16 @@ def build_separable_geometry_plan(
             )
         if "robin" in bc_kinds:
             return SeparableGeometryPlan(
-                kind,
-                "robin",
-                "sturm_liouville_robin",
-                spatial_variables,
-                {"series_family": family},
+                kind, "robin", "sturm_liouville_robin", spatial_variables, {"series_family": family}
             )
     if kind == "rectangle":
         if not bc_kinds or bc_kinds == {"dirichlet"}:
             return SeparableGeometryPlan(
-                kind,
-                "dirichlet",
-                "tensor_sine",
-                spatial_variables,
-                {"series_family": family},
+                kind, "dirichlet", "tensor_sine", spatial_variables, {"series_family": family}
             )
         if bc_kinds == {"neumann"}:
             return SeparableGeometryPlan(
-                kind,
-                "neumann",
-                "tensor_cosine",
-                spatial_variables,
-                {"series_family": family},
+                kind, "neumann", "tensor_cosine", spatial_variables, {"series_family": family}
             )
         if "robin" in bc_kinds:
             return SeparableGeometryPlan(
@@ -88,11 +69,7 @@ def build_separable_geometry_plan(
             )
     if kind == "disk":
         return SeparableGeometryPlan(
-            kind,
-            "radial_angular",
-            "bessel_fourier",
-            spatial_variables,
-            {"series_family": family},
+            kind, "radial_angular", "bessel_fourier", spatial_variables, {"series_family": family}
         )
     if kind == "polar_annulus":
         return SeparableGeometryPlan(
@@ -127,22 +104,13 @@ def _condition_rhs_for_kind(model: ConditionModel | None, kind: str):
     spatial = _spatial_vars(model)
     tvar = _time_var(model)
     for cond in model.initial_conditions:
-        if (
-            classify_condition_equation(
-                cond, time_variable=tvar, spatial_variables=spatial
-            )
-            == kind
-        ):
+        if classify_condition_equation(cond, time_variable=tvar, spatial_variables=spatial) == kind:
             return cond.equation.rhs
     return None
 
 
 def _boundary_rhs(
-    model: ConditionModel | None,
-    *,
-    variable=None,
-    location=None,
-    kind: str | None = None,
+    model: ConditionModel | None, *, variable=None, location=None, kind: str | None = None
 ):
     if model is None:
         return None
@@ -158,9 +126,7 @@ def _boundary_rhs(
             except Exception:
                 if cond.location != location:
                     continue
-        ck = classify_condition_equation(
-            cond, time_variable=tvar, spatial_variables=spatial
-        )
+        ck = classify_condition_equation(cond, time_variable=tvar, spatial_variables=spatial)
         if kind is not None and ck != kind:
             continue
         return cond.equation.rhs
@@ -184,16 +150,8 @@ def _rectangle_lengths(geometry: DomainGeometry | None):
         return None, None
     xext = getattr(geometry, "extents", {}).get("x")
     yext = getattr(geometry, "extents", {}).get("y")
-    xl = (
-        sp.simplify(xext[1] - xext[0])
-        if isinstance(xext, tuple) and len(xext) == 2
-        else None
-    )
-    yl = (
-        sp.simplify(yext[1] - yext[0])
-        if isinstance(yext, tuple) and len(yext) == 2
-        else None
-    )
+    xl = sp.simplify(xext[1] - xext[0]) if isinstance(xext, tuple) and len(xext) == 2 else None
+    yl = sp.simplify(yext[1] - yext[0]) if isinstance(yext, tuple) and len(yext) == 2 else None
     return xl, yl
 
 
@@ -225,9 +183,7 @@ def _regular_interval_spectrum(x, L, boundary_family):
     X = sp.Function("X")(x)
     try:
         return solve_regular_constant_sturm_liouville(
-            SturmLiouvilleProblem(
-                x, X, 1, 0, 1, (0, L), boundary_family, boundary_family
-            )
+            SturmLiouvilleProblem(x, X, 1, 0, 1, (0, L), boundary_family, boundary_family)
         )
     except Exception:
         return None
@@ -239,9 +195,7 @@ def execute_separation_plan(
     """Execute a structured separation/series plan using ConditionModel and DomainGeometry directly."""
     plan = (
         plan
-        or (getattr(problem.canonical_representation, "details", {}) or {}).get(
-            "separation_plan"
-        )
+        or (getattr(problem.canonical_representation, "details", {}) or {}).get("separation_plan")
         or problem.details.get("separation_plan")
     )
     if plan is None:
@@ -256,11 +210,7 @@ def execute_separation_plan(
                     "dirichlet",
                     "sine",
                     (problem.indep_vars[0],),
-                    {
-                        "series_family": getattr(
-                            problem.profile, "canonical_family", None
-                        )
-                    },
+                    {"series_family": getattr(problem.profile, "canonical_family", None)},
                 )
             elif btype == "neumann_homogeneous_interval":
                 plan = SeparableGeometryPlan(
@@ -268,11 +218,7 @@ def execute_separation_plan(
                     "neumann",
                     "cosine",
                     (problem.indep_vars[0],),
-                    {
-                        "series_family": getattr(
-                            problem.profile, "canonical_family", None
-                        )
-                    },
+                    {"series_family": getattr(problem.profile, "canonical_family", None)},
                 )
         if plan is None:
             raise NotImplementedError("No structured separation plan available.")
@@ -293,9 +239,7 @@ def execute_separation_plan(
         profile = _condition_rhs_for_kind(cond_model, "profile")
         velocity = _condition_rhs_for_kind(cond_model, "velocity")
         if profile is None and isinstance(getattr(problem, "ics", None), dict):
-            profile = problem.ics.get(
-                "initial_profile", problem.ics.get("initial_displacement")
-            )
+            profile = problem.ics.get("initial_profile", problem.ics.get("initial_displacement"))
         if velocity is None and isinstance(getattr(problem, "ics", None), dict):
             velocity = problem.ics.get(
                 "initial_velocity", problem.ics.get("initial_time_derivative")
@@ -315,9 +259,7 @@ def execute_separation_plan(
                     plan,
                     eigen_data={
                         "basis": "sine",
-                        "sturm_liouville": _regular_interval_spectrum(
-                            x, L, "dirichlet"
-                        ),
+                        "sturm_liouville": _regular_interval_spectrum(x, L, "dirichlet"),
                     },
                 )
             if plan.boundary_family == "neumann":
@@ -420,19 +362,11 @@ def execute_separation_plan(
     except (ValueError, NotImplementedError):
         return _as_series_result(
             classical_mod.separate_variables_structured(
-                problem.equation,
-                uexpr,
-                vars_,
-                assumptions=problem.assumptions,
-                bcs=problem.bcs,
+                problem.equation, uexpr, vars_, assumptions=problem.assumptions, bcs=problem.bcs
             ).ansatz,
             plan,
             native=False,
         )
 
 
-__all__ = [
-    "SeparableGeometryPlan",
-    "build_separable_geometry_plan",
-    "execute_separation_plan",
-]
+__all__ = ["SeparableGeometryPlan", "build_separable_geometry_plan", "execute_separation_plan"]

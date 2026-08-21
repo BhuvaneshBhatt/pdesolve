@@ -1,12 +1,12 @@
 import sympy as sp
 
 from pdesolve import (
+    ConservationLawRarefactionResult,
+    ConservationLawShockResult,
+    analyze_conservation_law,
     canonicalize_scalar_conservation_law,
     parse_conservation_law_initial_data,
-    analyze_conservation_law,
     verify_conservation_law_solution,
-    ConservationLawShockResult,
-    ConservationLawRarefactionResult,
 )
 
 
@@ -58,14 +58,8 @@ def test_verify_conservation_rarefaction_solution_smoke():
     res = analyze_conservation_law(
         eq, u, (x, t), ics={"initial_profile": sp.Piecewise((0, x < 0), (1, True))}
     )
-    assert isinstance(
-        res.details["structured_result"], ConservationLawRarefactionResult
-    )
+    assert isinstance(res.details["structured_result"], ConservationLawRarefactionResult)
     report = verify_conservation_law_solution(
-        eq,
-        sp.Eq(u, res.solution),
-        u,
-        (x, t),
-        structured_result=res.details["structured_result"],
+        eq, sp.Eq(u, res.solution), u, (x, t), structured_result=res.details["structured_result"]
     )
     assert report.pde_verified is True

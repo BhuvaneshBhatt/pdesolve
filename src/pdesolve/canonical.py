@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import replace
-from typing import Sequence
 
 import sympy as sp
 
@@ -24,9 +24,7 @@ def _is_affine_linear_in(expr: sp.Expr, vars: Sequence[sp.Symbol]) -> bool:
     return poly.total_degree() <= 1
 
 
-def canonicalize_coordinate_expression(
-    expr: sp.Expr, vars: Sequence[sp.Symbol]
-) -> sp.Expr:
+def canonicalize_coordinate_expression(expr: sp.Expr, vars: Sequence[sp.Symbol]) -> sp.Expr:
     """Best-effort canonicalization for coordinates/invariants.
 
     Rules:
@@ -53,17 +51,11 @@ def canonicalize_coordinate_expression(
 def canonicalize_coordinate_chart(
     chart: CharacteristicCoordinatesResult, vars: Sequence[sp.Symbol]
 ) -> CharacteristicCoordinatesResult:
-    invariants = tuple(
-        canonicalize_coordinate_expression(e, vars) for e in chart.invariants
-    )
-    transverse = tuple(
-        canonicalize_coordinate_expression(e, vars) for e in chart.transverse
-    )
+    invariants = tuple(canonicalize_coordinate_expression(e, vars) for e in chart.invariants)
+    transverse = tuple(canonicalize_coordinate_expression(e, vars) for e in chart.transverse)
     validity = tuple(dict.fromkeys(sp.simplify(v) for v in chart.validity_conditions))
     jacobian = sp.simplify(
-        sp.Matrix(
-            [[sp.diff(c, v) for v in vars] for c in invariants + transverse]
-        ).det()
+        sp.Matrix([[sp.diff(c, v) for v in vars] for c in invariants + transverse]).det()
     )
     return replace(
         chart,
@@ -126,8 +118,7 @@ def _normalize_by_highest_derivative_coefficient(expr: sp.Expr) -> sp.Expr:
         factor != 0
         and factor != 1
         and all(
-            getattr(n, "is_Function", False) is False
-            and not isinstance(n, sp.Derivative)
+            getattr(n, "is_Function", False) is False and not isinstance(n, sp.Derivative)
             for n in sp.preorder_traversal(factor)
         )
     ):

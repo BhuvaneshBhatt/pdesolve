@@ -1,19 +1,20 @@
 from __future__ import annotations
 
-import sympy as sp
 from collections import OrderedDict
 from dataclasses import replace
 from threading import RLock
 
-from .results import PDEProblemProfile, PDESolverMethodCandidate, PDESolutionPlan
-from .recognition import build_canonical_representation, recognize_pde_structure
+import sympy as sp
+
+from .boundary_model import build_boundary_model
+from .condition_analysis import analyze_conditions
 from .conditions import parse_conditions, summarize_condition_model
 from .domains import infer_domain_geometry, summarize_domain_geometry
-from .condition_analysis import analyze_conditions
+from .kernels import build_kernel_method_plan
+from .recognition import build_canonical_representation, recognize_pde_structure
+from .results import PDEProblemProfile, PDESolutionPlan, PDESolverMethodCandidate
 from .separation_framework import build_separable_geometry_plan
 from .transform_framework import build_transform_method_plan
-from .kernels import build_kernel_method_plan
-from .boundary_model import build_boundary_model
 
 
 def _cache_key(*objs):
@@ -48,9 +49,7 @@ def _refine_family(normalized, uexpr, vars_, fallback):
     if len(vars_) == 2:
         x, t = vars_
         zero = sp.expand(
-            (normalized.lhs - normalized.rhs)
-            if isinstance(normalized, sp.Equality)
-            else normalized
+            (normalized.lhs - normalized.rhs) if isinstance(normalized, sp.Equality) else normalized
         )
         ut = sp.diff(uexpr, t)
         uxx = sp.diff(uexpr, x, 2)
@@ -75,34 +74,24 @@ def _refine_family(normalized, uexpr, vars_, fallback):
 
 
 def preprocess_pde_problem(
-    eq_or_expr,
-    dep_expr_or_func,
-    indep_vars=None,
-    *,
-    assumptions=True,
-    max_principal_order=3,
+    eq_or_expr, dep_expr_or_func, indep_vars=None, *, assumptions=True, max_principal_order=3
 ) -> PDEProblemProfile:
-    key = _cache_key(
-        eq_or_expr, dep_expr_or_func, indep_vars, assumptions, max_principal_order
-    )
+    key = _cache_key(eq_or_expr, dep_expr_or_func, indep_vars, assumptions, max_principal_order)
     with _PREPROCESS_CACHE_LOCK:
         cached = _PREPROCESS_CACHE.get(key)
         if cached is not None:
             _PREPROCESS_CACHE.move_to_end(key)
             return _profile_copy(cached)
-    from ._classical_shared import _dep_and_vars, _as_zero_expr
     from .classical_methods import (
-        canonicalize_pde_problem,
         _infer_pde_order,
+        canonicalize_pde_problem,
         characteristic_form_first_order_2vars,
-        detect_first_order_linear_form_2vars,
         classify_linear_second_order_pde,
+        detect_first_order_linear_form_2vars,
         detect_linear_constant_coefficient_pde,
     )
-    from .family_recognizers import (
-        recognize_pde_family,
-        detect_scalar_conservation_law_family,
-    )
+    from .classical_symbolic_helpers import _as_zero_expr, _dep_and_vars
+    from .family_recognizers import detect_scalar_conservation_law_family, recognize_pde_family
 
     uexpr, vars_ = _dep_and_vars(dep_expr_or_func, indep_vars)
     can = canonicalize_pde_problem(eq_or_expr, uexpr, vars_, assumptions=assumptions)
@@ -152,9 +141,9 @@ def preprocess_pde_problem(
     except Exception as exc:
         details["canonical_family_error"] = str(exc)
     try:
-        from .pde import (
-            build_scalar_jet_equation_from_sympy_pde,
+        from .jet_space import (
             build_scalar_general_solved_pde_from_equation,
+            build_scalar_jet_equation_from_sympy_pde,
         )
 
         jet, pde = build_scalar_jet_equation_from_sympy_pde(
@@ -227,9 +216,7 @@ def _normalized_problem_geometry(
             else None
         )
     if cmodel is None:
-        cmodel = parse_conditions(
-            ics, bcs, dep_expr=dep_expr, indep_vars=tuple(indep_vars)
-        )
+        cmodel = parse_conditions(ics, bcs, dep_expr=dep_expr, indep_vars=tuple(indep_vars))
     if geom is None:
         geom = infer_domain_geometry(
             indep_vars=tuple(indep_vars), bcs=bcs, condition_model=cmodel, domain=domain
@@ -322,9 +309,7 @@ def rank_pde_solution_methods(
 
     def add(method, score, *reasons, **details):
         cands.append(
-            PDESolverMethodCandidate(
-                method, int(score), tuple(str(r) for r in reasons), details
-            )
+            PDESolverMethodCandidate(method, int(score), tuple(str(r) for r in reasons), details)
         )
 
     if condition_analysis is not None and condition_analysis.issues:
@@ -354,9 +339,7 @@ def rank_pde_solution_methods(
             transform_family=transform_plan.transform_family,
         )
     if kernel_plan is not None:
-        recognition = (getattr(kernel_plan, "metadata", {}) or {}).get(
-            "recognition", {}
-        ) or {}
+        recognition = (getattr(kernel_plan, "metadata", {}) or {}).get("recognition", {}) or {}
         # Automatic kernel routing is reserved for distributionally forced
         # problems. Homogeneous IVPs should use their condition-aware heat,
         # wave, transform, or series solvers; fundamental solutions remain
@@ -376,21 +359,13 @@ def rank_pde_solution_methods(
     nonlinear_info = None
     recognitions = tuple(profile.details.get("recognitions", ()) or ())
     for rec in recognitions:
-        if (
-            rec.recognized
-            and rec.solver_hint
-            and rec.solver_hint not in {c.method for c in cands}
-        ):
+        if rec.recognized and rec.solver_hint and rec.solver_hint not in {c.method for c in cands}:
             # Family recognizers intentionally lack enough condition/domain
             # context to select these concrete solvers.  The contextual rules
             # below add them only when their actual applicability is known.
             if rec.solver_hint in {"heat_dirichlet_series", "wave_dalembert"}:
                 continue
-            bonus = (
-                4
-                if rec.family in {"generalized_clairaut", "scalar_conservation_law"}
-                else 0
-            )
+            bonus = 4 if rec.family in {"generalized_clairaut", "scalar_conservation_law"} else 0
             add(
                 rec.solver_hint,
                 70 + bonus,
@@ -409,17 +384,9 @@ def rank_pde_solution_methods(
             add("first_order", 70, "first-order characteristic form detected")
         if profile.conservation_law is not None:
             cons_score = 60 if profile.first_order_linear is not None else 82
-            add(
-                "conservation_law",
-                cons_score,
-                "scalar conservation-law structure detected",
-            )
+            add("conservation_law", cons_score, "scalar conservation-law structure detected")
             if fam == "inviscid_burgers" and "profile" in ic_kinds:
-                add(
-                    "burgers_implicit",
-                    94,
-                    "Burgers IVP supports implicit characteristic solution",
-                )
+                add("burgers_implicit", 94, "Burgers IVP supports implicit characteristic solution")
         if profile.first_order_linear is None:
             try:
                 from .first_order_nonlinear import analyze_first_order_nonlinear_pde
@@ -453,11 +420,7 @@ def rank_pde_solution_methods(
                         72,
                         "first-order nonlinear PDE supports complete-integral search",
                     )
-                    add(
-                        "charpit",
-                        80,
-                        "first-order nonlinear PDE supports Charpit search",
-                    )
+                    add("charpit", 80, "first-order nonlinear PDE supports Charpit search")
                     if len(profile.indep_vars) >= 3:
                         add(
                             "jacobi",
@@ -469,11 +432,7 @@ def rank_pde_solution_methods(
                     74,
                     "first-order nonlinear PDE supports invariant reduction",
                 )
-                add(
-                    "first_order_nonlinear_auto",
-                    86,
-                    "first-order nonlinear auto solver available",
-                )
+                add("first_order_nonlinear_auto", 86, "first-order nonlinear auto solver available")
     if cc_prof is not None:
         score = 92 if getattr(cc_prof, "is_constant_coefficient", True) else 70
         if fam == "heat_like" and has_profile_data:
@@ -506,9 +465,7 @@ def rank_pde_solution_methods(
             )
         if (
             geom == "interval"
-            and (
-                ("dirichlet" in bc_kinds) or bc_type == "dirichlet_homogeneous_interval"
-            )
+            and (("dirichlet" in bc_kinds) or bc_type == "dirichlet_homogeneous_interval")
             and has_profile_data
         ):
             add(
@@ -574,12 +531,7 @@ def rank_pde_solution_methods(
                     97,
                     "1D whole-line wave IVP with displacement and velocity data",
                 )
-    if fam in {
-        "laplace_like",
-        "helmholtz_like",
-        "diffusion_reaction",
-        "reaction_diffusion_like",
-    }:
+    if fam in {"laplace_like", "helmholtz_like", "diffusion_reaction", "reaction_diffusion_like"}:
         add(
             "separation_of_variables",
             80 if prefer_separation else 72,
@@ -593,17 +545,9 @@ def rank_pde_solution_methods(
                 eigenbasis=getattr(sep_plan, "eigenbasis", None),
             )
     if profile.second_order_class is not None:
-        add(
-            "classification_only",
-            20,
-            f"classified as {profile.second_order_class.classification}",
-        )
+        add("classification_only", 20, f"classified as {profile.second_order_class.classification}")
     else:
-        add(
-            "classification_only",
-            5,
-            "structural fallback when no executable solver applies",
-        )
+        add("classification_only", 5, "structural fallback when no executable solver applies")
     if profile.principal_solved_form is not None:
         add(
             "symmetry_reduction",
@@ -618,9 +562,7 @@ def rank_pde_solution_methods(
         prev = best_by_method.get(cand.method)
         if prev is None or cand.score > prev.score:
             best_by_method[cand.method] = cand
-    return profile, tuple(
-        sorted(best_by_method.values(), key=lambda c: (-c.score, c.method))
-    )
+    return profile, tuple(sorted(best_by_method.values(), key=lambda c: (-c.score, c.method)))
 
 
 def plan_pde_solution_methods(

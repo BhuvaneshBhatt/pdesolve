@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sympy as sp
 
-from pdesolve import pdesolve, build_benchmark_suite, run_benchmark_case
+from pdesolve import build_benchmark_suite, pdesolve, run_benchmark_case
 from pdesolve.first_order_framework import canonicalize_first_order_nonlinear_pde
 
 
@@ -44,9 +44,7 @@ def test_benchmark_suite_has_exact_and_stress_cases():
     assert suite.total_cases >= 14
     assert suite.stress_cases
     assert any(
-        case.expected_solution is not None
-        or case.solution_fragments
-        or case.exact_output_kind
+        case.expected_solution is not None or case.solution_fragments or case.exact_output_kind
         for case in suite.all_cases()
     )
 
@@ -54,12 +52,7 @@ def test_benchmark_suite_has_exact_and_stress_cases():
 def test_selected_benchmark_cases_run_successfully():
     suite = build_benchmark_suite()
     cases = {case.name: case for case in suite.all_cases()}
-    for name in (
-        "whole_line_heat",
-        "interval_heat_dirichlet",
-        "clairaut",
-        "linear_flux_profile",
-    ):
+    for name in ("whole_line_heat", "interval_heat_dirichlet", "clairaut", "linear_flux_profile"):
         outcome = run_benchmark_case(cases[name])
         assert outcome.success, (name, outcome.message)
 
@@ -84,9 +77,7 @@ def test_benchmark_suite_includes_large_symbolic_stress_cases():
 
 def test_benchmark_suite_has_more_exact_solution_assertions():
     suite = build_benchmark_suite()
-    exact_names = {
-        case.name for case in suite.all_cases() if case.expected_solution is not None
-    }
+    exact_names = {case.name for case in suite.all_cases() if case.expected_solution is not None}
     assert {
         "transport_ivp_gaussian",
         "clairaut",

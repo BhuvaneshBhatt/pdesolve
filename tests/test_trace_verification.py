@@ -1,10 +1,6 @@
 import sympy as sp
 
-from pdesolve.classical import (
-    pdesolve,
-    extract_solution_trace,
-    summarize_solution_record,
-)
+from pdesolve.classical import extract_solution_trace, pdesolve, summarize_solution_record
 
 
 def test_trace_and_verification_present():

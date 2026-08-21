@@ -100,19 +100,16 @@ def _lhs_target_expr(
         and getattr(expr.expr.expr, "func", None) == dep_func
     ):
         args = list(expr.expr.expr.args)
-        for old, new in zip(expr.variables, expr.point):
+        for old, new in zip(expr.variables, expr.point, strict=True):
             args = [new if a == old else a for a in args]
         multi = []
         for v in expr.expr.expr.args:
-            multi.append(
-                next((count for vv, count in expr.expr.variable_count if vv == v), 0)
-            )
+            multi.append(next((count for vv, count in expr.expr.variable_count if vv == v), 0))
         return tuple(args), tuple(multi)
     if isinstance(expr, sp.Derivative) and getattr(expr.expr, "func", None) == dep_func:
         args = tuple(expr.expr.args)
         multi = tuple(
-            next((count for vv, count in expr.variable_count if vv == v), 0)
-            for v in args
+            next((count for vv, count in expr.variable_count if vv == v), 0) for v in args
         )
         return args, multi
     if getattr(expr, "func", None) == dep_func:
@@ -120,15 +117,13 @@ def _lhs_target_expr(
     return None, ()
 
 
-def _lhs_target(
-    eq: sp.Equality, dep_func
-) -> tuple[tuple[sp.Expr, ...] | None, tuple[int, ...]]:
+def _lhs_target(eq: sp.Equality, dep_func) -> tuple[tuple[sp.Expr, ...] | None, tuple[int, ...]]:
     return _lhs_target_expr(eq.lhs, dep_func, tuple(getattr(eq.lhs, "args", ())))
 
 
 def _fixed_slice(args, indep_vars):
     fixed = []
-    for v, a in zip(indep_vars, args):
+    for v, a in zip(indep_vars, args, strict=True):
         if a == v:
             continue
         if not sp.sympify(a).has(*indep_vars):
@@ -175,10 +170,7 @@ def _linear_boundary_terms(lhs: sp.Expr, dep_func, indep_vars: tuple[sp.Symbol, 
     if not parsed:
         return None
     fixed_sets = [_fixed_slice(args, indep_vars) for args, _, _ in parsed]
-    if (
-        any(fs is None or len(fs) != 1 for fs in fixed_sets)
-        or len(set(fixed_sets)) != 1
-    ):
+    if any(fs is None or len(fs) != 1 for fs in fixed_sets) or len(set(fixed_sets)) != 1:
         return None
     ((var, loc),) = fixed_sets[0]
     alpha = sp.Integer(0)
@@ -250,40 +242,20 @@ def _condition_from_eq(
         if role == "initial":
             kind = "profile" if sum(multi) == 0 else "initial_derivative"
             return InitialCondition(
-                eq,
-                role,
-                variable=var,
-                location=loc,
-                derivative_multiindex=multi,
-                kind=kind,
+                eq, role, variable=var, location=loc, derivative_multiindex=multi, kind=kind
             )
         spatial_idx = indep_vars.index(var)
         s_order = multi[spatial_idx] if spatial_idx < len(multi) else 0
         if sum(multi) == 0:
             return DirichletCondition(
-                eq,
-                role,
-                variable=var,
-                location=loc,
-                derivative_multiindex=multi,
-                kind="dirichlet",
+                eq, role, variable=var, location=loc, derivative_multiindex=multi, kind="dirichlet"
             )
         if s_order == 1 and sum(multi) == 1:
             return NeumannCondition(
-                eq,
-                role,
-                variable=var,
-                location=loc,
-                derivative_multiindex=multi,
-                kind="neumann",
+                eq, role, variable=var, location=loc, derivative_multiindex=multi, kind="neumann"
             )
         return RobinCondition(
-            eq,
-            role,
-            variable=var,
-            location=loc,
-            derivative_multiindex=multi,
-            kind="robin",
+            eq, role, variable=var, location=loc, derivative_multiindex=multi, kind="robin"
         )
     if len(fixed) > 1:
         return InterfaceCondition(
@@ -316,11 +288,7 @@ def _with_role(cond: ConditionEquation, role: str) -> ConditionEquation:
         total = cond.derivative_order
         kind = "dirichlet" if total == 0 else "neumann" if total == 1 else "robin"
         cls = (
-            DirichletCondition
-            if total == 0
-            else NeumannCondition
-            if total == 1
-            else RobinCondition
+            DirichletCondition if total == 0 else NeumannCondition if total == 1 else RobinCondition
         )
         return cls(
             cond.equation,
@@ -388,13 +356,7 @@ def parse_conditions(
     if len(time_vars) == 1:
         meta["time_variable"] = next(iter(time_vars))
     return ConditionModel(
-        dep_expr,
-        tuple(indep_vars),
-        tuple(init),
-        tuple(bc),
-        tuple(mixed),
-        tuple(events),
-        meta,
+        dep_expr, tuple(indep_vars), tuple(init), tuple(bc), tuple(mixed), tuple(events), meta
     )
 
 
@@ -437,19 +399,10 @@ def classify_condition_equation(
     if cond.role == "boundary":
         if cond.metadata.get("paired_location") is not None:
             return "periodic"
-        spatial_idx = next(
-            (i for i, v in enumerate(spatial_variables) if cond.variable == v), None
-        )
-        s_order = (
-            deriv[spatial_idx]
-            if spatial_idx is not None and spatial_idx < len(deriv)
-            else 0
-        )
+        spatial_idx = next((i for i, v in enumerate(spatial_variables) if cond.variable == v), None)
+        s_order = deriv[spatial_idx] if spatial_idx is not None and spatial_idx < len(deriv) else 0
         total = sum(deriv)
-        if (
-            cond.metadata.get("alpha") is not None
-            or cond.metadata.get("beta") is not None
-        ):
+        if cond.metadata.get("alpha") is not None or cond.metadata.get("beta") is not None:
             return "robin"
         if total == 0:
             return "dirichlet"
@@ -466,24 +419,16 @@ def summarize_condition_model(model: ConditionModel) -> dict[str, Any]:
     time_var = model.metadata.get("time_variable")
     if time_var is None and len(indep) >= 2:
         time_var = indep[-1]
-    spatial = (
-        tuple(v for v in indep if v != time_var) if time_var is not None else indep
-    )
+    spatial = tuple(v for v in indep if v != time_var) if time_var is not None else indep
     ic_kinds = tuple(
         classify_condition_equation(
-            c,
-            time_variable=time_var,
-            spatial_variables=spatial,
-            independent_variables=indep,
+            c, time_variable=time_var, spatial_variables=spatial, independent_variables=indep
         )
         for c in model.initial_conditions
     )
     bc_kinds = tuple(
         classify_condition_equation(
-            c,
-            time_variable=time_var,
-            spatial_variables=spatial,
-            independent_variables=indep,
+            c, time_variable=time_var, spatial_variables=spatial, independent_variables=indep
         )
         for c in model.boundary_conditions
     )
@@ -518,9 +463,7 @@ def first_constant_time_slice(model: ConditionModel):
     return summary["time_slices"][0] if summary["time_slices"] else None
 
 
-def extract_equations_by_role(
-    model: ConditionModel, role: str
-) -> tuple[sp.Equality, ...]:
+def extract_equations_by_role(model: ConditionModel, role: str) -> tuple[sp.Equality, ...]:
     groups = {
         "initial": model.initial_conditions,
         "boundary": model.boundary_conditions,
@@ -531,11 +474,7 @@ def extract_equations_by_role(
 
 
 def select_boundary_equations(
-    model: ConditionModel | None,
-    *,
-    variable=None,
-    location=None,
-    kind: str | None = None,
+    model: ConditionModel | None, *, variable=None, location=None, kind: str | None = None
 ):
     if model is None:
         return ()

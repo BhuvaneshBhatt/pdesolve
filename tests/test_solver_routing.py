@@ -1,8 +1,8 @@
 import sympy as sp
 
-from pdesolve.geometry import DistributionKD, VectorFieldKD
 from pdesolve.coordinates import pdesolve, solve_with_diagnostics
-from pdesolve.pde import ScalarJetSpaceKD, build_scalar_general_solved_pde_from_equation
+from pdesolve.geometry import DistributionKD, VectorFieldKD
+from pdesolve.jet_space import ScalarJetSpaceKD, build_scalar_general_solved_pde_from_equation
 from pdesolve.reduction import (
     reduce_scalar_by_commuting_affine_subalgebra_kd,
     reduce_scalar_by_projectable_affine_generator_transport,

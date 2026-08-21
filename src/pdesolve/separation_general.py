@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 import sympy as sp
 
 
@@ -43,9 +44,7 @@ def separate_product_pde(
     Y = sp.Function(f"{u.func.__name__}_{y}")(y)
     prod = X * Y
     zero = (
-        equation.lhs - equation.rhs
-        if isinstance(equation, sp.Equality)
-        else sp.sympify(equation)
+        equation.lhs - equation.rhs if isinstance(equation, sp.Equality) else sp.sympify(equation)
     )
     replaced = zero.xreplace({u: prod}).doit()
     reduced = sp.factor_terms(sp.cancel(replaced / prod))
@@ -54,12 +53,10 @@ def separate_product_pde(
     for term in parts:
         # Applied functions/derivatives don't appear in free_symbols; use has instead.
         has_x = term.has(x, X) or any(
-            isinstance(n, sp.Derivative) and n.expr.has(X)
-            for n in sp.preorder_traversal(term)
+            isinstance(n, sp.Derivative) and n.expr.has(X) for n in sp.preorder_traversal(term)
         )
         has_y = term.has(y, Y) or any(
-            isinstance(n, sp.Derivative) and n.expr.has(Y)
-            for n in sp.preorder_traversal(term)
+            isinstance(n, sp.Derivative) and n.expr.has(Y) for n in sp.preorder_traversal(term)
         )
         if has_x and not has_y:
             xparts.append(term)
@@ -74,9 +71,7 @@ def separate_product_pde(
     if constants:
         xparts.extend(constants)
     if not xparts or not yparts:
-        raise ValueError(
-            "could not split substituted PDE into independent-variable factors"
-        )
+        raise ValueError("could not split substituted PDE into independent-variable factors")
     A = sp.simplify(sum(xparts))
     B = sp.simplify(sum(yparts))
     lam = separation_constant or sp.Symbol("lambda", real=True)

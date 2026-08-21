@@ -6,12 +6,12 @@ from typing import Any
 import sympy as sp
 
 from .domains import DomainGeometry, infer_domain_geometry
-from .results import FundamentalSolutionResult, GreenFunctionResult
 from .green_subsystem import (
+    AdvancedGreenPlan,
     execute_advanced_green_plan,
     recognize_advanced_kernel_problem,
-    AdvancedGreenPlan,
 )
+from .results import FundamentalSolutionResult, GreenFunctionResult
 
 
 @dataclass(frozen=True)
@@ -56,11 +56,7 @@ def _dirac_source_locations(source, vars_):
                 coeff = sp.diff(arg, v)
             except Exception:
                 coeff = None
-            if (
-                coeff is not None
-                and coeff != 0
-                and all(not coeff.has(w) for w in vars_)
-            ):
+            if coeff is not None and coeff != 0 and all(not coeff.has(w) for w in vars_):
                 shifted = sp.simplify(-arg.subs(v, 0) / coeff)
                 found = shifted
                 break
@@ -155,9 +151,7 @@ def recognize_kernel_problem(eq_or_expr, dep_expr, vars_):
     return None
 
 
-def _coerce_geometry(
-    vars_, *, geometry=None, bcs=None, condition_model=None, operator_family=None
-):
+def _coerce_geometry(vars_, *, geometry=None, bcs=None, condition_model=None, operator_family=None):
     if isinstance(geometry, DomainGeometry):
         return geometry
     if isinstance(geometry, dict):
@@ -169,13 +163,8 @@ def _coerce_geometry(
         )
     if isinstance(geometry, str):
         return DomainGeometry(geometry, tuple(vars_))
-    geom = infer_domain_geometry(
-        indep_vars=tuple(vars_), bcs=bcs, condition_model=condition_model
-    )
-    if (
-        operator_family in {"heat_1d", "wave_1d"}
-        and geom.kind == "unspecified_spacetime"
-    ):
+    geom = infer_domain_geometry(indep_vars=tuple(vars_), bcs=bcs, condition_model=condition_model)
+    if operator_family in {"heat_1d", "wave_1d"} and geom.kind == "unspecified_spacetime":
         return DomainGeometry("full_line", (vars_[0],), {"x": (-sp.oo, sp.oo)})
     if operator_family == "laplace_2d" and geom.kind == "unspecified_spacetime":
         return DomainGeometry("full_plane", tuple(vars_))
@@ -191,9 +180,7 @@ def _boundary_family(bcs, condition_model, geom, vars_):
     if condition_model is not None:
         from .conditions import summarize_condition_model
 
-        kinds = set(
-            summarize_condition_model(condition_model).get("boundary_kinds", ())
-        )
+        kinds = set(summarize_condition_model(condition_model).get("boundary_kinds", ()))
         if "dirichlet" in kinds:
             return "dirichlet"
         if "neumann" in kinds:
@@ -205,18 +192,10 @@ def _boundary_family(bcs, condition_model, geom, vars_):
 
 def build_kernel_method_plan(problem, *, geometry=None):
     details = getattr(problem.canonical_representation, "details", {}) or {}
-    condition_model = problem.details.get("condition_model") or details.get(
-        "condition_model"
-    )
-    preferred_family = getattr(
-        getattr(problem, "profile", None), "canonical_family", None
-    )
-    domain_geometry = problem.details.get("domain_geometry") or details.get(
-        "domain_geometry"
-    )
-    recog = recognize_kernel_problem(
-        problem.equation, problem.dep_function, problem.indep_vars
-    )
+    condition_model = problem.details.get("condition_model") or details.get("condition_model")
+    preferred_family = getattr(getattr(problem, "profile", None), "canonical_family", None)
+    domain_geometry = problem.details.get("domain_geometry") or details.get("domain_geometry")
+    recog = recognize_kernel_problem(problem.equation, problem.dep_function, problem.indep_vars)
     if preferred_family == "laplace_like":
         op, source, sign = _split_operator_and_source(
             _as_eq(problem.equation), problem.dep_function
@@ -226,9 +205,7 @@ def build_kernel_method_plan(problem, *, geometry=None):
             alt["source_point"] = (
                 _dirac_source_locations(source, problem.indep_vars)
                 if source is not None
-                else tuple(
-                    sp.Symbol(f"{v.name}_0", real=True) for v in problem.indep_vars
-                )
+                else tuple(sp.Symbol(f"{v.name}_0", real=True) for v in problem.indep_vars)
             )
             alt["has_source"] = source is not None
             alt["source_sign"] = sign
@@ -242,9 +219,7 @@ def build_kernel_method_plan(problem, *, geometry=None):
             alt["source_point"] = (
                 _dirac_source_locations(source, problem.indep_vars)
                 if source is not None
-                else tuple(
-                    sp.Symbol(f"{v.name}_0", real=True) for v in problem.indep_vars
-                )
+                else tuple(sp.Symbol(f"{v.name}_0", real=True) for v in problem.indep_vars)
             )
             alt["has_source"] = source is not None
             alt["source_sign"] = sign
@@ -258,9 +233,7 @@ def build_kernel_method_plan(problem, *, geometry=None):
             alt["source_point"] = (
                 _dirac_source_locations(source, problem.indep_vars)
                 if source is not None
-                else tuple(
-                    sp.Symbol(f"{v.name}_0", real=True) for v in problem.indep_vars
-                )
+                else tuple(sp.Symbol(f"{v.name}_0", real=True) for v in problem.indep_vars)
             )
             alt["has_source"] = source is not None
             alt["source_sign"] = sign
@@ -274,9 +247,7 @@ def build_kernel_method_plan(problem, *, geometry=None):
             alt["source_point"] = (
                 _dirac_source_locations(source, problem.indep_vars)
                 if source is not None
-                else tuple(
-                    sp.Symbol(f"{v.name}_0", real=True) for v in problem.indep_vars
-                )
+                else tuple(sp.Symbol(f"{v.name}_0", real=True) for v in problem.indep_vars)
             )
             alt["has_source"] = source is not None
             alt["source_sign"] = sign
@@ -286,14 +257,10 @@ def build_kernel_method_plan(problem, *, geometry=None):
         geometry=geometry or domain_geometry,
         bcs=problem.bcs,
         condition_model=condition_model,
-        operator_family=(recog or {}).get("family")
-        if isinstance(recog, dict)
-        else None,
+        operator_family=(recog or {}).get("family") if isinstance(recog, dict) else None,
     )
     prefer_advanced_kinds = {"strip", "semi_infinite_strip", "quadrant", "half_space"}
-    use_advanced = (
-        recog is None or getattr(geom_probe, "kind", None) in prefer_advanced_kinds
-    )
+    use_advanced = recog is None or getattr(geom_probe, "kind", None) in prefer_advanced_kinds
     if use_advanced:
         adv = recognize_advanced_kernel_problem(
             problem.equation, problem.dep_function, problem.indep_vars
@@ -306,9 +273,7 @@ def build_kernel_method_plan(problem, *, geometry=None):
                 condition_model=condition_model,
                 operator_family=adv["family"],
             )
-            boundary = _boundary_family(
-                problem.bcs, condition_model, geom, problem.indep_vars
-            )
+            boundary = _boundary_family(problem.bcs, condition_model, geom, problem.indep_vars)
             free_kinds = {"free", "full_line", "full_plane", "full_space"}
             method = (
                 "kernel_fundamental_solution"
@@ -363,11 +328,7 @@ def build_kernel_method_plan(problem, *, geometry=None):
         geometry_kind=geom.kind,
         boundary_family=boundary,
         source_point=tuple(recog["source_point"]),
-        metadata={
-            "recognition": recog,
-            "geometry": geom,
-            "condition_model": condition_model,
-        },
+        metadata={"recognition": recog, "geometry": geom, "condition_model": condition_model},
     )
 
 
@@ -454,27 +415,19 @@ def _laplace_green_free(scale, x, y, xi, eta):
 def _laplace_green_half_plane(scale, x, y, xi, eta, *, boundary="dirichlet"):
     if boundary == "neumann":
         return -(
-            sp.log((x - xi) ** 2 + (y - eta) ** 2)
-            + sp.log((x - xi) ** 2 + (y + eta) ** 2)
+            sp.log((x - xi) ** 2 + (y - eta) ** 2) + sp.log((x - xi) ** 2 + (y + eta) ** 2)
         ) / (4 * sp.pi * scale)
-    return sp.log(
-        ((x - xi) ** 2 + (y + eta) ** 2) / ((x - xi) ** 2 + (y - eta) ** 2)
-    ) / (4 * sp.pi * scale)
+    return sp.log(((x - xi) ** 2 + (y + eta) ** 2) / ((x - xi) ** 2 + (y - eta) ** 2)) / (
+        4 * sp.pi * scale
+    )
 
 
 def solve_fundamental_solution(
-    eq_or_expr,
-    dep_expr_or_func,
-    indep_vars=None,
-    *,
-    assumptions=True,
-    source_point=None,
+    eq_or_expr, dep_expr_or_func, indep_vars=None, *, assumptions=True, source_point=None
 ):
     from .problem import build_pde_problem
 
-    problem = build_pde_problem(
-        eq_or_expr, dep_expr_or_func, indep_vars, assumptions=assumptions
-    )
+    problem = build_pde_problem(eq_or_expr, dep_expr_or_func, indep_vars, assumptions=assumptions)
     plan = build_kernel_method_plan(
         problem,
         geometry="full_plane"
@@ -489,9 +442,7 @@ def solve_fundamental_solution(
             plan=KernelMethodPlan(
                 method="kernel_fundamental_solution",
                 operator_family=plan.operator_family,
-                geometry_kind="full_plane"
-                if plan.operator_family == "laplace_2d"
-                else "full_line",
+                geometry_kind="full_plane" if plan.operator_family == "laplace_2d" else "full_line",
                 boundary_family="free",
                 source_point=source_point or plan.source_point,
                 metadata=plan.metadata,
@@ -554,9 +505,9 @@ def execute_kernel_plan(problem, *, plan: KernelMethodPlan | None = None):
             assumptions=problem.assumptions,
             geometry=problem.details.get("domain_geometry"),
         )
-    if (plan.metadata or {}).get("subsystem") == "advanced_green" or (
-        plan.metadata or {}
-    ).get("advanced_plan") is not None:
+    if (plan.metadata or {}).get("subsystem") == "advanced_green" or (plan.metadata or {}).get(
+        "advanced_plan"
+    ) is not None:
         return execute_advanced_green_plan(
             problem.equation,
             problem.dep_function,
@@ -588,13 +539,7 @@ def execute_kernel_plan(problem, *, plan: KernelMethodPlan | None = None):
                     L = sp.simplify(ext[1] - ext[0])
             L = L or sp.Symbol("L", positive=True)
             kernel = _heat_kernel_interval(
-                a,
-                x,
-                t,
-                xi,
-                tau,
-                L,
-                boundary="neumann" if boundary == "neumann" else "dirichlet",
+                a, x, t, xi, tau, L, boundary="neumann" if boundary == "neumann" else "dirichlet"
             )
         else:
             raise NotImplementedError(f"Unsupported heat geometry: {geom_kind}")
@@ -616,13 +561,7 @@ def execute_kernel_plan(problem, *, plan: KernelMethodPlan | None = None):
                     L = sp.simplify(ext[1] - ext[0])
             L = L or sp.Symbol("L", positive=True)
             kernel = _wave_kernel_interval(
-                c,
-                x,
-                t,
-                xi,
-                tau,
-                L,
-                boundary="neumann" if boundary == "neumann" else "dirichlet",
+                c, x, t, xi, tau, L, boundary="neumann" if boundary == "neumann" else "dirichlet"
             )
         else:
             raise NotImplementedError(f"Unsupported wave geometry: {geom_kind}")

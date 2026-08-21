@@ -1,4 +1,5 @@
 import sympy as sp
+
 from pdesolve import (
     adapted_coordinate_reduction,
     characteristic_first_integral,

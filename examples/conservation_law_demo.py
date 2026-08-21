@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sympy as sp
+
 import pdesolve as rle
 
 
@@ -25,9 +26,7 @@ def main() -> None:
     print("Solution:", getattr(record, "solution", None))
     print("Summary:", rle.summarize_solution_record(record))
     for step in rle.extract_solution_trace(record).steps:
-        print(
-            f"[{step.stage}] {step.method}: success={step.success} message={step.message}"
-        )
+        print(f"[{step.stage}] {step.method}: success={step.success} message={step.message}")
 
 
 if __name__ == "__main__":

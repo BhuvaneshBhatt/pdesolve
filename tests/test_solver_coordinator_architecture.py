@@ -1,10 +1,10 @@
 import sympy as sp
 
+from pdesolve.planners import plan_canonical_problem
 from pdesolve.problem import build_pde_problem
 from pdesolve.recognizers import recognize_canonical_problem
-from pdesolve.planners import plan_canonical_problem
-from pdesolve.solvers import execute_planned_solver
 from pdesolve.results import BasePDEResult, SeriesPDEResult
+from pdesolve.solvers import execute_planned_solver
 
 
 def test_coordinator_layers_work_from_canonical_problem():

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from math import factorial
-from typing import Iterable
 
 import sympy as sp
 
@@ -44,7 +44,7 @@ class ShiftedOperatorSymbol:
         for a in alpha:
             denom *= factorial(int(a))
         mono = sp.Integer(1)
-        for var, power in zip(indep_vars, alpha):
+        for var, power in zip(indep_vars, alpha, strict=True):
             mono *= var ** int(power)
         return sp.expand(mono / denom)
 
@@ -56,7 +56,7 @@ class ConstantCoefficientSymbol:
 
     def evaluate(self, vector: Iterable[sp.Expr]) -> sp.Expr:
         vector = tuple(vector)
-        subs = {v: value for v, value in zip(self.variables, vector)}
+        subs = {v: value for v, value in zip(self.variables, vector, strict=True)}
         return sp.expand(self.expr.subs(subs))
 
     def shift(self, vector: Iterable[sp.Expr]) -> ShiftedOperatorSymbol:
@@ -64,16 +64,14 @@ class ConstantCoefficientSymbol:
         zvars = sp.symbols(f"z0:{len(self.variables)}")
         subs = {
             var: sp.expand(shift + z)
-            for var, shift, z in zip(self.variables, vector, zvars)
+            for var, shift, z in zip(self.variables, vector, zvars, strict=True)
         }
         shifted = sp.expand(self.expr.subs(subs))
         lowest = _lowest_nonzero_term(shifted, zvars)
         return ShiftedOperatorSymbol(tuple(zvars), vector, shifted, lowest)
 
 
-def _lowest_nonzero_term(
-    expr: sp.Expr, vars_: tuple[sp.Symbol, ...]
-) -> SymbolLowestTerm | None:
+def _lowest_nonzero_term(expr: sp.Expr, vars_: tuple[sp.Symbol, ...]) -> SymbolLowestTerm | None:
     expr = sp.expand(expr)
     if expr == 0:
         return None
@@ -85,14 +83,12 @@ def _lowest_nonzero_term(
             continue
         total_degree = int(sum(monom))
         mono_expr = sp.Integer(1)
-        for var, power in zip(vars_, monom):
+        for var, power in zip(vars_, monom, strict=True):
             mono_expr *= var ** int(power)
         terms.append((total_degree, tuple(int(i) for i in monom), coeff, mono_expr))
     if not terms:
         return None
-    total_degree, multiindex, coeff, mono_expr = min(
-        terms, key=lambda item: (item[0], item[1])
-    )
+    total_degree, multiindex, coeff, mono_expr = min(terms, key=lambda item: (item[0], item[1]))
     return SymbolLowestTerm(total_degree, multiindex, coeff, mono_expr)
 
 

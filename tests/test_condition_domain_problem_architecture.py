@@ -2,11 +2,11 @@ import sympy as sp
 
 from pdesolve import (
     build_pde_problem,
-    parse_conditions,
-    infer_domain_geometry,
     extract_canonical_linear_system_form,
-    solve_hyperbolic_system,
+    infer_domain_geometry,
+    parse_conditions,
     pdesolve,
+    solve_hyperbolic_system,
 )
 
 
@@ -14,10 +14,7 @@ def test_condition_parser_handles_arbitrary_constant_time_and_boundary_slices():
     x, t = sp.symbols("x t", real=True)
     u = sp.Function("u")
     model = parse_conditions(
-        ics=[
-            sp.Eq(u(x, 2), sp.sin(x)),
-            sp.Eq(sp.diff(u(x, t), t).subs(t, 2), sp.cos(x)),
-        ],
+        ics=[sp.Eq(u(x, 2), sp.sin(x)), sp.Eq(sp.diff(u(x, t), t).subs(t, 2), sp.cos(x))],
         bcs=[sp.Eq(u(0, t), 0), sp.Eq(sp.diff(u(x, t), x).subs(x, 1), 0)],
         dep_expr=u(x, t),
         indep_vars=(x, t),
@@ -78,11 +75,7 @@ def test_nonautonomous_quasilinear_path_attempts_explicit_characteristics():
     u = sp.Function("u")
     eq = sp.Eq((1 + x) * sp.diff(u(x, t), x) + sp.diff(u(x, t), t), 0)
     res = pdesolve(
-        eq,
-        u(x, t),
-        (x, t),
-        method="quasilinear_implicit",
-        ics={"initial_profile": x**2},
+        eq, u(x, t), (x, t), method="quasilinear_implicit", ics={"initial_profile": x**2}
     )
     raw = res.details["raw_result"]
     assert raw.method == "quasilinear_implicit_characteristics"

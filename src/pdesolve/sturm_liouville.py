@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 import sympy as sp
 
 
@@ -18,9 +19,7 @@ class SturmLiouvilleProblem:
     def differential_equation(self, eigenvalue=None):
         lam = eigenvalue or sp.Symbol("lambda", real=True)
         x, X = self.variable, self.function
-        return sp.Eq(
-            -sp.diff(self.p * sp.diff(X, x), x) + self.q * X, lam * self.weight * X
-        )
+        return sp.Eq(-sp.diff(self.p * sp.diff(X, x), x) + self.q * X, lam * self.weight * X)
 
 
 @dataclass(frozen=True)
@@ -37,9 +36,7 @@ class SturmLiouvilleSpectrum:
         x = self.problem.variable
         a, b = self.problem.interval
         return sp.simplify(
-            sp.Integral(
-                self.orthogonality_weight * profile * self.eigenfunctions, (x, a, b)
-            )
+            sp.Integral(self.orthogonality_weight * profile * self.eigenfunctions, (x, a, b))
             / self.norm_squared
         )
 

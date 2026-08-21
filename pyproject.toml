@@ -66,7 +66,18 @@ include = ["pdesolve*"]
 pdesolve = ["data/benchmarks/*.csv", "data/benchmarks/*.json"]
 
 [tool.ruff]
-exclude = ["notebooks"]
+line-length = 100
+exclude = [
+    "notebooks",
+    ".git",
+    ".venv",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
 "src/pdesolve/classical.py" = ["F403"]

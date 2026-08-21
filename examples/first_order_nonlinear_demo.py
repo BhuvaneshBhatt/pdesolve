@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sympy as sp
+
 import pdesolve as rle
 
 
@@ -26,9 +27,7 @@ def main() -> None:
     print(rle.summarize_solution_record(record))
     trace = rle.extract_solution_trace(record)
     for step in trace.steps:
-        print(
-            f"[{step.stage}] {step.method}: success={step.success} message={step.message}"
-        )
+        print(f"[{step.stage}] {step.method}: success={step.success} message={step.message}")
 
     print("\n" + "=" * 80)
     print("Direct first-order nonlinear auto solver")

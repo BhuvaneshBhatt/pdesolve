@@ -1,20 +1,18 @@
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import Callable, Iterable
 
 import sympy as sp
 
 from .coordinates import solve_with_diagnostics
 from .geometry import DistributionKD, VectorFieldKD
-from .pde import ScalarJetSpaceKD, build_scalar_general_solved_pde_from_equation
+from .jet_space import ScalarJetSpaceKD, build_scalar_general_solved_pde_from_equation
 from .reduction import (
     reduce_scalar_by_translation_affine_kd,
     reduce_scalar_by_translation_subalgebra_kd,
 )
-from .symmetry import (
-    solve_determining_equations_with_polynomial_ansatz_scalar_general_kd,
-)
+from .symmetry import solve_determining_equations_with_polynomial_ansatz_scalar_general_kd
 from .workflows import repeated_reduction_workflow_scalar_kd
 
 
@@ -68,9 +66,7 @@ def _assert_eq(actual, expected, message: str):
         raise AssertionError(f"{message}: expected {expected!r}, got {actual!r}")
 
 
-def _assert_equation_equivalent(
-    actual: sp.Equality, expected: sp.Equality, message: str
-):
+def _assert_equation_equivalent(actual: sp.Equality, expected: sp.Equality, message: str):
     if not _equations_equivalent(actual, expected):
         raise AssertionError(f"{message}: expected {expected}, got {actual}")
 
@@ -84,17 +80,9 @@ def case_heat_principal_selection() -> dict:
     x, y, t = sp.symbols("x y t", real=True)
     jet = ScalarJetSpaceKD((x, y, t), dep_name="u", max_order=2)
     pde = sp.Eq(jet.coord((0, 0, 1)), jet.coord((2, 0, 0)) + jet.coord((0, 2, 0)))
-    eq_obj, info = build_scalar_general_solved_pde_from_equation(
-        jet, pde, max_principal_order=3
-    )
-    _assert_eq(
-        info.principal_multiindex, (0, 0, 1), "Heat equation principal multi-index"
-    )
-    _assert_eq(
-        eq_obj.G,
-        jet.coord((2, 0, 0)) + jet.coord((0, 2, 0)),
-        "Heat equation solved RHS",
-    )
+    eq_obj, info = build_scalar_general_solved_pde_from_equation(jet, pde, max_principal_order=3)
+    _assert_eq(info.principal_multiindex, (0, 0, 1), "Heat equation principal multi-index")
+    _assert_eq(eq_obj.G, jet.coord((2, 0, 0)) + jet.coord((0, 2, 0)), "Heat equation solved RHS")
     return {"principal_multiindex": info.principal_multiindex, "solved_rhs": eq_obj.G}
 
 
@@ -102,17 +90,9 @@ def case_wave_second_order_selection() -> dict:
     x, y, t = sp.symbols("x y t", real=True)
     jet = ScalarJetSpaceKD((x, y, t), dep_name="u", max_order=2)
     pde = sp.Eq(jet.coord((0, 0, 2)), jet.coord((2, 0, 0)) + jet.coord((0, 2, 0)))
-    eq_obj, info = build_scalar_general_solved_pde_from_equation(
-        jet, pde, max_principal_order=3
-    )
-    _assert_eq(
-        info.principal_multiindex, (0, 0, 2), "Wave equation principal multi-index"
-    )
-    _assert_eq(
-        eq_obj.G,
-        jet.coord((2, 0, 0)) + jet.coord((0, 2, 0)),
-        "Wave equation solved RHS",
-    )
+    eq_obj, info = build_scalar_general_solved_pde_from_equation(jet, pde, max_principal_order=3)
+    _assert_eq(info.principal_multiindex, (0, 0, 2), "Wave equation principal multi-index")
+    _assert_eq(eq_obj.G, jet.coord((2, 0, 0)) + jet.coord((0, 2, 0)), "Wave equation solved RHS")
     return {"principal_multiindex": info.principal_multiindex, "solved_rhs": eq_obj.G}
 
 
@@ -120,20 +100,14 @@ def case_transport_advection_reduction() -> dict:
     x, t, a = sp.symbols("x t a", real=True)
     jet = ScalarJetSpaceKD((x, t), dep_name="u", max_order=1)
     pde = sp.Eq(jet.coord((0, 1)) + a * jet.coord((1, 0)), 0)
-    eq_obj, info = build_scalar_general_solved_pde_from_equation(
-        jet, pde, max_principal_order=2
-    )
-    _assert_eq(
-        info.principal_multiindex, (0, 1), "Advection equation principal multi-index"
-    )
+    eq_obj, info = build_scalar_general_solved_pde_from_equation(jet, pde, max_principal_order=2)
+    _assert_eq(info.principal_multiindex, (0, 1), "Advection equation principal multi-index")
     red = reduce_scalar_by_translation_affine_kd(eq_obj, (1, a), a=0, b=0)
     _assert_eq(red.invariants, (x - t / a,), "Advection invariant")
     z1 = sp.Symbol("z1", real=True)
     f = sp.Function("f")
     expected = sp.Eq(sp.diff(f(z1), z1), 0)
-    _assert_equation_equivalent(
-        red.reduced_equation, expected, "Advection reduced equation"
-    )
+    _assert_equation_equivalent(red.reduced_equation, expected, "Advection reduced equation")
     return {"invariants": red.invariants, "reduced_equation": red.reduced_equation}
 
 
@@ -142,19 +116,13 @@ def case_reaction_diffusion_reduction() -> dict:
     jet = ScalarJetSpaceKD((x, t), dep_name="u", max_order=2)
     u = jet.u
     pde = sp.Eq(jet.coord((0, 1)), jet.coord((2, 0)) + u * (1 - u))
-    eq_obj, info = build_scalar_general_solved_pde_from_equation(
-        jet, pde, max_principal_order=2
-    )
-    _assert_eq(
-        info.principal_multiindex, (0, 1), "Reaction-diffusion principal multi-index"
-    )
+    eq_obj, info = build_scalar_general_solved_pde_from_equation(jet, pde, max_principal_order=2)
+    _assert_eq(info.principal_multiindex, (0, 1), "Reaction-diffusion principal multi-index")
     red = reduce_scalar_by_translation_affine_kd(eq_obj, (1, c), a=0, b=0)
     _assert_eq(red.invariants, (x - t / c,), "Reaction-diffusion invariant")
     z1 = sp.Symbol("z1", real=True)
     f = sp.Function("f")
-    expected = sp.Eq(
-        f(z1) ** 2 - f(z1) - sp.diff(f(z1), (z1, 2)) - sp.diff(f(z1), z1) / c, 0
-    )
+    expected = sp.Eq(f(z1) ** 2 - f(z1) - sp.diff(f(z1), (z1, 2)) - sp.diff(f(z1), z1) / c, 0)
     _assert_equation_equivalent(
         red.reduced_equation, expected, "Reaction-diffusion reduced equation"
     )
@@ -165,22 +133,15 @@ def case_heat_translation_reduction() -> dict:
     x, y, t, c = sp.symbols("x y t c", positive=True, real=True)
     jet = ScalarJetSpaceKD((x, y, t), dep_name="u", max_order=2)
     pde = sp.Eq(jet.coord((0, 0, 1)), jet.coord((2, 0, 0)) + jet.coord((0, 2, 0)))
-    eq_obj, _ = build_scalar_general_solved_pde_from_equation(
-        jet, pde, max_principal_order=3
-    )
+    eq_obj, _ = build_scalar_general_solved_pde_from_equation(jet, pde, max_principal_order=3)
     red = reduce_scalar_by_translation_affine_kd(eq_obj, (1, 0, c), a=0, b=0)
     _assert_eq(red.invariants, (y, x - t / c), "Heat translation invariants")
     z1, z2 = sp.symbols("z1 z2", real=True)
     f = sp.Function("f")
     expected = sp.Eq(
-        sp.diff(f(z1, z2), (z1, 2))
-        + sp.diff(f(z1, z2), (z2, 2))
-        + sp.diff(f(z1, z2), z2) / c,
-        0,
+        sp.diff(f(z1, z2), (z1, 2)) + sp.diff(f(z1, z2), (z2, 2)) + sp.diff(f(z1, z2), z2) / c, 0
     )
-    _assert_equation_equivalent(
-        red.reduced_equation, expected, "Heat translation reduced equation"
-    )
+    _assert_equation_equivalent(red.reduced_equation, expected, "Heat translation reduced equation")
     return {"invariants": red.invariants, "reduced_equation": red.reduced_equation}
 
 
@@ -205,9 +166,7 @@ def case_affine_generator_coordinates() -> dict:
     if len(coords.invariants) != 2:
         raise AssertionError(f"Expected 2 invariants, got {coords.invariants}")
     if coords.method is None:
-        raise AssertionError(
-            "Expected a coordinate-construction method for affine generator"
-        )
+        raise AssertionError("Expected a coordinate-construction method for affine generator")
     return {
         "method": coords.method,
         "invariants": coords.invariants,
@@ -220,9 +179,7 @@ def case_commuting_multi_symmetry_reduction() -> dict:
     x, y, t = sp.symbols("x y t", real=True)
     jet = ScalarJetSpaceKD((x, y, t), dep_name="u", max_order=2)
     pde = sp.Eq(jet.coord((0, 0, 1)), jet.coord((2, 0, 0)) + jet.coord((0, 2, 0)))
-    eq_obj, _ = build_scalar_general_solved_pde_from_equation(
-        jet, pde, max_principal_order=3
-    )
+    eq_obj, _ = build_scalar_general_solved_pde_from_equation(jet, pde, max_principal_order=3)
     red = reduce_scalar_by_translation_subalgebra_kd(
         eq_obj, [(1, 0, 0), (0, 1, 0)], a_list=[0, 0], beta_list=[0, 0]
     )
@@ -231,9 +188,7 @@ def case_commuting_multi_symmetry_reduction() -> dict:
     f = sp.Function("f")
     expected = sp.Eq(sp.diff(f(z1), z1), 0)
     _assert_equation_equivalent(
-        red.reduced_equation,
-        expected,
-        "Commuting translation-subalgebra reduced equation",
+        red.reduced_equation, expected, "Commuting translation-subalgebra reduced equation"
     )
     return {
         "invariants": red.invariants,
@@ -249,16 +204,12 @@ def case_mixed_principal_manual_support() -> dict:
     eq_obj, info = build_scalar_general_solved_pde_from_equation(
         jet, pde, principal_multiindex=(1, 1, 0), max_principal_order=3
     )
-    _assert_eq(
-        info.principal_multiindex, (1, 1, 0), "Mixed-principal manual solved form"
-    )
+    _assert_eq(info.principal_multiindex, (1, 1, 0), "Mixed-principal manual solved form")
     poly = solve_determining_equations_with_polynomial_ansatz_scalar_general_kd(
         eq_obj, degree=1, include_dependent_var=True
     )
     if len(poly.xi_solutions) != 3:
-        raise AssertionError(
-            "Expected three xi solutions in 3D mixed-principal problem"
-        )
+        raise AssertionError("Expected three xi solutions in 3D mixed-principal problem")
     return {
         "principal_multiindex": info.principal_multiindex,
         "symmetry_family": tuple(poly.xi_solutions),
@@ -290,9 +241,7 @@ def case_repeated_reduction_workflow() -> dict:
     x, y, t = sp.symbols("x y t", positive=True, real=True)
     jet = ScalarJetSpaceKD((x, y, t), dep_name="u", max_order=2)
     pde = sp.Eq(jet.coord((0, 0, 1)), jet.coord((2, 0, 0)) + jet.coord((0, 2, 0)))
-    eq_obj, _ = build_scalar_general_solved_pde_from_equation(
-        jet, pde, max_principal_order=3
-    )
+    eq_obj, _ = build_scalar_general_solved_pde_from_equation(jet, pde, max_principal_order=3)
     result = repeated_reduction_workflow_scalar_kd(
         eq_obj, max_steps=2, symmetry_degree=1, max_subset_size=2, prefer_commuting=True
     )
@@ -400,24 +349,20 @@ def run_benchmark_suite() -> tuple[BenchmarkOutcome, ...]:
 
 def case_noncommuting_involutive_chart():
     x, y = sp.symbols("x y", real=True)
-    from .geometry import DistributionKD, VectorFieldKD
     from .frobenius import local_frobenius_chart
+    from .geometry import DistributionKD, VectorFieldKD
 
-    dist = DistributionKD(
-        (x, y), (VectorFieldKD((x, y), (1, 0)), VectorFieldKD((x, y), (x, 1)))
-    )
+    dist = DistributionKD((x, y), (VectorFieldKD((x, y), (1, 0)), VectorFieldKD((x, y), (x, 1))))
     chart = local_frobenius_chart(dist)
     if len(chart.transverse) != 2:
-        raise AssertionError(
-            "Expected full local chart for rank-2 involutive distribution."
-        )
+        raise AssertionError("Expected full local chart for rank-2 involutive distribution.")
     return {"method": chart.method, "coords": chart.invariants + chart.transverse}
 
 
 def case_higher_order_differential_invariants():
     x, t = sp.symbols("x t", real=True)
-    from .geometry import VectorFieldKD
     from .diffinv import differential_invariants_scalar_up_to_order
+    from .geometry import VectorFieldKD
 
     X = VectorFieldKD((x, t), (1, 1))
     res = differential_invariants_scalar_up_to_order(X, 0, sp.Symbol("u"), max_order=3)
@@ -431,14 +376,12 @@ def case_higher_order_differential_invariants():
 
 def case_managed_repeated_reduction_workflow():
     x, y, t = sp.symbols("x y t", positive=True, real=True)
-    from .pde import ScalarJetSpaceKD, build_scalar_general_solved_pde_from_equation
+    from .jet_space import ScalarJetSpaceKD, build_scalar_general_solved_pde_from_equation
     from .workflows import repeated_reduction_workflow_scalar_kd_managed
 
     jet = ScalarJetSpaceKD((x, y, t), dep_name="u", max_order=2)
     pde = sp.Eq(jet.coord((0, 0, 1)), jet.coord((2, 0, 0)) + jet.coord((0, 2, 0)))
-    eq_obj, _ = build_scalar_general_solved_pde_from_equation(
-        jet, pde, max_principal_order=2
-    )
+    eq_obj, _ = build_scalar_general_solved_pde_from_equation(jet, pde, max_principal_order=2)
     out = repeated_reduction_workflow_scalar_kd_managed(eq_obj, max_steps=2)
     if len(out.history) < 1:
         raise AssertionError("Expected at least one managed history entry.")
@@ -450,8 +393,8 @@ def case_managed_repeated_reduction_workflow():
 
 
 def case_cache_smoke():
-    from .performance import clear_all_caches, cache_stats
-    from .geometry import VectorFieldKD, DistributionKD
+    from .geometry import DistributionKD, VectorFieldKD
+    from .performance import cache_stats, clear_all_caches
 
     x, y = sp.symbols("x y", real=True)
     clear_all_caches()

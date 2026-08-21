@@ -5,12 +5,11 @@ from dataclasses import dataclass
 import sympy as sp
 from sympy.core.function import AppliedUndef
 
-from .pde import (
-    build_scalar_jet_equation_from_sympy_pde,
+from .frobenius import local_frobenius_chart, local_frobenius_chart_explain
+from .geometry import DistributionKD, VectorFieldKD
+from .jet_space import (
     build_scalar_general_solved_pde_from_equation,
-)
-from .symmetry import (
-    solve_determining_equations_with_polynomial_ansatz_scalar_general_kd,
+    build_scalar_jet_equation_from_sympy_pde,
 )
 from .reduction import (
     auto_reduce_best_commuting_subalgebra_scalar_kd,
@@ -18,8 +17,7 @@ from .reduction import (
     reduce_scalar_by_frobenius_chart,
     search_symbolic_linear_combinations_for_reduction_scalar_kd,
 )
-from .frobenius import local_frobenius_chart, local_frobenius_chart_explain
-from .geometry import DistributionKD, VectorFieldKD
+from .symmetry import solve_determining_equations_with_polynomial_ansatz_scalar_general_kd
 from .verify import verify_reduction
 
 
@@ -97,9 +95,7 @@ def repeated_reduction_workflow_scalar_kd(
         )
         if prefer_commuting:
             reduced = auto_reduce_best_commuting_subalgebra_scalar_kd(
-                current,
-                list(matches),
-                max_generators=min(current.jet.k - 1, max_subset_size),
+                current, list(matches), max_generators=min(current.jet.k - 1, max_subset_size)
             )
         else:
             reduced = None
@@ -205,7 +201,7 @@ def repeated_reduction_workflow_scalar_kd_frobenius_default(
                     candidate_dists.append((idxs, dist, report))
             if candidate_dists:
                 break
-        for idxs, dist, report in candidate_dists:
+        for _idxs, dist, _report in candidate_dists:
             try:
                 chart = local_frobenius_chart(dist)
                 reduced = reduce_scalar_by_frobenius_chart(
@@ -220,9 +216,7 @@ def repeated_reduction_workflow_scalar_kd_frobenius_default(
 
         if reduced is None:
             reduced = auto_reduce_best_commuting_subalgebra_scalar_kd(
-                current,
-                list(matches),
-                max_generators=min(current.jet.k - 1, max_subset_size),
+                current, list(matches), max_generators=min(current.jet.k - 1, max_subset_size)
             )
         if reduced is None and matches:
             reduced = auto_reduce_best_symbolic_match_scalar_kd(current, list(matches))
@@ -309,9 +303,7 @@ def repeated_reduction_workflow_scalar_kd_managed(
         sig = _equation_signature(sp.Eq(current.equation(), 0))
         if avoid_equivalent and sig in seen:
             history.append(
-                ReductionHistoryEntry(
-                    step_index, sig, None, ("equivalent_equation_seen",)
-                )
+                ReductionHistoryEntry(step_index, sig, None, ("equivalent_equation_seen",))
             )
             break
         if sig is not None:
@@ -348,9 +340,7 @@ def repeated_reduction_workflow_scalar_kd_managed(
         if step.reduced_pde is None:
             break
         nxt = _reduced_equation_to_new_problem(
-            step.reduced_pde,
-            dep_name=current.jet.dep_name,
-            max_order=current.jet.max_order,
+            step.reduced_pde, dep_name=current.jet.dep_name, max_order=current.jet.max_order
         )
         if nxt is None:
             break
@@ -358,6 +348,4 @@ def repeated_reduction_workflow_scalar_kd_managed(
         # Stop early on effectively 1D reduced problems where the polynomial symmetry workflow is still fragile.
         if getattr(current.jet, "k", len(getattr(current.jet, "xs", ()))) <= 1:
             break
-    return ManagedRepeatedReductionResult(
-        tuple(steps), final_eq, tuple(history), tuple(seen)
-    )
+    return ManagedRepeatedReductionResult(tuple(steps), final_eq, tuple(history), tuple(seen))

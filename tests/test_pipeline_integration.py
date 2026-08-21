@@ -1,5 +1,7 @@
-import sympy as sp
 from collections.abc import Mapping
+
+import sympy as sp
+
 from pdesolve import pdesolve
 
 
@@ -18,9 +20,7 @@ def test_pipeline_uses_unified_transform_for_heat_with_initial_data():
     u = sp.Function("u")
     eq = sp.Eq(sp.diff(u(x, t), t), sp.diff(u(x, t), x, 2))
     ic = sp.Eq(u(x, 0), sp.exp(-(x**2)))
-    res = pdesolve(
-        eq, u, (x, t), ics=ic, method="unified_transform", domain="whole_line"
-    )
+    res = pdesolve(eq, u, (x, t), ics=ic, method="unified_transform", domain="whole_line")
     assert _method_family_of(res) == "unified_transform_whole_line"
 
 
@@ -29,10 +29,7 @@ def test_pipeline_integrates_first_order_or_constant_coefficient_solver():
     u = sp.Function("u")
     eq = sp.Eq(sp.diff(u(x, y), x) + sp.diff(u(x, y), y), 0)
     res = pdesolve(eq, u, (x, y))
-    assert _method_family_of(res) in {
-        "first_integral_adapted_coordinates",
-        "homogeneous",
-    }
+    assert _method_family_of(res) in {"first_integral_adapted_coordinates", "homogeneous"}
 
 
 def test_pipeline_uses_constant_coefficient_solver():

@@ -2,8 +2,8 @@ import sympy as sp
 
 from pdesolve.classical import (
     detect_first_order_linear_form_2vars,
-    solve_reduced_equation_auto,
     pdesolve,
+    solve_reduced_equation_auto,
 )
 
 
@@ -32,9 +32,7 @@ def test_pdesolve_prefers_symmetry_when_requested():
     x, t = sp.symbols("x t", real=True)
     u = sp.Function("u")
     eq = sp.Eq(sp.diff(u(x, t), t) + sp.diff(u(x, t), x), 0)
-    res = pdesolve(
-        eq, u(x, t), (x, t), method="auto", prefer_symmetry=True, max_symmetry_steps=1
-    )
+    res = pdesolve(eq, u(x, t), (x, t), method="auto", prefer_symmetry=True, max_symmetry_steps=1)
     # Accept either successful symmetry reduction/postsolve or a strong first-order direct solve.
     assert res.method in {
         "symmetry_reduction_plus_postsolve",

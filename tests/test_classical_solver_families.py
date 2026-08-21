@@ -5,8 +5,8 @@ from pdesolve.classical import (
     classify_second_order_linear_pde_2vars,
     load_benchmark_measurement_csv,
     load_benchmark_measurement_json,
-    solve_heat_equation_1d_dirichlet_series,
     pdesolve,
+    solve_heat_equation_1d_dirichlet_series,
     solve_transport_ivp,
     solve_wave_equation_1d_ivp,
 )

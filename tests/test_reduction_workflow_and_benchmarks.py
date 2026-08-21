@@ -1,23 +1,21 @@
 import sympy as sp
 
-from pdesolve.geometry import VectorFieldKD, DistributionKD
-from pdesolve.diffinv import (
-    differential_invariants_scalar_up_to_order,
-    differential_invariants_commuting_distribution_scalar_up_to_order,
-)
-from pdesolve.workflows import repeated_reduction_workflow_scalar_kd_managed
-from pdesolve.pde import ScalarJetSpaceKD, build_scalar_general_solved_pde_from_equation
-from pdesolve.performance import clear_all_caches, cache_stats
 from pdesolve.benchmarks import run_benchmark_case
+from pdesolve.diffinv import (
+    differential_invariants_commuting_distribution_scalar_up_to_order,
+    differential_invariants_scalar_up_to_order,
+)
+from pdesolve.geometry import DistributionKD, VectorFieldKD
+from pdesolve.jet_space import ScalarJetSpaceKD, build_scalar_general_solved_pde_from_equation
+from pdesolve.performance import cache_stats, clear_all_caches
+from pdesolve.workflows import repeated_reduction_workflow_scalar_kd_managed
 
 
 def _heat_eq_obj():
     x, y, t = sp.symbols("x y t", positive=True, real=True)
     jet = ScalarJetSpaceKD((x, y, t), dep_name="u", max_order=2)
     pde = sp.Eq(jet.coord((0, 0, 1)), jet.coord((2, 0, 0)) + jet.coord((0, 2, 0)))
-    eq_obj, _ = build_scalar_general_solved_pde_from_equation(
-        jet, pde, max_principal_order=2
-    )
+    eq_obj, _ = build_scalar_general_solved_pde_from_equation(jet, pde, max_principal_order=2)
     return eq_obj
 
 
@@ -32,8 +30,7 @@ def test_higher_order_scalar_differential_invariant_tower():
 def test_higher_order_commuting_distribution_differential_invariant_tower():
     x, y, t = sp.symbols("x y t", real=True)
     dist = DistributionKD(
-        (x, y, t),
-        (VectorFieldKD((x, y, t), (1, 0, 0)), VectorFieldKD((x, y, t), (0, 1, 0))),
+        (x, y, t), (VectorFieldKD((x, y, t), (1, 0, 0)), VectorFieldKD((x, y, t), (0, 1, 0)))
     )
     res = differential_invariants_commuting_distribution_scalar_up_to_order(
         dist, sp.Symbol("u"), max_order=2

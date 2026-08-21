@@ -1,29 +1,25 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
 
 import sympy as sp
 
+from .canonical import canonicalize_coordinate_chart
+from .charts import ChartAtlasKD, build_chart_atlas
+from .coordinates import (
+    _common_affine_coordinates_distribution,
+    _common_affine_data,
+    pdesolve,
+)
+from .diagnostics import explain_distribution, failure, local_chart_conditions_from_coords
 from .geometry import (
     CharacteristicCoordinatesResult,
     DistributionKD,
     VectorFieldKD,
     distribution_closure,
 )
-from .coordinates import (
-    pdesolve,
-    _common_affine_coordinates_distribution,
-    _common_affine_data,
-)
-from .canonical import canonicalize_coordinate_chart
-from .utils import expr_complexity
-from .charts import build_chart_atlas, ChartAtlasKD
-from .diagnostics import (
-    local_chart_conditions_from_coords,
-    explain_distribution,
-    failure,
-)
+from .symbolic_algebra_helpers import expr_complexity
 
 
 @dataclass
@@ -70,14 +66,10 @@ def _triangular_score(fields: Sequence[VectorFieldKD]) -> int:
     return score
 
 
-def _adapt_field_order(
-    transformed_fields: Sequence[VectorFieldKD],
-) -> tuple[VectorFieldKD, ...]:
+def _adapt_field_order(transformed_fields: Sequence[VectorFieldKD]) -> tuple[VectorFieldKD, ...]:
     # Heuristic: order fields by first nonzero coordinate index, then sparsity.
     def keyfun(X: VectorFieldKD):
-        first = next(
-            (i for i, c in enumerate(X.coeffs) if sp.simplify(c) != 0), len(X.coeffs)
-        )
+        first = next((i for i, c in enumerate(X.coeffs) if sp.simplify(c) != 0), len(X.coeffs))
         nz = sum(1 for c in X.coeffs if sp.simplify(c) != 0)
         cx = sum(expr_complexity(c) for c in X.coeffs)
         return (first, nz, cx)
@@ -207,11 +199,7 @@ def restricted_local_frobenius_atlas(distribution: DistributionKD) -> ChartAtlas
     # adapted chart candidate from identity coordinates for involutive cases
     if closure.closed and distribution.size > 0:
         coords = CharacteristicCoordinatesResult(
-            tuple(),
-            distribution.vars,
-            sp.Integer(1),
-            "identity_chart_candidate",
-            tuple(),
+            tuple(), distribution.vars, sp.Integer(1), "identity_chart_candidate", tuple()
         )
         candidates.append(_chart_candidate_from_result(distribution, coords))
 
@@ -243,12 +231,7 @@ def local_frobenius_chart_explain(distribution: DistributionKD) -> dict:
         "success": False,
         "distribution": report,
         "failures": (
-            failure(
-                "frobenius",
-                "no_valid_chart_found",
-                *reasons,
-                conditions=report.conditions,
-            ),
+            failure("frobenius", "no_valid_chart_found", *reasons, conditions=report.conditions),
         ),
     }
 
@@ -317,8 +300,8 @@ def adapted_basis_in_chart(
             if sp.simplify(val) == 0:
                 continue
             factor = sp.simplify(val / pivot)
-            A.row_op(row2, lambda v, j: sp.expand(v - factor * A[i, j]))
-            T.row_op(row2, lambda v, j: sp.expand(v - factor * T[i, j]))
+            A.row_op(row2, lambda v, j, factor=factor, row=i: sp.expand(v - factor * A[row, j]))
+            T.row_op(row2, lambda v, j, factor=factor, row=i: sp.expand(v - factor * T[row, j]))
         pivot_cols.append(col)
         remaining_cols.remove(col)
 

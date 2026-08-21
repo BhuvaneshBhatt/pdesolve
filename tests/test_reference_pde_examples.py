@@ -33,9 +33,7 @@ def _build_examples():
     )
     examples["sol_pde_03"] = (
         [
-            sp.Eq(
-                x * sp.diff(u(x, y), y) + y * sp.diff(u(x, y), x), -4 * x * y * u(x, y)
-            ),
+            sp.Eq(x * sp.diff(u(x, y), y) + y * sp.diff(u(x, y), x), -4 * x * y * u(x, y)),
             sp.Eq(u(x, 0), sp.exp(-(x**2))),
         ],
         u(x, y),
@@ -47,10 +45,7 @@ def _build_examples():
         (t, x),
     )
     examples["sol_pde_05"] = (
-        [
-            sp.Eq(sp.diff(u(t, x), t) + c * sp.diff(u(t, x), x), 0),
-            sp.Eq(u(0, x), sp.exp(-(x**2))),
-        ],
+        [sp.Eq(sp.diff(u(t, x), t) + c * sp.diff(u(t, x), x), 0), sp.Eq(u(0, x), sp.exp(-(x**2)))],
         u(t, x),
         (t, x),
     )
@@ -87,20 +82,14 @@ def _build_examples():
         (x, y),
     )
     examples["sol_pde_10"] = (
-        sp.Eq(
-            sp.diff(u(x, t), t)
-            + sp.diff(u(x, t), x, 3)
-            + 6 * u(x, t) * sp.diff(u(x, t), x),
-            0,
-        ),
+        sp.Eq(sp.diff(u(x, t), t) + sp.diff(u(x, t), x, 3) + 6 * u(x, t) * sp.diff(u(x, t), x), 0),
         u(x, t),
         (x, t),
     )
     examples["sol_pde_11"] = (
         [
             sp.Eq(
-                sp.diff(u(x, t), t) + u(x, t) * sp.diff(u(x, t), x),
-                eps * sp.diff(u(x, t), x, 2),
+                sp.diff(u(x, t), t) + u(x, t) * sp.diff(u(x, t), x), eps * sp.diff(u(x, t), x, 2)
             ),
             sp.Eq(u(x, 0), sp.Piecewise((1, x < 0), (0, True))),
         ],
@@ -177,28 +166,18 @@ def _build_examples():
         (r, t),
     )
     examples["sol_pde_20"] = (
-        sp.Eq(
-            12 * sp.diff(u(x, t), x, 2), sp.diff(u(x, t), t, 2) + sp.diff(u(x, t), x, t)
-        ),
+        sp.Eq(12 * sp.diff(u(x, t), x, 2), sp.diff(u(x, t), t, 2) + sp.diff(u(x, t), x, t)),
         u(x, t),
         (x, t),
     )
     examples["sol_pde_21"] = (
-        sp.Eq(
-            3 * sp.diff(u(x, t), x, 2)
-            - sp.diff(u(x, t), t, 2)
-            + sp.diff(u(x, t), x, t),
-            1,
-        ),
+        sp.Eq(3 * sp.diff(u(x, t), x, 2) - sp.diff(u(x, t), t, 2) + sp.diff(u(x, t), x, t), 1),
         u(x, t),
         (x, t),
     )
     examples["sol_pde_22"] = (
         [
-            sp.Eq(
-                sp.diff(u(x, y, t), t, 2),
-                sp.diff(u(x, y, t), x, 2) + sp.diff(u(x, y, t), y, 2),
-            ),
+            sp.Eq(sp.diff(u(x, y, t), t, 2), sp.diff(u(x, y, t), x, 2) + sp.diff(u(x, y, t), y, 2)),
             sp.Eq(u(x, y, 0), sp.S(1) / 10 * (x - x**2) * (2 * y - y**2)),
             sp.Eq(sp.diff(u(x, y, t), t).subs(t, 0), 0),
             sp.Eq(u(x, 0, t), 0),
@@ -210,18 +189,12 @@ def _build_examples():
         (x, y, t),
     )
     examples["sol_pde_23"] = (
-        [
-            sp.Eq(sp.diff(u(x, t), t), sp.diff(u(x, t), x, 2)),
-            sp.Eq(u(x, 0), sp.exp(-(x**2))),
-        ],
+        [sp.Eq(sp.diff(u(x, t), t), sp.diff(u(x, t), x, 2)), sp.Eq(u(x, 0), sp.exp(-(x**2)))],
         u(x, t),
         (x, t),
     )
     examples["sol_pde_24"] = (
-        [
-            sp.Eq(sp.diff(u(x, t), t), sp.diff(u(x, t), x, 2) + m),
-            sp.Eq(u(x, 0), sp.sin(x)),
-        ],
+        [sp.Eq(sp.diff(u(x, t), t), sp.diff(u(x, t), x, 2) + m), sp.Eq(u(x, 0), sp.sin(x))],
         u(x, t),
         (x, t),
     )
@@ -458,8 +431,7 @@ def _build_examples():
     examples["sol_pde_48"] = (
         [
             sp.Eq(
-                sp.I * hbar * sp.diff(Psi(x, t), t),
-                -(hbar**2 / (2 * m)) * sp.diff(Psi(x, t), x, 2),
+                sp.I * hbar * sp.diff(Psi(x, t), t), -(hbar**2 / (2 * m)) * sp.diff(Psi(x, t), x, 2)
             ),
             sp.Eq(Psi(a, t), 0),
             sp.Eq(Psi(b, t), 0),
@@ -479,10 +451,7 @@ def _build_examples():
     )
     examples["sol_pde_50"] = (
         [
-            sp.Eq(
-                sp.I * sp.diff(Psi(x, t), t),
-                -sp.diff(Psi(x, t), x, 2) + 2 * x**2 * Psi(x, t),
-            ),
+            sp.Eq(sp.I * sp.diff(Psi(x, t), t), -sp.diff(Psi(x, t), x, 2) + 2 * x**2 * Psi(x, t)),
             sp.Eq(Psi(-sp.oo, t), 0),
             sp.Eq(Psi(sp.oo, t), 0),
         ],
@@ -498,12 +467,7 @@ def _build_examples():
         (x, y),
     )
     examples["sol_pde_52"] = (
-        sp.Eq(
-            sp.diff(u(x, t), t)
-            + sp.diff(u(x, t), x, 3)
-            + 6 * u(x, t) * sp.diff(u(x, t), x),
-            0,
-        ),
+        sp.Eq(sp.diff(u(x, t), t) + sp.diff(u(x, t), x, 3) + 6 * u(x, t) * sp.diff(u(x, t), x), 0),
         u(x, t),
         (x, t),
     )

@@ -1,13 +1,8 @@
 import sympy as sp
 
+from pdesolve import ClosedFormPDEResult, SeriesPDEResult, SystemPDEResult, TransformPDEResult
 from pdesolve.problem import build_pde_problem, build_system_pde_problem
 from pdesolve.solver_execution import solve_with_canonical_problem
-from pdesolve import (
-    ClosedFormPDEResult,
-    SeriesPDEResult,
-    TransformPDEResult,
-    SystemPDEResult,
-)
 
 
 def test_canonical_problem_first_order_solver_family_returns_standardized_result():
@@ -60,10 +55,7 @@ def test_canonical_problem_system_solver_family_returns_system_result():
         sp.Eq(sp.diff(v(x, t), t), sp.diff(u(x, t), x)),
     ]
     sys_problem = build_system_pde_problem(
-        eqs,
-        (u(x, t), v(x, t)),
-        (x, t),
-        ics=[sp.Eq(u(x, 0), sp.sin(x)), sp.Eq(v(x, 0), 0)],
+        eqs, (u(x, t), v(x, t)), (x, t), ics=[sp.Eq(u(x, 0), sp.sin(x)), sp.Eq(v(x, 0), 0)]
     )
     res = solve_with_canonical_problem(sys_problem, "hyperbolic_system")
     assert isinstance(res, SystemPDEResult)

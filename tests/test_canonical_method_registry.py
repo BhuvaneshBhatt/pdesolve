@@ -1,25 +1,22 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 import pytest
 import sympy as sp
 
+import pdesolve.solver_execution as solver_execution
 from pdesolve import classical as classical_mod
 from pdesolve import classical_methods as classical_core
 from pdesolve.constant_coeff import pdesolve_constant_coefficient
-from pdesolve.first_order_nonlinear import solve_first_order_nonlinear_auto
 from pdesolve.first_order_linear import solve_first_order_linear_pde
+from pdesolve.first_order_nonlinear import solve_first_order_nonlinear_auto
 from pdesolve.hyperbolic_system import solve_hyperbolic_system
 from pdesolve.kernels import solve_fundamental_solution, solve_green_function
 from pdesolve.problem import build_pde_problem
 from pdesolve.results import BasePDEResult
-from pdesolve.solver_execution import (
-    SolverExecutionContext,
-    solve_with_canonical_problem,
-)
-import pdesolve.solver_execution as solver_execution
+from pdesolve.solver_execution import SolverExecutionContext, solve_with_canonical_problem
 from pdesolve.unified_transform import solve_unified_transform
 
 
@@ -235,9 +232,7 @@ def _probe_unified_transform():
     x, t, u = _xt(positive=True)
     eq = sp.Eq(sp.I * sp.diff(u(x, t), t) + sp.diff(u(x, t), x, 2), 0)
     ic = sp.Eq(u(x, 0), sp.exp(-x))
-    return solve_unified_transform(
-        eq, u, (x, t), initial_condition=ic, domain="whole_line"
-    )
+    return solve_unified_transform(eq, u, (x, t), initial_condition=ic, domain="whole_line")
 
 
 def _probe_symmetry():
@@ -332,17 +327,11 @@ METHOD_COVERAGE_SPECS = {
     "first_order_nonlinear_auto": MethodCoverageSpec(
         "first_order_nonlinear", _probe_first_order_nonlinear
     ),
-    "invariant_reduction_auto": MethodCoverageSpec(
-        "invariant_reduction", _probe_symmetry
-    ),
-    "classification_only": MethodCoverageSpec(
-        "classification", _probe_classification_only
-    ),
+    "invariant_reduction_auto": MethodCoverageSpec("invariant_reduction", _probe_symmetry),
+    "classification_only": MethodCoverageSpec("classification", _probe_classification_only),
     "first_order": MethodCoverageSpec("first_order_linear", _probe_first_order_linear),
     "transport_ivp": MethodCoverageSpec("transport", _probe_transport),
-    "quasilinear_implicit": MethodCoverageSpec(
-        "first_order_quasilinear", _probe_quasilinear
-    ),
+    "quasilinear_implicit": MethodCoverageSpec("first_order_quasilinear", _probe_quasilinear),
     "conservation_law": MethodCoverageSpec("conservation_law", _probe_conservation),
     "burgers_implicit": MethodCoverageSpec("burgers", _probe_burgers),
     "wave_dalembert": MethodCoverageSpec("wave", _probe_wave_dalembert),
@@ -354,43 +343,27 @@ METHOD_COVERAGE_SPECS = {
     "wave_dirichlet_series": MethodCoverageSpec("series_wave", _probe_wave_dirichlet),
     "separation_framework": MethodCoverageSpec("separation", _probe_heat_dirichlet),
     "separation_of_variables": MethodCoverageSpec("separation", _probe_separation),
-    "laplace_rectangle_dirichlet_series": MethodCoverageSpec(
-        "elliptic_series", _probe_rectangle
-    ),
-    "heat_half_line_transform": MethodCoverageSpec(
-        "transform_heat", _probe_heat_half_line
-    ),
+    "laplace_rectangle_dirichlet_series": MethodCoverageSpec("elliptic_series", _probe_rectangle),
+    "heat_half_line_transform": MethodCoverageSpec("transform_heat", _probe_heat_half_line),
     "heat_laplace_transform": MethodCoverageSpec("transform_heat", _probe_heat_laplace),
-    "laplace_fourier_heat": MethodCoverageSpec(
-        "transform_heat", _probe_laplace_fourier_heat
-    ),
+    "laplace_fourier_heat": MethodCoverageSpec("transform_heat", _probe_laplace_fourier_heat),
     "wave_laplace_transform": MethodCoverageSpec("transform_wave", _probe_wave_laplace),
-    "wave_laplace_sine_transform": MethodCoverageSpec(
-        "transform_wave", _probe_wave_laplace_sine
-    ),
-    "structured_transform": MethodCoverageSpec(
-        "transform_framework", _probe_structured_transform
-    ),
-    "unified_transform": MethodCoverageSpec(
-        "unified_transform", _probe_unified_transform
-    ),
+    "wave_laplace_sine_transform": MethodCoverageSpec("transform_wave", _probe_wave_laplace_sine),
+    "structured_transform": MethodCoverageSpec("transform_framework", _probe_structured_transform),
+    "unified_transform": MethodCoverageSpec("unified_transform", _probe_unified_transform),
     "symmetry_reduction": MethodCoverageSpec("symmetry", _probe_symmetry),
     "post_reduction_auto": MethodCoverageSpec("reduction", _probe_post_reduction),
     "generalized_clairaut_complete_integral": MethodCoverageSpec(
         "complete_integral", _probe_generalized_clairaut
     ),
     "charpit": MethodCoverageSpec("complete_integral", _probe_charpit),
-    "complete_integral": MethodCoverageSpec(
-        "complete_integral", _probe_complete_integral
-    ),
+    "complete_integral": MethodCoverageSpec("complete_integral", _probe_complete_integral),
     "jacobi": MethodCoverageSpec("complete_integral", _probe_jacobi),
     "hyperbolic_system": MethodCoverageSpec("system", _probe_hyperbolic_system),
     "constant_coefficient_inverse_operator": MethodCoverageSpec(
         "constant_coefficient", _probe_constant_coeff
     ),
-    "kernel_fundamental_solution": MethodCoverageSpec(
-        "kernel", _probe_kernel_fundamental
-    ),
+    "kernel_fundamental_solution": MethodCoverageSpec("kernel", _probe_kernel_fundamental),
     "kernel_green_function": MethodCoverageSpec("kernel", _probe_kernel_green),
 }
 

@@ -1,24 +1,24 @@
 import sympy as sp
 
 from pdesolve import (
-    build_pde_problem,
-    pdesolve,
     CanonicalPDERepresentation,
     ClosedFormPDEResult,
     ImplicitPDEResult,
+    build_pde_problem,
+    pdesolve,
 )
-from pdesolve.complete_integral_helpers import recognize_generalized_clairaut_pde
+from pdesolve.classical_methods import PDEIVPResult
 from pdesolve.complete_integral_helpers import (
+    recognize_generalized_clairaut_pde,
     solve_generalized_clairaut_complete_integral,
 )
 from pdesolve.conservation_laws import (
     entropy_admissibility_scalar_riemann,
-    verify_weak_conservation_law_solution,
     solve_scalar_conservation_law_ivp,
+    verify_weak_conservation_law_solution,
 )
 from pdesolve.dispatcher_support import coerce_result
 from pdesolve.results import ConservationLawShockResult
-from pdesolve.classical_methods import PDEIVPResult
 
 
 def test_canonical_representation_layer_exposes_metadata():
@@ -83,9 +83,7 @@ def test_result_object_model_has_closed_and_implicit_forms():
 def test_entropy_admissibility_and_weak_verification_for_burgers_shock():
     u = sp.Symbol("u", real=True)
     flux = u**2 / 2
-    admiss = entropy_admissibility_scalar_riemann(
-        flux, 2, 0, "shock", shock_speed=1, u_symbol=u
-    )
+    admiss = entropy_admissibility_scalar_riemann(flux, 2, 0, "shock", shock_speed=1, u_symbol=u)
     assert admiss["admissible"] is True
     x, t = sp.symbols("x t", real=True)
     sol = ConservationLawShockResult(
@@ -106,11 +104,7 @@ def test_general_quasilinear_implicit_returns_formal_characteristic_system_for_n
     u = sp.Function("u")
     eq = sp.Eq((1 + x) * sp.diff(u(x, t), x) + sp.diff(u(x, t), t), 0)
     res = pdesolve(
-        eq,
-        u(x, t),
-        (x, t),
-        method="quasilinear_implicit",
-        ics={"initial_profile": x**2},
+        eq, u(x, t), (x, t), method="quasilinear_implicit", ics={"initial_profile": x**2}
     )
     raw = res.details["raw_result"]
     assert raw.details.get("formal_characteristic_system") is True
@@ -142,6 +136,7 @@ def test_structured_conservation_solver_attaches_admissibility_metadata():
 
 def test_planner_details_use_condition_and_domain_models():
     import sympy as sp
+
     from pdesolve.classification import plan_pde_solution_methods
 
     x, t = sp.symbols("x t", real=True)

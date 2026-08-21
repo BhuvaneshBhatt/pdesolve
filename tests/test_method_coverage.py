@@ -45,9 +45,7 @@ def test_unified_transform_whole_line():
     u = sp.Function("u")
     ic = sp.Eq(u(x, 0), sp.exp(-(x**2)))
     eq = sp.Eq(sp.I * sp.diff(u(x, t), t) + sp.diff(u(x, t), x, 2), 0)
-    res = solve_unified_transform(
-        eq, u, (x, t), initial_condition=ic, domain="whole_line"
-    )
+    res = solve_unified_transform(eq, u, (x, t), initial_condition=ic, domain="whole_line")
     assert res.domain == "whole_line"
 
 

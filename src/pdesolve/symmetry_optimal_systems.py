@@ -5,9 +5,9 @@ from itertools import combinations, product
 
 import sympy as sp
 
-from .geometry import DistributionKD, VectorFieldKD, distribution_closure
 from .frobenius import local_frobenius_chart
-from .utils import expr_complexity, matrix_is_zero, matrix_is_diagonal
+from .geometry import DistributionKD, VectorFieldKD, distribution_closure
+from .symbolic_algebra_helpers import expr_complexity, matrix_is_diagonal, matrix_is_zero
 
 
 @dataclass(frozen=True)
@@ -87,10 +87,7 @@ def _matrix_invariants(M: sp.Matrix):
     except Exception:
         det = None
     offdiag = sum(
-        1
-        for i in range(M.rows)
-        for j in range(M.cols)
-        if i != j and sp.simplify(M[i, j]) != 0
+        1 for i in range(M.rows) for j in range(M.cols) if i != j and sp.simplify(M[i, j]) != 0
     )
     return rank, trace, det, offdiag, charpoly_sig
 
@@ -210,17 +207,13 @@ def _distribution_score(distribution: DistributionKD) -> tuple:
     try:
         chart = local_frobenius_chart(distribution)
         chart_penalty = 0
-        chart_complexity = sum(
-            expr_complexity(v) for v in chart.invariants + chart.transverse
-        )
+        chart_complexity = sum(expr_complexity(v) for v in chart.invariants + chart.transverse)
         cond_penalty = 5 * len(chart.validity_conditions)
     except Exception:
         chart_penalty = 10**5
         chart_complexity = 10**5
         cond_penalty = 10**5
-    coeff_complexity = sum(
-        sum(expr_complexity(c) for c in f.coeffs) for f in distribution.fields
-    )
+    coeff_complexity = sum(sum(expr_complexity(c) for c in f.coeffs) for f in distribution.fields)
     return (
         -distribution.size,
         fam_prio,
@@ -293,26 +286,20 @@ def commuting_subalgebras(
     reps = {}
     for r in range(2, min(max_dim, n) + 1):
         for idxs in combinations(range(n), r):
-            sub = DistributionKD(
-                distribution.vars, tuple(distribution.fields[i] for i in idxs)
-            )
+            sub = DistributionKD(distribution.vars, tuple(distribution.fields[i] for i in idxs))
             if not sub.is_commuting():
                 continue
             if not distribution_closure(sub).closed:
                 continue
             sig = subalgebra_equivalence_signature(sub)
             score = _distribution_score(sub)
-            rep = OptimalSubalgebraRepresentative(
-                idxs, sub, sig, score, _distribution_family(sub)
-            )
+            rep = OptimalSubalgebraRepresentative(idxs, sub, sig, score, _distribution_family(sub))
             if sig not in reps or score < reps[sig].score:
                 reps[sig] = rep
     return tuple(sorted(reps.values(), key=lambda r: r.score))
 
 
-def choose_optimal_reduction_candidates(
-    distribution: DistributionKD, max_commuting_dim: int = 2
-):
+def choose_optimal_reduction_candidates(distribution: DistributionKD, max_commuting_dim: int = 2):
     """Return preferred one-dimensional representatives followed by higher-dimensional commuting ones."""
     one_d = optimal_system_1d(distribution)
     higher = commuting_subalgebras(distribution, max_dim=max_commuting_dim)

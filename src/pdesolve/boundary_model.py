@@ -49,9 +49,7 @@ def build_boundary_model(
         for key, ext in geometry.extents.items():
             if not isinstance(ext, tuple) or len(ext) != 2:
                 continue
-            var = next(
-                (v for v in spatial_vars if str(v) == key or str(v) == key[0]), None
-            )
+            var = next((v for v in spatial_vars if str(v) == key or str(v) == key[0]), None)
             comps.append(BoundaryComponent(f"{key}_lower", var, ext[0], geometry.kind))
             comps.append(BoundaryComponent(f"{key}_upper", var, ext[1], geometry.kind))
     bindings = []
@@ -67,30 +65,17 @@ def build_boundary_model(
             (
                 c
                 for c in comps
-                if c.variable == cond.variable
-                and sp.simplify(c.location - cond.location) == 0
+                if c.variable == cond.variable and sp.simplify(c.location - cond.location) == 0
             ),
             None,
         )
         if comp is None:
             comp = BoundaryComponent(
-                f"boundary_{len(comps) + 1}",
-                cond.variable,
-                cond.location,
-                geometry.kind,
+                f"boundary_{len(comps) + 1}", cond.variable, cond.location, geometry.kind
             )
             comps.append(comp)
-        bindings.append(
-            BoundaryConditionBinding(comp, kind, cond.equation, dict(cond.metadata))
-        )
-    return BoundaryModel(
-        geometry, tuple(comps), tuple(bindings), {"geometry_kind": geometry.kind}
-    )
+        bindings.append(BoundaryConditionBinding(comp, kind, cond.equation, dict(cond.metadata)))
+    return BoundaryModel(geometry, tuple(comps), tuple(bindings), {"geometry_kind": geometry.kind})
 
 
-__all__ = [
-    "BoundaryComponent",
-    "BoundaryConditionBinding",
-    "BoundaryModel",
-    "build_boundary_model",
-]
+__all__ = ["BoundaryComponent", "BoundaryConditionBinding", "BoundaryModel", "build_boundary_model"]

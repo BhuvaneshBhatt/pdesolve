@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 import sympy as sp
 
@@ -16,7 +15,7 @@ class SpecialPDEResult:
 
 def recognize_heat_or_advection_diffusion(
     eq: sp.Equality | sp.Expr, u: sp.Function, vars: tuple[sp.Symbol, sp.Symbol]
-) -> Optional[SpecialPDEResult]:
+) -> SpecialPDEResult | None:
     """Recognize ``u_t = k u_xx`` and ``u_t = k u_xx + gamma u_x``.
 
     The returned solution family is a one-parameter exponential family,
@@ -43,9 +42,7 @@ def recognize_heat_or_advection_diffusion(
 
     k = sp.simplify(-a_xx / a_t)
     gamma = sp.simplify(-a_x / a_t)
-    if not k.free_symbols.isdisjoint({x, t}) or not gamma.free_symbols.isdisjoint(
-        {x, t}
-    ):
+    if not k.free_symbols.isdisjoint({x, t}) or not gamma.free_symbols.isdisjoint({x, t}):
         return None
 
     c0, r = sp.symbols("c0 r")
@@ -56,7 +53,7 @@ def recognize_heat_or_advection_diffusion(
 
 def recognize_laplace_or_helmholtz(
     eq: sp.Equality | sp.Expr, u: sp.Function, vars: tuple[sp.Symbol, sp.Symbol]
-) -> Optional[SpecialPDEResult]:
+) -> SpecialPDEResult | None:
     """Recognize 2D Laplace/Helmholtz equations and return a separated family."""
     x, y = vars
     expr = sp.simplify((eq.lhs - eq.rhs) if isinstance(eq, sp.Equality) else eq)
@@ -91,8 +88,8 @@ def recognize_laplace_or_helmholtz(
 
 def solve_special_pde(
     eq: sp.Equality | sp.Expr, u: sp.Function, vars: tuple[sp.Symbol, sp.Symbol]
-) -> Optional[SpecialPDEResult]:
+) -> SpecialPDEResult | None:
     """Try the lightweight special-family recognizers."""
-    return recognize_heat_or_advection_diffusion(
+    return recognize_heat_or_advection_diffusion(eq, u, vars) or recognize_laplace_or_helmholtz(
         eq, u, vars
-    ) or recognize_laplace_or_helmholtz(eq, u, vars)
+    )

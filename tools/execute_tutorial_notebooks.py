@@ -4,8 +4,8 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import nbformat
 from nbclient import NotebookClient
@@ -20,9 +20,7 @@ def parse_args() -> argparse.Namespace:
         "--timeout", type=int, default=120, help="per-cell execution timeout in seconds"
     )
     parser.add_argument(
-        "notebooks",
-        nargs="*",
-        help="optional notebook filenames under notebooks/tutorials",
+        "notebooks", nargs="*", help="optional notebook filenames under notebooks/tutorials"
     )
     return parser.parse_args()
 

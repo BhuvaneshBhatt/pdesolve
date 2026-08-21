@@ -1,42 +1,37 @@
 import sympy as sp
 
 from pdesolve import (
+    ClassicalResidualVerifier,
     ClosedFormPDEResult,
     ImplicitPDEResult,
-    SeriesPDEResult,
-    TransformPDEResult,
-    ClassicalResidualVerifier,
     ImplicitSolutionVerifier,
+    SeriesPDEResult,
     SeriesVerifier,
-    TransformVerifier,
-    select_verification_strategy,
-    verify_result,
-    separate_product_pde,
     SturmLiouvilleProblem,
-    solve_regular_constant_sturm_liouville,
-    evaluate_inner_transforms,
+    TransformPDEResult,
+    TransformVerifier,
     analyze_lie_point_symmetries,
+    evaluate_inner_transforms,
     invariants_from_point_generator,
+    select_verification_strategy,
+    separate_product_pde,
+    solve_regular_constant_sturm_liouville,
+    verify_result,
 )
 
 
 def test_verification_strategy_selection_by_representation():
     x = sp.symbols("x")
     assert isinstance(
-        select_verification_strategy(
-            ClosedFormPDEResult("closed", sp.Eq(sp.Symbol("u"), x))
-        ),
+        select_verification_strategy(ClosedFormPDEResult("closed", sp.Eq(sp.Symbol("u"), x))),
         ClassicalResidualVerifier,
     )
     assert isinstance(
-        select_verification_strategy(
-            ImplicitPDEResult("implicit", sp.Eq(sp.Symbol("F"), 0))
-        ),
+        select_verification_strategy(ImplicitPDEResult("implicit", sp.Eq(sp.Symbol("F"), 0))),
         ImplicitSolutionVerifier,
     )
     assert isinstance(
-        select_verification_strategy(SeriesPDEResult("series", sp.Integer(0))),
-        SeriesVerifier,
+        select_verification_strategy(SeriesPDEResult("series", sp.Integer(0))), SeriesVerifier
     )
     assert isinstance(
         select_verification_strategy(
@@ -61,9 +56,7 @@ def test_result_verification_classical_residual():
 def test_general_product_separation_derives_heat_odes():
     x, t = sp.symbols("x t")
     u = sp.Function("u")
-    sep = separate_product_pde(
-        sp.Eq(sp.diff(u(x, t), t), sp.diff(u(x, t), x, 2)), u(x, t), (x, t)
-    )
+    sep = separate_product_pde(sp.Eq(sp.diff(u(x, t), t), sp.diff(u(x, t), x, 2)), u(x, t), (x, t))
     assert sep.verified_separable
     assert len(sep.factor_equations) == 2
     assert sep.factor_equations[0].lhs.has(sp.Derivative)
@@ -120,10 +113,7 @@ def test_lie_analysis_generates_determining_equations_and_generators():
     x, t = sp.symbols("x t")
     u = sp.Function("u")
     analysis = analyze_lie_point_symmetries(
-        sp.Eq(sp.diff(u(x, t), t), sp.diff(u(x, t), x, 2)),
-        u(x, t),
-        (x, t),
-        polynomial_degree=1,
+        sp.Eq(sp.diff(u(x, t), t), sp.diff(u(x, t), x, 2)), u(x, t), (x, t), polynomial_degree=1
     )
     assert analysis.determining_equations
     assert analysis.generators
@@ -136,8 +126,7 @@ def test_lie_analysis_invariants_for_traveling_wave_generator():
     x, t, U = sp.symbols("x t U")
     inv = invariants_from_point_generator((x, t), U, (1, 1), 0)
     assert any(
-        sp.simplify(z - (x - t)) == 0 or sp.simplify(z + (x - t)) == 0
-        for z in inv.invariants
+        sp.simplify(z - (x - t)) == 0 or sp.simplify(z + (x - t)) == 0 for z in inv.invariants
     )
     assert U in inv.invariants
     assert sp.simplify(inv.jacobian) != 0

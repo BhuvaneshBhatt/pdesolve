@@ -4,8 +4,8 @@ from dataclasses import dataclass
 
 import sympy as sp
 
-from .utils import matrix_is_diagonal, matrix_is_zero, matrix_rank_symbolic
 from .performance import cached_bracket_coeffs, cached_distribution_diagnostics
+from .symbolic_algebra_helpers import matrix_is_diagonal, matrix_is_zero, matrix_rank_symbolic
 
 
 @dataclass
@@ -25,20 +25,15 @@ class VectorFieldKD:
 
     def apply(self, expr: sp.Expr) -> sp.Expr:
         return sp.expand(
-            sum(
-                self.coeffs[i] * sp.diff(expr, self.vars[i])
-                for i in range(self.dimension)
-            )
+            sum(self.coeffs[i] * sp.diff(expr, self.vars[i]) for i in range(self.dimension))
         )
 
-    def bracket(self, other: "VectorFieldKD") -> "VectorFieldKD":
+    def bracket(self, other: VectorFieldKD) -> VectorFieldKD:
         if self.vars != other.vars:
             raise ValueError("Vector fields must live on the same coordinate system.")
         vars_sig = tuple(str(v) for v in self.vars)
         coeffs = cached_bracket_coeffs(
-            vars_sig,
-            tuple(str(c) for c in self.coeffs),
-            tuple(str(c) for c in other.coeffs),
+            vars_sig, tuple(str(c) for c in self.coeffs), tuple(str(c) for c in other.coeffs)
         )
         return VectorFieldKD(self.vars, tuple(sp.sympify(c) for c in coeffs))
 
@@ -82,7 +77,7 @@ class VectorFieldKD:
         M, b = data
         return matrix_is_diagonal(M) and matrix_is_zero(b)
 
-    def simplify(self) -> "VectorFieldKD":
+    def simplify(self) -> VectorFieldKD:
         return VectorFieldKD(self.vars, tuple(sp.simplify(c) for c in self.coeffs))
 
 
@@ -175,7 +170,7 @@ class DistributionKD:
         aff = self.affine_data()
         translation = aff is not None and all(matrix_is_zero(M) for M in aff[0])
         diagonal = aff is not None and all(
-            matrix_is_diagonal(M) and matrix_is_zero(b) for M, b in zip(*aff)
+            matrix_is_diagonal(M) and matrix_is_zero(b) for M, b in zip(*aff, strict=True)
         )
         return DistributionDiagnostics(
             rank=rank,
@@ -188,9 +183,7 @@ class DistributionKD:
 
     def diagnostics(self) -> DistributionDiagnostics:
         coeffs_sig = tuple(tuple(str(c) for c in f.coeffs) for f in self.fields)
-        return cached_distribution_diagnostics(
-            coeffs_sig, tuple(str(v) for v in self.vars)
-        )
+        return cached_distribution_diagnostics(coeffs_sig, tuple(str(v) for v in self.vars))
 
 
 @dataclass
@@ -207,16 +200,12 @@ class ClosureResult:
     residuals: tuple[VectorFieldKD, ...]
 
 
-def distribution_commutator_table(
-    distribution: DistributionKD,
-) -> tuple[LieBracketRecord, ...]:
+def distribution_commutator_table(distribution: DistributionKD) -> tuple[LieBracketRecord, ...]:
     out = []
     for i in range(distribution.size):
         for j in range(i + 1, distribution.size):
             out.append(
-                LieBracketRecord(
-                    i, j, distribution.fields[i].bracket(distribution.fields[j])
-                )
+                LieBracketRecord(i, j, distribution.fields[i].bracket(distribution.fields[j]))
             )
     return tuple(out)
 
@@ -235,19 +224,12 @@ def distribution_closure(distribution: DistributionKD) -> ClosureResult:
             sol, params = A.gauss_jordan_solve(b)
             if params.shape[0] > 0:
                 sub = {params[i, 0]: 0 for i in range(params.shape[0])}
-                sol = sp.Matrix(
-                    [sp.expand(sol[i, 0].subs(sub)) for i in range(distribution.size)]
-                )
+                sol = sp.Matrix([sp.expand(sol[i, 0].subs(sub)) for i in range(distribution.size)])
             else:
-                sol = sp.Matrix(
-                    [sp.expand(sol[i, 0]) for i in range(distribution.size)]
-                )
+                sol = sp.Matrix([sp.expand(sol[i, 0]) for i in range(distribution.size)])
             recon = A * sol
             resid = sp.Matrix(
-                [
-                    sp.simplify(recon[i, 0] - b[i, 0])
-                    for i in range(distribution.dimension)
-                ]
+                [sp.simplify(recon[i, 0] - b[i, 0]) for i in range(distribution.dimension)]
             )
             if any(sp.simplify(v) != 0 for v in resid):
                 residuals.append(rec.bracket)
@@ -278,9 +260,7 @@ def extract_commuting_subdistributions(
     seen = set()
     for r in range(1, min(max_dim, n) + 1):
         for idxs in combinations(range(n), r):
-            sub = DistributionKD(
-                distribution.vars, tuple(distribution.fields[i] for i in idxs)
-            )
+            sub = DistributionKD(distribution.vars, tuple(distribution.fields[i] for i in idxs))
             if sub.is_commuting():
                 sig = tuple(idxs)
                 if sig not in seen:
@@ -289,11 +269,7 @@ def extract_commuting_subdistributions(
     out.sort(
         key=lambda d: (
             -d.size,
-            0
-            if d.diagnostics().translation
-            else 1
-            if d.diagnostics().diagonal_scaling
-            else 2,
+            0 if d.diagnostics().translation else 1 if d.diagnostics().diagonal_scaling else 2,
         )
     )
     return tuple(out)

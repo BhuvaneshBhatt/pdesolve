@@ -23,13 +23,9 @@ def test_canonical_conservation_law_normalization_burgers():
 def test_parse_conservation_law_initial_data_profile_and_riemann():
     x, t = sp.symbols("x t", real=True)
     u = sp.Function("u")
-    general = parse_scalar_conservation_law_initial_data(
-        {"initial_profile": sp.sin(x)}, u, (x, t)
-    )
+    general = parse_scalar_conservation_law_initial_data({"initial_profile": sp.sin(x)}, u, (x, t))
     assert general.kind == "general_profile"
-    riemann = parse_scalar_conservation_law_initial_data(
-        {"riemann_data": (1, 0)}, u, (x, t)
-    )
+    riemann = parse_scalar_conservation_law_initial_data({"riemann_data": (1, 0)}, u, (x, t))
     assert riemann.kind == "riemann"
     assert riemann.left_state == 1
     assert riemann.right_state == 0

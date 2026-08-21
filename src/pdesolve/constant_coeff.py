@@ -7,8 +7,8 @@ from typing import Any
 import sympy as sp
 from sympy.polys.monomials import itermonomials
 
-from .verify import verify_solution_with_conditions
 from .operator_symbol import ConstantCoefficientSymbol
+from .verify import verify_solution_with_conditions
 
 
 @dataclass(frozen=True)
@@ -96,9 +96,7 @@ def _method_family(method: str) -> str:
     return "constant_coefficient"
 
 
-def _with_method_metadata(
-    method: str, details: dict[str, Any] | None = None
-) -> dict[str, Any]:
+def _with_method_metadata(method: str, details: dict[str, Any] | None = None) -> dict[str, Any]:
     merged = dict(details or {})
     merged.setdefault("solver_family", "constant_coefficient")
     merged.setdefault("method_family", _method_family(method))
@@ -117,9 +115,7 @@ def _particular_result(
 def _general_solution_result(
     method: str, solution: sp.Equality, details: dict[str, Any] | None = None
 ) -> PDEGeneralSolutionResult:
-    return PDEGeneralSolutionResult(
-        method, solution, _with_method_metadata(method, details)
-    )
+    return PDEGeneralSolutionResult(method, solution, _with_method_metadata(method, details))
 
 
 def _impl():
@@ -143,9 +139,7 @@ def canonicalize_pde_problem(eq_or_expr, dep_expr_or_func, indep_vars=None):
     return can.equation if hasattr(can, "equation") else can
 
 
-def detect_linear_constant_coefficient_pde(
-    eq_or_expr, dep_expr_or_func, indep_vars=None
-):
+def detect_linear_constant_coefficient_pde(eq_or_expr, dep_expr_or_func, indep_vars=None):
     uexpr, vars_ = _dep_and_vars(dep_expr_or_func, indep_vars)
     zero = _as_zero_expr(eq_or_expr)
     vars_ = tuple(vars_)
@@ -194,8 +188,7 @@ def detect_linear_constant_coefficient_pde(
             operator_terms[mi] = coeff
 
     if any(
-        not coeff.free_symbols.isdisjoint(set(vars_) | {uexpr})
-        for coeff in operator_terms.values()
+        not coeff.free_symbols.isdisjoint(set(vars_) | {uexpr}) for coeff in operator_terms.values()
     ):
         raise ValueError("PDE is not constant-coefficient linear in the operator part.")
 
@@ -247,9 +240,7 @@ def _cc_operator_apply_from_terms(operator_terms, expr, vars_):
     return sp.expand(total)
 
 
-def _make_operator_symbol(
-    ccpde: LinearConstantCoefficientPDE,
-) -> ConstantCoefficientSymbol:
+def _make_operator_symbol(ccpde: LinearConstantCoefficientPDE) -> ConstantCoefficientSymbol:
     msyms = sp.symbols(f"m0:{len(ccpde.indep_vars)}")
     return ConstantCoefficientSymbol(tuple(msyms), sp.expand(ccpde.operator_polynomial))
 
@@ -279,7 +270,7 @@ def _linear_system_solve(expressions, unknowns, vars_):
     for entry in vec:
         free_syms |= {s for s in entry.free_symbols if s not in set(unknowns)}
     zero_sub = {s: 0 for s in free_syms}
-    return {u: sp.expand(v.subs(zero_sub)) for u, v in zip(unknowns, vec)}
+    return {u: sp.expand(v.subs(zero_sub)) for u, v in zip(unknowns, vec, strict=True)}
 
 
 def _phase_vector(phase, vars_):
@@ -291,15 +282,12 @@ def _phase_vector(phase, vars_):
 def _monomials_in_vars(vars_, degree):
     return tuple(
         sorted(
-            itermonomials(vars_, degree),
-            key=lambda m: (sp.total_degree(m), sp.default_sort_key(m)),
+            itermonomials(vars_, degree), key=lambda m: (sp.total_degree(m), sp.default_sort_key(m))
         )
     )
 
 
-def _solve_polynomial_ansatz(
-    ccpde: LinearConstantCoefficientPDE, rhs, degree, *, prefix="coef"
-):
+def _solve_polynomial_ansatz(ccpde: LinearConstantCoefficientPDE, rhs, degree, *, prefix="coef"):
     vars_ = ccpde.indep_vars
     coeffs = []
     ansatz = sp.Integer(0)
@@ -307,9 +295,7 @@ def _solve_polynomial_ansatz(
         c = sp.Symbol(f"{prefix}_{idx}")
         coeffs.append(c)
         ansatz += c * mon
-    resid = sp.expand(
-        _cc_operator_apply_from_terms(ccpde.operator_terms, ansatz, vars_) - rhs
-    )
+    resid = sp.expand(_cc_operator_apply_from_terms(ccpde.operator_terms, ansatz, vars_) - rhs)
     sub = _linear_system_solve([resid], coeffs, vars_)
     if sub is None:
         raise NotImplementedError("Could not determine an ansatz solution.")
@@ -324,9 +310,7 @@ def _exponential_particular(ccpde: LinearConstantCoefficientPDE, amplitude, phas
     vars_ = ccpde.indep_vars
     kvec = _phase_vector(phase, vars_)
     if kvec is None:
-        raise NotImplementedError(
-            "Exponential phase must be affine in the independent variables."
-        )
+        raise NotImplementedError("Exponential phase must be affine in the independent variables.")
     symbol_profile = _shifted_symbol_profile(ccpde, kvec)
     symbol_value = sp.simplify(_operator_symbol(ccpde, kvec))
     forcing = sp.expand(amplitude * sp.exp(phase))
@@ -427,9 +411,7 @@ def _decompose_rhs_to_exponential_amplitudes(rhs, vars_):
         if extracted is None:
             return None
         amplitude, phase = extracted
-        if not phase.is_polynomial(*vars_) or any(
-            sp.degree(phase, v) > 1 for v in vars_
-        ):
+        if not phase.is_polynomial(*vars_) or any(sp.degree(phase, v) > 1 for v in vars_):
             return None
         origin = "exponential"
         raw = sp.expand(term)
@@ -471,9 +453,7 @@ def _solve_exponential_amplitude_term(
 def _particular_from_exponential_amplitudes(ccpde: LinearConstantCoefficientPDE, rhs):
     pieces = _decompose_rhs_to_exponential_amplitudes(rhs, ccpde.indep_vars)
     if pieces is None:
-        raise NotImplementedError(
-            "Unsupported exponential-amplitude forcing decomposition."
-        )
+        raise NotImplementedError("Unsupported exponential-amplitude forcing decomposition.")
     solved = [
         _solve_exponential_amplitude_term(
             ccpde, piece["amplitude"], piece["phase"], origin=piece["origin"]
@@ -504,9 +484,7 @@ def _hyper_trig_particular(ccpde: LinearConstantCoefficientPDE, rhs):
     result = _particular_from_exponential_amplitudes(ccpde, rhs)
     details = dict(result.details)
     details["reduced_from"] = sp.expand(rhs)
-    details["origin_families"] = tuple(
-        piece["origin"] for piece in details["decomposition"]
-    )
+    details["origin_families"] = tuple(piece["origin"] for piece in details["decomposition"])
     return _particular_result(
         "constant_coefficient_trig_hyperbolic",
         sp.simplify(
@@ -532,15 +510,11 @@ def _polynomial_particular(ccpde: LinearConstantCoefficientPDE, rhs):
         deg_rhs = sp.total_degree(rhs, *vars_) if rhs != 0 else 0
         max_steps = int(deg_rhs) + ccpde.order + 2
         for _ in range(max_steps):
-            current = sp.expand(
-                -_cc_operator_apply_from_terms(n_terms, current, vars_) / c0
-            )
+            current = sp.expand(-_cc_operator_apply_from_terms(n_terms, current, vars_) / c0)
             if current == 0:
                 break
             acc = sp.expand(acc + current)
-        residual = sp.expand(
-            _cc_operator_apply_from_terms(ccpde.operator_terms, acc, vars_) - rhs
-        )
+        residual = sp.expand(_cc_operator_apply_from_terms(ccpde.operator_terms, acc, vars_) - rhs)
         if sp.simplify(residual) == 0:
             return _particular_result(
                 "constant_coefficient_polynomial_inverse_operator",
@@ -569,9 +543,7 @@ def _shifted_operator_terms(ccpde: LinearConstantCoefficientPDE, phase):
     vars_ = ccpde.indep_vars
     kvec = _phase_vector(phase, vars_)
     if kvec is None:
-        raise NotImplementedError(
-            "Exponential phase must be affine in the independent variables."
-        )
+        raise NotImplementedError("Exponential phase must be affine in the independent variables.")
     new_terms = {}
     for mi, coeff in ccpde.operator_terms.items():
         ranges = [range(mi_i + 1) for mi_i in mi]
@@ -579,17 +551,13 @@ def _shifted_operator_terms(ccpde: LinearConstantCoefficientPDE, phase):
             comb = sp.Integer(1)
             kpow = sp.Integer(1)
             out_mi = []
-            for i, (mi_i, nu_i) in enumerate(zip(mi, nu)):
+            for i, (mi_i, nu_i) in enumerate(zip(mi, nu, strict=True)):
                 comb *= sp.binomial(mi_i, nu_i)
                 kpow *= kvec[i] ** (mi_i - nu_i)
                 out_mi.append(nu_i)
             out_mi = tuple(out_mi)
-            new_terms[out_mi] = sp.expand(
-                new_terms.get(out_mi, 0) + coeff * comb * kpow
-            )
-    new_terms = {
-        mi: sp.expand(val) for mi, val in new_terms.items() if sp.simplify(val) != 0
-    }
+            new_terms[out_mi] = sp.expand(new_terms.get(out_mi, 0) + coeff * comb * kpow)
+    new_terms = {mi: sp.expand(val) for mi, val in new_terms.items() if sp.simplify(val) != 0}
     return new_terms, kvec
 
 
@@ -684,9 +652,7 @@ def factor_constant_coefficient_operator(operator_polynomial, indep_vars):
     factors = []
     for fac, mult in facs[1]:
         fac_poly = sp.Poly(fac, *msyms, domain="EX")
-        coeffs = tuple(
-            sp.expand(fac_poly.coeff_monomial(msyms[i])) for i in range(len(msyms))
-        )
+        coeffs = tuple(sp.expand(fac_poly.coeff_monomial(msyms[i])) for i in range(len(msyms)))
         const = sp.expand(fac_poly.TC())
         factors.append(
             ConstantCoefficientOperatorFactor(
@@ -700,18 +666,12 @@ def factor_constant_coefficient_operator(operator_polynomial, indep_vars):
     return tuple(factors)
 
 
-def build_constant_coefficient_operator_profile(
-    eq_or_expr, dep_expr_or_func, indep_vars=None
-):
-    ccpde = detect_linear_constant_coefficient_pde(
-        eq_or_expr, dep_expr_or_func, indep_vars
-    )
+def build_constant_coefficient_operator_profile(eq_or_expr, dep_expr_or_func, indep_vars=None):
+    ccpde = detect_linear_constant_coefficient_pde(eq_or_expr, dep_expr_or_func, indep_vars)
     return ConstantCoefficientOperatorProfile(
         pde=ccpde,
         forcing_family=_forcing_family(ccpde.rhs, ccpde.indep_vars),
-        factors=factor_constant_coefficient_operator(
-            ccpde.operator_polynomial, ccpde.indep_vars
-        ),
+        factors=factor_constant_coefficient_operator(ccpde.operator_polynomial, ccpde.indep_vars),
         symbol=_make_operator_symbol(ccpde),
     )
 
@@ -719,13 +679,9 @@ def build_constant_coefficient_operator_profile(
 def invert_factored_constant_coefficient_operator_on_forcing(
     eq_or_expr, dep_expr_or_func, indep_vars=None
 ):
-    profile = build_constant_coefficient_operator_profile(
-        eq_or_expr, dep_expr_or_func, indep_vars
-    )
+    profile = build_constant_coefficient_operator_profile(eq_or_expr, dep_expr_or_func, indep_vars)
     ccpde = profile.pde
-    base = invert_constant_coefficient_operator_on_forcing(
-        eq_or_expr, dep_expr_or_func, indep_vars
-    )
+    base = invert_constant_coefficient_operator_on_forcing(eq_or_expr, dep_expr_or_func, indep_vars)
     rhs = sp.expand(sp.sympify(ccpde.rhs))
     stage_data = []
     extracted = _extract_exponential_term_data(rhs)
@@ -734,9 +690,7 @@ def invert_factored_constant_coefficient_operator_on_forcing(
         _, phase = extracted
         wave_vector = _phase_vector(phase, ccpde.indep_vars)
     for factor in profile.factors:
-        fac_symbol = ConstantCoefficientSymbol(
-            profile.symbol.variables, factor.polynomial
-        )
+        fac_symbol = ConstantCoefficientSymbol(profile.symbol.variables, factor.polynomial)
         stage = {"factor": factor}
         if wave_vector is not None:
             stage["evaluation"] = sp.expand(fac_symbol.evaluate(wave_vector))
@@ -747,18 +701,12 @@ def invert_factored_constant_coefficient_operator_on_forcing(
     return _particular_result(base.method, base.solution, details)
 
 
-def invert_constant_coefficient_operator_on_forcing(
-    eq_or_expr, dep_expr_or_func, indep_vars=None
-):
-    ccpde = detect_linear_constant_coefficient_pde(
-        eq_or_expr, dep_expr_or_func, indep_vars
-    )
+def invert_constant_coefficient_operator_on_forcing(eq_or_expr, dep_expr_or_func, indep_vars=None):
+    ccpde = detect_linear_constant_coefficient_pde(eq_or_expr, dep_expr_or_func, indep_vars)
     rhs = sp.expand(sp.sympify(ccpde.rhs))
     vars_ = ccpde.indep_vars
     if rhs == 0:
-        return _particular_result(
-            "constant_coefficient_zero_rhs", sp.Integer(0), {"rhs": rhs}
-        )
+        return _particular_result("constant_coefficient_zero_rhs", sp.Integer(0), {"rhs": rhs})
     decomposed = _decompose_rhs_to_exponential_amplitudes(rhs, vars_)
     if rhs.has(sp.sin, sp.cos, sp.sinh, sp.cosh):
         return _hyper_trig_particular(ccpde, rhs)
@@ -769,9 +717,7 @@ def invert_constant_coefficient_operator_on_forcing(
     extracted = _extract_exponential_term_data(rhs)
     if extracted is not None:
         amplitude, phase = extracted
-        return _solve_exponential_amplitude_term(
-            ccpde, amplitude, phase, origin="exponential"
-        )
+        return _solve_exponential_amplitude_term(ccpde, amplitude, phase, origin="exponential")
     if rhs.has(sp.sin, sp.cos, sp.sinh, sp.cosh):
         return _hyper_trig_particular(ccpde, rhs)
     raise NotImplementedError(
@@ -789,15 +735,10 @@ def _invert_affine_line_map(expr, line_var):
 
 
 def _fit_single_family_on_line(
-    general_solution_result,
-    uexpr,
-    vars_,
-    *,
-    line_var,
-    line_value,
-    profile,
-    particular=sp.Integer(0),
+    general_solution_result, uexpr, vars_, *, line_var, line_value, profile, particular=None
 ):
+    if particular is None:
+        particular = sp.Integer(0)
     families = tuple(general_solution_result.details.get("families", ()))
     if len(families) != 1:
         return None
@@ -823,9 +764,7 @@ def _fit_single_family_on_line(
     amp = sp.simplify(line_expr / generator(inv_line))
     if amp.has(generator):
         return None
-    target = sp.expand(
-        sp.sympify(profile) - sp.sympify(particular).subs(line_var, line_value)
-    )
+    target = sp.expand(sp.sympify(profile) - sp.sympify(particular).subs(line_var, line_value))
     mapped = sp.expand(target / amp)
     replacement = sp.expand(mapped.subs(param, (fam.invariant - beta) / alpha))
     fitted_expr = sp.expand(
@@ -855,8 +794,10 @@ def _fit_two_family_initial_data(
     curve_value,
     initial_profile,
     initial_time_derivative=None,
-    particular=sp.Integer(0),
+    particular=None,
 ):
+    if particular is None:
+        particular = sp.Integer(0)
     if len(vars_) != 2:
         return None
     x, t = vars_
@@ -875,9 +816,9 @@ def _fit_two_family_initial_data(
     g1, g2 = f1.generators[0], f2.generators[0]
     expr1 = sp.expand(f1.expression)
     expr2 = sp.expand(f2.expression)
-    if sp.simplify(expr1 / g1(f1.invariant)).has(g1) or sp.simplify(
-        expr2 / g2(f2.invariant)
-    ).has(g2):
+    if sp.simplify(expr1 / g1(f1.invariant)).has(g1) or sp.simplify(expr2 / g2(f2.invariant)).has(
+        g2
+    ):
         return None
     amp1 = sp.simplify(expr1 / g1(f1.invariant))
     amp2 = sp.simplify(expr2 / g2(f2.invariant))
@@ -968,9 +909,7 @@ def _normalize_point_conditions(ics=None, bcs=None):
     if not conditions:
         return None
     point_var = data.get("point_var")
-    point_value = data.get(
-        "point_value", data.get("curve_value", data.get("line_value", 0))
-    )
+    point_value = data.get("point_value", data.get("curve_value", data.get("line_value", 0)))
     return {
         "source": source,
         "point_var": point_var,
@@ -1058,7 +997,7 @@ def _linear_algebra_solve_equations(equations, unknowns):
     for item in vec:
         free |= {s for s in item.free_symbols if s not in set(unknowns)}
     sub_zero = {s: 0 for s in free}
-    return {u: sp.expand(v.subs(sub_zero)) for u, v in zip(unknowns, vec)}
+    return {u: sp.expand(v.subs(sub_zero)) for u, v in zip(unknowns, vec, strict=True)}
 
 
 def _fit_1d_family_at_point(
@@ -1069,8 +1008,10 @@ def _fit_1d_family_at_point(
     point_var=None,
     point_value=0,
     conditions=None,
-    particular=sp.Integer(0),
+    particular=None,
 ):
+    if particular is None:
+        particular = sp.Integer(0)
     if len(vars_) != 1 or not conditions:
         return None
     var = vars_[0]
@@ -1145,16 +1086,10 @@ def _build_generator_line_maps(families, line_var, line_value, param):
 def _replace_generator_line_jets(expr, param, generator_maps):
     expr = sp.expand(expr)
     for item in generator_maps:
-        expr = expr.xreplace(
-            {item["generator"](item["inv_line"]): item["yfunc"](param)}
-        )
+        expr = expr.xreplace({item["generator"](item["inv_line"]): item["yfunc"](param)})
 
     def repl(node):
-        if (
-            not isinstance(node, sp.Subs)
-            or len(node.variables) != 1
-            or len(node.point) != 1
-        ):
+        if not isinstance(node, sp.Subs) or len(node.variables) != 1 or len(node.point) != 1:
             return None
         point = sp.expand(node.point[0])
         for item in generator_maps:
@@ -1162,18 +1097,14 @@ def _replace_generator_line_jets(expr, param, generator_maps):
                 continue
             if isinstance(node.expr, sp.Derivative):
                 deriv_expr = node.expr
-                if (
-                    deriv_expr.expr.func != item["generator"]
-                    or len(deriv_expr.expr.args) != 1
-                ):
+                if deriv_expr.expr.func != item["generator"] or len(deriv_expr.expr.args) != 1:
                     continue
                 pivot = node.variables[0]
                 if deriv_expr.expr.args[0] != pivot:
                     continue
                 order = deriv_expr.derivative_count
                 return sp.expand(
-                    sp.diff(item["yfunc"](param), param, order)
-                    / (item["alpha"] ** order)
+                    sp.diff(item["yfunc"](param), param, order) / (item["alpha"] ** order)
                 )
         return None
 
@@ -1181,15 +1112,10 @@ def _replace_generator_line_jets(expr, param, generator_maps):
 
 
 def _try_direct_line_function_solve(
-    general_solution_result,
-    uexpr,
-    vars_,
-    *,
-    line_var,
-    line_value,
-    conditions,
-    particular=sp.Integer(0),
+    general_solution_result, uexpr, vars_, *, line_var, line_value, conditions, particular=None
 ):
+    if particular is None:
+        particular = sp.Integer(0)
     if len(vars_) != 2 or not conditions:
         return None
     param = next(v for v in vars_ if v != line_var)
@@ -1200,28 +1126,20 @@ def _try_direct_line_function_solve(
     if generator_maps is None:
         return None
     homogeneous = sp.expand(sum(f.expression for f in families))
-    zero_order = sorted(
-        [item["yfunc"](param) for item in generator_maps], key=sp.default_sort_key
-    )
+    zero_order = sorted([item["yfunc"](param) for item in generator_maps], key=sp.default_sort_key)
     equations = []
     for order, target in sorted(conditions.items()):
-        lhs = sp.expand(
-            sp.diff(homogeneous, line_var, int(order)).subs(line_var, line_value)
-        )
+        lhs = sp.expand(sp.diff(homogeneous, line_var, int(order)).subs(line_var, line_value))
         lhs = _replace_generator_line_jets(lhs, param, generator_maps)
         rhs = sp.expand(
             sp.sympify(target)
-            - sp.diff(sp.sympify(particular), line_var, int(order)).subs(
-                line_var, line_value
-            )
+            - sp.diff(sp.sympify(particular), line_var, int(order)).subs(line_var, line_value)
         )
         equations.append(sp.Eq(lhs, rhs))
     linear_unknowns = tuple(zero_order)
     sub = _linear_algebra_solve_equations(equations, linear_unknowns)
     if sub is None:
-        if any(
-            eq.lhs.has(sp.Derivative) or eq.rhs.has(sp.Derivative) for eq in equations
-        ):
+        if any(eq.lhs.has(sp.Derivative) or eq.rhs.has(sp.Derivative) for eq in equations):
             return None
         try:
             sol = sp.solve(equations, zero_order, dict=True)
@@ -1279,11 +1197,7 @@ def fit_constant_coefficient_solution_with_conditions(
     if line_data is None:
         return None
 
-    if (
-        len(vars_) == 2
-        and line_data["source"] == "ics"
-        and 0 in line_data["conditions"]
-    ):
+    if len(vars_) == 2 and line_data["source"] == "ics" and 0 in line_data["conditions"]:
         fitted = _fit_single_family_on_line(
             general_solution_result,
             uexpr,
@@ -1359,9 +1273,7 @@ def _attach_constant_coefficient_verification(
         "homogeneous_method": details.get("homogeneous").method
         if details.get("homogeneous") is not None
         else None,
-        "homogeneous_method_family": details.get("homogeneous").details.get(
-            "method_family"
-        )
+        "homogeneous_method_family": details.get("homogeneous").details.get("method_family")
         if details.get("homogeneous") is not None
         else None,
         "fit_strategy": details.get("fit_strategy"),
@@ -1421,7 +1333,7 @@ def _homogeneous_family_linear_factor(factor: ConstantCoefficientOperatorFactor,
     coeffs = coeffs[: len(vars_)]
     if all(sp.simplify(c) == 0 for c in coeffs):
         return None
-    dot = sp.expand(sum(sp.expand(a * v) for a, v in zip(coeffs, vars_)))
+    dot = sp.expand(sum(sp.expand(a * v) for a, v in zip(coeffs, vars_, strict=True)))
     denom = sp.expand(sum(sp.expand(a**2) for a in coeffs))
     if sp.simplify(denom) == 0:
         return None
@@ -1438,9 +1350,7 @@ def _homogeneous_family_linear_factor(factor: ConstantCoefficientOperatorFactor,
         else:
             f, gen_expr = _make_generator_function(f"F_{name_seed}_{j}", invariants)
             gens.append(f)
-        pieces.append(
-            sp.expand((transverse**j) * sp.exp(-const * transverse) * gen_expr)
-        )
+        pieces.append(sp.expand((transverse**j) * sp.exp(-const * transverse) * gen_expr))
     invariant_value = None
     if len(invariants) == 1:
         invariant_value = invariants[0]
@@ -1461,18 +1371,12 @@ def _homogeneous_family_1d(factor: ConstantCoefficientOperatorFactor, var: sp.Sy
     return _homogeneous_family_linear_factor(factor, (var,))
 
 
-def _homogeneous_family_2d_linear_factor(
-    factor: ConstantCoefficientOperatorFactor, vars_
-):
+def _homogeneous_family_2d_linear_factor(factor: ConstantCoefficientOperatorFactor, vars_):
     return _homogeneous_family_linear_factor(factor, vars_)
 
 
 def _family_to_factor_solution_2d(family: ConstantCoefficientHomogeneousFamily):
-    if (
-        family.invariant is None
-        or family.transverse is None
-        or len(family.factor.coefficients) < 2
-    ):
+    if family.invariant is None or family.transverse is None or len(family.factor.coefficients) < 2:
         return None
     a, b = family.factor.coefficients[:2]
     return ConstantCoefficientFactorSolution2D(
@@ -1487,12 +1391,8 @@ def _family_to_factor_solution_2d(family: ConstantCoefficientHomogeneousFamily):
     )
 
 
-def build_constant_coefficient_homogeneous_solution(
-    eq_or_expr, dep_expr_or_func, indep_vars=None
-):
-    profile = build_constant_coefficient_operator_profile(
-        eq_or_expr, dep_expr_or_func, indep_vars
-    )
+def build_constant_coefficient_homogeneous_solution(eq_or_expr, dep_expr_or_func, indep_vars=None):
+    profile = build_constant_coefficient_operator_profile(eq_or_expr, dep_expr_or_func, indep_vars)
     ccpde = profile.pde
     families = []
     unsupported_factors = []
@@ -1521,9 +1421,7 @@ def build_constant_coefficient_homogeneous_solution(
             "profile": profile,
             "families": tuple(families),
             "factor_solutions": tuple(
-                fs
-                for fs in (_family_to_factor_solution_2d(f) for f in families)
-                if fs is not None
+                fs for fs in (_family_to_factor_solution_2d(f) for f in families) if fs is not None
             ),
             "unsupported_factors": tuple(unsupported_factors),
         },
@@ -1533,9 +1431,7 @@ def build_constant_coefficient_homogeneous_solution(
 def _build_1d_characteristic_root_homogeneous_solution(
     eq_or_expr, dep_expr_or_func, indep_vars=None
 ):
-    profile = build_constant_coefficient_operator_profile(
-        eq_or_expr, dep_expr_or_func, indep_vars
-    )
+    profile = build_constant_coefficient_operator_profile(eq_or_expr, dep_expr_or_func, indep_vars)
     ccpde = profile.pde
     if len(ccpde.indep_vars) != 1:
         return None
@@ -1610,9 +1506,7 @@ def pdesolve_constant_coefficient(
     particular_result = (
         invert_factored_constant_coefficient_operator_on_forcing(norm_eq, uexpr, vars_)
         if sp.expand(ccpde.rhs) != 0
-        else _particular_result(
-            "constant_coefficient_zero_rhs", sp.Integer(0), {"rhs": 0}
-        )
+        else _particular_result("constant_coefficient_zero_rhs", sp.Integer(0), {"rhs": 0})
     )
     particular = particular_result.solution
 
@@ -1637,9 +1531,7 @@ def pdesolve_constant_coefficient(
                 "profile": profile,
                 "homogeneous": homogeneous_result,
                 "families": homogeneous_result.details.get("families", ()),
-                "factor_solutions": homogeneous_result.details.get(
-                    "factor_solutions", ()
-                ),
+                "factor_solutions": homogeneous_result.details.get("factor_solutions", ()),
                 "particular": particular,
                 "particular_result": particular_result,
             },
@@ -1705,11 +1597,7 @@ def pdesolve_constant_coefficient(
         result = _general_solution_result(
             "constant_coefficient_particular_only",
             sp.Eq(uexpr, particular),
-            {
-                "profile": profile,
-                "particular": particular,
-                "particular_result": particular_result,
-            },
+            {"profile": profile, "particular": particular, "particular_result": particular_result},
         )
         return _attach_constant_coefficient_verification(
             result,

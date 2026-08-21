@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
-from typing import Any
 from types import MappingProxyType
+from typing import Any
 
 import sympy as sp
 
-from .classification import preprocess_pde_problem
-from .results import CanonicalPDERepresentation
-from .condition_analysis import analyze_conditions
 from .boundary_model import build_boundary_model
+from .classification import preprocess_pde_problem
+from .condition_analysis import analyze_conditions
 from .hyperbolic_system import extract_canonical_linear_system_form
 from .kernels import build_kernel_method_plan
+from .results import CanonicalPDERepresentation
 
 
 @dataclass(frozen=True)
@@ -45,12 +45,8 @@ def build_pde_problem(
     from . import classical_methods as classical_mod
 
     uexpr, vars_ = classical_mod._dep_and_vars(dep_expr_or_func, indep_vars)
-    can = classical_mod.canonicalize_pde_problem(
-        eq_or_expr, uexpr, vars_, assumptions=assumptions
-    )
-    profile = preprocess_pde_problem(
-        can.equation, uexpr, vars_, assumptions=assumptions
-    )
+    can = classical_mod.canonicalize_pde_problem(eq_or_expr, uexpr, vars_, assumptions=assumptions)
+    profile = preprocess_pde_problem(can.equation, uexpr, vars_, assumptions=assumptions)
     try:
         normalized_data = classical_mod.normalize_problem_data(
             ics=ics,
@@ -147,9 +143,7 @@ def build_pde_problem(
     return problem
 
 
-def build_system_pde_problem(
-    eqns, dep_exprs_or_funcs, indep_vars, *, ics=None, assumptions=True
-):
+def build_system_pde_problem(eqns, dep_exprs_or_funcs, indep_vars, *, ics=None, assumptions=True):
     vars_ = tuple(indep_vars)
     unknowns = tuple(dep_exprs_or_funcs)
     canonical_system = None

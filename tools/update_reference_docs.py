@@ -45,9 +45,7 @@ def write_api_inventory():
         "",
     ]
     for module in sorted(groups):
-        out.extend(
-            [f"## `{module}`", "", "| Export | Kind | Signature |", "|---|---|---|"]
-        )
+        out.extend([f"## `{module}`", "", "| Export | Kind | Signature |", "|---|---|---|"])
         for name, kind, sig in sorted(groups[module]):
             sig = sig.replace("|", "\\|")
             out.append(f"| `{name}` | {kind} | `{sig}` |")
@@ -126,9 +124,7 @@ def write_notebook_index():
     ]
     for path in tutorials:
         out.append(f"| `{path.name}` | {_notebook_title(path)} |")
-    out.extend(
-        ["", "## Focused example notebooks", "", "| Notebook | Topic |", "|---|---|"]
-    )
+    out.extend(["", "## Focused example notebooks", "", "| Notebook | Topic |", "|---|---|"])
     for path in examples:
         out.append(f"| `{path.name}` | {_notebook_title(path)} |")
     out.extend(

@@ -3,11 +3,11 @@ from __future__ import annotations
 import sympy as sp
 
 from .dispatcher_support import append_trace_step, coerce_result
+from .errors import PDEMethodNotApplicable, PDESolveError, PDETransformationError
 from .method_names import normalize_method_name
 from .planners.coordinator import plan_canonical_problem
 from .results import PDESolverTraceStep
 from .solver_execution import is_registered_method
-from .errors import PDEMethodNotApplicable, PDETransformationError, PDESolveError
 from .solvers.coordinator import execute_planned_solver
 
 
@@ -55,9 +55,7 @@ def _ordered_plan_methods(plan, solver_kwargs):
         promoted.add("structured_transform")
     if solver_kwargs.get("prefer_separation"):
         promoted.add("separation_framework")
-    methods = [m for m in methods if m in promoted] + [
-        m for m in methods if m not in promoted
-    ]
+    methods = [m for m in methods if m in promoted] + [m for m in methods if m not in promoted]
 
     if solver_kwargs.get("prefer_symmetry"):
         sym_methods = {"symmetry_reduction", "post_reduction_auto", "first_order"}

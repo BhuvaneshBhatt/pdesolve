@@ -13,9 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def _load_hardening_module():
     path = ROOT / "tests" / "test_canonical_method_hardening.py"
-    spec = importlib.util.spec_from_file_location(
-        "pdesolve_method_hardening_tests", path
-    )
+    spec = importlib.util.spec_from_file_location("pdesolve_method_hardening_tests", path)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"Unable to load {path}")
     module = importlib.util.module_from_spec(spec)
@@ -65,9 +63,7 @@ def check_report(report: dict) -> list[str]:
     minimum = report["minimum_tests_per_method"]
     for record in report["methods"]:
         if record["test_count"] < minimum:
-            errors.append(
-                f"{record['method']} has only {record['test_count']} coverage tests."
-            )
+            errors.append(f"{record['method']} has only {record['test_count']} coverage tests.")
         if not record["family"]:
             errors.append(f"{record['method']} has no declared family.")
     return errors

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 import sympy as sp
 
-from ._classical_shared import _dep_and_vars
+from .classical_symbolic_helpers import _dep_and_vars
 
 
 @dataclass(frozen=True)
@@ -15,13 +16,7 @@ class TransformMethodResult:
 
 
 def solve_heat_equation_1d_fourier_transform(
-    dep_expr_or_func,
-    *,
-    x=None,
-    t=None,
-    diffusivity=1,
-    initial_profile=None,
-    fourier_variable=None,
+    dep_expr_or_func, *, x=None, t=None, diffusivity=1, initial_profile=None, fourier_variable=None
 ):
     """
     Fourier-transform solution of u_t = k u_xx on the whole line.
@@ -39,11 +34,7 @@ def solve_heat_equation_1d_fourier_transform(
     kappa = sp.sympify(diffusivity)
     if initial_profile is None:
         raise ValueError("initial_profile is required.")
-    w = (
-        sp.Symbol("w", real=True)
-        if fourier_variable is None
-        else sp.sympify(fourier_variable)
-    )
+    w = sp.Symbol("w", real=True) if fourier_variable is None else sp.sympify(fourier_variable)
     xi = sp.Symbol("xi", real=True)
 
     if callable(initial_profile):
@@ -90,11 +81,7 @@ def solve_advection_equation_1d_fourier_transform(
     r = sp.sympify(reaction)
     if initial_profile is None:
         raise ValueError("initial_profile is required.")
-    w = (
-        sp.Symbol("w", real=True)
-        if fourier_variable is None
-        else sp.sympify(fourier_variable)
-    )
+    w = sp.Symbol("w", real=True) if fourier_variable is None else sp.sympify(fourier_variable)
     xi = sp.Symbol("xi", real=True)
 
     if callable(initial_profile):

@@ -1,8 +1,8 @@
 import sympy as sp
 
-from pdesolve.geometry import DistributionKD, VectorFieldKD, distribution_closure
-from pdesolve.frobenius import local_frobenius_chart
 from pdesolve.diffinv import first_order_differential_invariants_scalar
+from pdesolve.frobenius import local_frobenius_chart
+from pdesolve.geometry import DistributionKD, VectorFieldKD, distribution_closure
 
 
 def test_involutive_noncommuting_affine_distribution_supported():

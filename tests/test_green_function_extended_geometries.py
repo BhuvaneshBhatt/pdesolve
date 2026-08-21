@@ -1,5 +1,6 @@
 def test_planner_recognizes_advanced_laplace3d_kernel_directly():
-    from sympy import symbols, Function, Eq, DiracDelta, diff
+    from sympy import DiracDelta, Eq, Function, diff, symbols
+
     from pdesolve.problem import build_pde_problem
 
     x, y, z = symbols("x y z", real=True)
@@ -13,7 +14,4 @@ def test_planner_recognizes_advanced_laplace3d_kernel_directly():
     kp = problem.details.get("kernel_plan")
     assert kp is not None
     assert kp.operator_family == "laplace_nd"
-    assert (
-        kp.method == "kernel_green_function"
-        or kp.method == "kernel_fundamental_solution"
-    )
+    assert kp.method == "kernel_green_function" or kp.method == "kernel_fundamental_solution"

@@ -7,10 +7,8 @@ coordinate reduction object used by the linear first-order solver family.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 import sympy as sp
-
 
 # First-integral search -----------------------------------------------------
 
@@ -28,7 +26,7 @@ class AdaptedCoordinateReduction:
 
 def characteristic_first_integral(
     a: sp.Expr, b: sp.Expr, x: sp.Symbol, y: sp.Symbol
-) -> Optional[sp.Expr]:
+) -> sp.Expr | None:
     """Return a simple first integral for the field ``(a, b)``.
 
     The implementation intentionally focuses on a few robust patterns:
@@ -76,7 +74,7 @@ def characteristic_first_integral(
 
 def adapted_coordinate_reduction(
     a: sp.Expr, b: sp.Expr, x: sp.Symbol, y: sp.Symbol
-) -> Optional[AdaptedCoordinateReduction]:
+) -> AdaptedCoordinateReduction | None:
     """Construct a simple adapted-coordinate reduction from a first integral."""
     inv = characteristic_first_integral(a, b, x, y)
     if inv is None:

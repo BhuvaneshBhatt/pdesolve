@@ -1,4 +1,5 @@
 import sympy as sp
+
 from pdesolve.classification import rank_pde_solution_methods
 
 

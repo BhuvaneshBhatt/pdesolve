@@ -53,9 +53,7 @@ def build_inventory(root: pathlib.Path) -> dict[str, Any]:
         )
 
     test_files = sorted((root / "tests").glob("test_*.py"))
-    test_text = "\n".join(
-        path.read_text(encoding="utf-8", errors="ignore") for path in test_files
-    )
+    test_text = "\n".join(path.read_text(encoding="utf-8", errors="ignore") for path in test_files)
     method_keys = sorted(solver_execution._METHOD_REGISTRY)
     method_test_mentions = {
         method: len(re.findall(re.escape(method), test_text)) for method in method_keys
@@ -65,9 +63,7 @@ def build_inventory(root: pathlib.Path) -> dict[str, Any]:
         "package_version": getattr(pdesolve, "__version__", None),
         "top_level_export_count": len(exports),
         "top_level_exports": exports,
-        "exports_by_module": dict(
-            sorted(Counter(item["module"] for item in exports).items())
-        ),
+        "exports_by_module": dict(sorted(Counter(item["module"] for item in exports).items())),
         "canonical_execution_method_count": len(method_keys),
         "canonical_execution_methods": method_keys,
         "method_test_mentions": method_test_mentions,

@@ -5,6 +5,7 @@ from itertools import combinations
 
 import sympy as sp
 
+from .canonical import canonicalize_coordinate_chart, canonicalize_reduced_equation
 from .coordinates import (
     find_coordinates_diagonal_scaling_subalgebra,
     find_coordinates_translation_subalgebra,
@@ -12,11 +13,12 @@ from .coordinates import (
     probe_transport_coordinates_for_affine_distribution,
     solve_with_diagnostics,
 )
-from .geometry import DistributionKD, VectorFieldKD
 from .frobenius import local_frobenius_chart, restricted_local_frobenius_atlas
-from .canonical import canonicalize_reduced_equation, canonicalize_coordinate_chart
-from .utils import (
+from .geometry import DistributionKD, VectorFieldKD
+from .symbolic_algebra_helpers import (
     expr_complexity,
+    extract_first_single_argument_undef_arg,
+    extract_rhs_from_pde_solution,
     factor_prefactor_independent_of_symbols,
     first_nonzero_scale,
     matrix_is_diagonal,
@@ -24,12 +26,9 @@ from .utils import (
     matrix_rank_symbolic,
     multiindex_sum,
     poly_zero_equations,
-    substitute_free_parameters_zero,
-    extract_first_single_argument_undef_arg,
-    extract_rhs_from_pde_solution,
     replace_applied_undefs,
+    substitute_free_parameters_zero,
 )
-
 
 # ------------------ Match data classes ------------------
 
@@ -79,9 +78,7 @@ class ReducedFunctionJetKD:
         self.k = len(self.xs)
         self.r = len(self.zs)
         self.max_order = max_order
-        self._indices_by_order = {
-            n: list(self._weak_comp(n, self.r)) for n in range(max_order + 2)
-        }
+        self._indices_by_order = {n: list(self._weak_comp(n, self.r)) for n in range(max_order + 2)}
         self._cache = {}
         for n in range(max_order + 2):
             for M in self._indices_by_order[n]:
@@ -125,9 +122,7 @@ class ReducedFunctionJetKD:
                 for a in range(self.r):
                     Mnext = list(M)
                     Mnext[a] += 1
-                    dFM += self.coord(tuple(Mnext)) * sp.diff(
-                        self.zexprs[a], self.xs[axis]
-                    )
+                    dFM += self.coord(tuple(Mnext)) * sp.diff(self.zexprs[a], self.xs[axis])
                 result += sp.diff(expr, FM) * dFM
         return sp.expand(result)
 
@@ -206,12 +201,7 @@ def match_translation_affine_scalar_kd(Xis, Phi, xs, u):
     if dec is None:
         return None
     a, b = dec
-    return {
-        "kind": "translation_affine_scalar_kd",
-        "xis": tuple(xis_const),
-        "a": a,
-        "b": b,
-    }
+    return {"kind": "translation_affine_scalar_kd", "xis": tuple(xis_const), "a": a, "b": b}
 
 
 def match_diagonal_scaling_affine_scalar_kd(Xis, Phi, xs, u):
@@ -231,11 +221,7 @@ def match_diagonal_scaling_affine_scalar_kd(Xis, Phi, xs, u):
     a, b = dec
     if sp.simplify(b) != 0:
         return None
-    return {
-        "kind": "diagonal_scaling_affine_scalar_kd",
-        "scales": tuple(scales),
-        "a": a,
-    }
+    return {"kind": "diagonal_scaling_affine_scalar_kd", "scales": tuple(scales), "a": a}
 
 
 def match_affine_independent_affine_u_scalar_kd(Xis, Phi, xs, u):
@@ -395,10 +381,7 @@ def _match_secondary_complexity_scalar_kd(match_data):
 def rank_symbolic_combination_matches_scalar_kd(matches, xs=None):
     def keyfun(m):
         secondary = _match_secondary_complexity_scalar_kd(m.match_data)
-        if (
-            xs is not None
-            and m.match_data["kind"] == "affine_independent_affine_u_scalar_kd"
-        ):
+        if xs is not None and m.match_data["kind"] == "affine_independent_affine_u_scalar_kd":
             field = VectorFieldKD(tuple(xs), tuple(m.generator_xis))
             probe = probe_transport_coordinates_for_affine_distribution(
                 DistributionKD(tuple(xs), (field,))
@@ -476,10 +459,10 @@ def _template_equations_affine_independent_affine_u_scalar_kd(Xis, Phi, xs, u):
 
 def _construct_symbolic_combination_scalar_kd(subbasis, lambdas):
     Xis = [
-        sp.expand(sum(lmb * vec[0][i] for lmb, vec in zip(lambdas, subbasis)))
+        sp.expand(sum(lmb * vec[0][i] for lmb, vec in zip(lambdas, subbasis, strict=True)))
         for i in range(len(subbasis[0][0]))
     ]
-    Phi = sp.expand(sum(lmb * vec[1] for lmb, vec in zip(lambdas, subbasis)))
+    Phi = sp.expand(sum(lmb * vec[1] for lmb, vec in zip(lambdas, subbasis, strict=True)))
     return Xis, Phi
 
 
@@ -503,9 +486,7 @@ def search_symbolic_linear_combinations_for_reduction_scalar_kd(
             subbasis = [basis_vectors[i] for i in idxs]
             for anchor in range(r):
                 lambdas = sp.symbols(f"lam0:{r}")
-                Xis_raw, Phi_raw = _construct_symbolic_combination_scalar_kd(
-                    subbasis, lambdas
-                )
+                Xis_raw, Phi_raw = _construct_symbolic_combination_scalar_kd(subbasis, lambdas)
                 jobs = []
                 if try_translation:
                     jobs.append(
@@ -544,7 +525,7 @@ def search_symbolic_linear_combinations_for_reduction_scalar_kd(
                     if not solset:
                         continue
                     sol_tuple = substitute_free_parameters_zero(list(solset)[0])
-                    sub = dict(zip(unknowns, sol_tuple))
+                    sub = dict(zip(unknowns, sol_tuple, strict=True))
                     coeff_vals = tuple(sp.expand(sub[param]) for param in lambdas)
                     if all(sp.simplify(v) == 0 for v in coeff_vals):
                         continue
@@ -557,9 +538,7 @@ def search_symbolic_linear_combinations_for_reduction_scalar_kd(
                     elif kind == "scaling":
                         md = match_diagonal_scaling_affine_scalar_kd(Xis, Phi, xs, u)
                     else:
-                        md = match_affine_independent_affine_u_scalar_kd(
-                            Xis, Phi, xs, u
-                        )
+                        md = match_affine_independent_affine_u_scalar_kd(Xis, Phi, xs, u)
                     if md is None:
                         continue
                     sig = (
@@ -601,22 +580,16 @@ def _solve_transport_coordinates_projectable_affine_k2(Xis, a, beta, xs):
     s_pde = sp.Eq(X1 * sp.diff(sfun(x, y), x) + X2 * sp.diff(sfun(x, y), y), 1)
     s_sol = sp.pdsolve(s_pde)
     s_rhs = replace_applied_undefs(extract_rhs_from_pde_solution(s_sol), 0)
-    l_pde = sp.Eq(
-        X1 * sp.diff(lfun(x, y), x) + X2 * sp.diff(lfun(x, y), y) + a * lfun(x, y), 0
-    )
+    l_pde = sp.Eq(X1 * sp.diff(lfun(x, y), x) + X2 * sp.diff(lfun(x, y), y) + a * lfun(x, y), 0)
     l_sol = sp.pdsolve(l_pde)
     l_rhs = replace_applied_undefs(extract_rhs_from_pde_solution(l_sol), 1)
-    e_pde = sp.Eq(
-        X1 * sp.diff(efun(x, y), x) + X2 * sp.diff(efun(x, y), y) + beta * l_rhs, 0
-    )
+    e_pde = sp.Eq(X1 * sp.diff(efun(x, y), x) + X2 * sp.diff(efun(x, y), y) + beta * l_rhs, 0)
     e_sol = sp.pdsolve(e_pde)
     e_rhs = replace_applied_undefs(extract_rhs_from_pde_solution(e_sol), 0)
     return (sp.expand(z_expr),), sp.expand(s_rhs), sp.expand(l_rhs), sp.expand(e_rhs)
 
 
-def reduce_scalar_by_explicit_transport_coordinates_kd(
-    eq_obj, invariants, transverse, a=0, beta=0
-):
+def reduce_scalar_by_explicit_transport_coordinates_kd(eq_obj, invariants, transverse, a=0, beta=0):
     jet = eq_obj.jet
     xs = list(jet.xs)
     invariants = tuple(map(sp.expand, invariants))
@@ -672,9 +645,7 @@ def reduce_scalar_by_translation_affine_kd(eq_obj, xis_const, a=0, b=0):
 
 def reduce_scalar_by_diagonal_scaling_affine_kd(eq_obj, scales, a=0, b=0):
     xs = list(eq_obj.jet.xs)
-    field = VectorFieldKD(
-        tuple(xs), tuple(sp.sympify(scales[i]) * xs[i] for i in range(len(xs)))
-    )
+    field = VectorFieldKD(tuple(xs), tuple(sp.sympify(scales[i]) * xs[i] for i in range(len(xs))))
     coords = pdesolve(DistributionKD(tuple(xs), (field,)))
     return reduce_scalar_by_explicit_transport_coordinates_kd(
         eq_obj, coords.invariants, coords.transverse, a=a, beta=b
@@ -696,8 +667,8 @@ def reduce_scalar_by_projectable_affine_generator_transport(eq_obj, Xis, Phi):
             eq_obj, coords.invariants, coords.transverse, a=a, beta=beta
         )
     if len(xs) == 2:
-        invariants, s_expr, lam_expr, eta_expr = (
-            _solve_transport_coordinates_projectable_affine_k2(Xis, a, beta, xs)
+        invariants, s_expr, lam_expr, eta_expr = _solve_transport_coordinates_projectable_affine_k2(
+            Xis, a, beta, xs
         )
         reducer = ReducedFunctionJetKD(
             xs, (sp.Symbol("z1", real=True),), invariants, eq_obj.jet.max_order
@@ -710,9 +681,7 @@ def reduce_scalar_by_projectable_affine_generator_transport(eq_obj, Xis, Phi):
                 continue
             subs[eq_obj.jet.coord(J)] = _apply_multi_total_derivative(reducer, U, J)
         expr = sp.expand(eq_obj.equation().subs(subs))
-        keep_syms = [reducer.coord(M) for M in reducer._cache] + [
-            sp.Symbol("z1", real=True)
-        ]
+        keep_syms = [reducer.coord(M) for M in reducer._cache] + [sp.Symbol("z1", real=True)]
         expr = factor_prefactor_independent_of_symbols(expr, keep_syms)
         f = sp.Function("f")
         reduced_expr = reducer.to_function_notation(expr, f)
@@ -743,9 +712,7 @@ def _u_action_compatibility(a_list, beta_list):
     return True
 
 
-def reduce_scalar_by_translation_subalgebra_kd(
-    eq_obj, xis_list, a_list=None, beta_list=None
-):
+def reduce_scalar_by_translation_subalgebra_kd(eq_obj, xis_list, a_list=None, beta_list=None):
     xs = list(eq_obj.jet.xs)
     k = len(xs)
     r = len(xis_list)
@@ -753,9 +720,7 @@ def reduce_scalar_by_translation_subalgebra_kd(
         a_list = [0] * r
     if beta_list is None:
         beta_list = [0] * r
-    fields = [
-        VectorFieldKD(tuple(xs), tuple(sp.sympify(v) for v in xis)) for xis in xis_list
-    ]
+    fields = [VectorFieldKD(tuple(xs), tuple(sp.sympify(v) for v in xis)) for xis in xis_list]
     dist = DistributionKD(tuple(xs), tuple(fields))
     coords = find_coordinates_translation_subalgebra(dist)
     reducer = ReducedFunctionJetKD(
@@ -765,9 +730,7 @@ def reduce_scalar_by_translation_subalgebra_kd(
         eq_obj.jet.max_order,
     )
     F0 = reducer.coord(()) if k - r == 0 else reducer.coord((0,) * (k - r))
-    U = _common_scalar_ansatz_from_transverse_parameters(
-        F0, coords.transverse, a_list, beta_list
-    )
+    U = _common_scalar_ansatz_from_transverse_parameters(F0, coords.transverse, a_list, beta_list)
     subs = {eq_obj.jet.u: U}
     for J in eq_obj.jet.all_indices():
         if multiindex_sum(J) == 0:
@@ -781,10 +744,7 @@ def reduce_scalar_by_translation_subalgebra_kd(
     f = sp.Function("f")
     reduced_expr = reducer.to_function_notation(expr, f)
     ansatz = sp.expand(U).subs(
-        F0,
-        f(*tuple(sp.Symbol(f"z{i + 1}", real=True) for i in range(k - r)))
-        if k - r > 0
-        else f(),
+        F0, f(*tuple(sp.Symbol(f"z{i + 1}", real=True) for i in range(k - r))) if k - r > 0 else f()
     )
     return ScalarMultiReductionResultKD(
         "translation_subalgebra_scalar_kd",
@@ -822,9 +782,7 @@ def reduce_scalar_by_diagonal_scaling_subalgebra_kd(
         eq_obj.jet.max_order,
     )
     F0 = reducer.coord(()) if k - r == 0 else reducer.coord((0,) * (k - r))
-    U = _common_scalar_ansatz_from_transverse_parameters(
-        F0, coords.transverse, a_list, beta_list
-    )
+    U = _common_scalar_ansatz_from_transverse_parameters(F0, coords.transverse, a_list, beta_list)
     subs = {eq_obj.jet.u: U}
     for J in eq_obj.jet.all_indices():
         if multiindex_sum(J) == 0:
@@ -838,10 +796,7 @@ def reduce_scalar_by_diagonal_scaling_subalgebra_kd(
     f = sp.Function("f")
     reduced_expr = reducer.to_function_notation(expr, f)
     ansatz = sp.expand(U).subs(
-        F0,
-        f(*tuple(sp.Symbol(f"z{i + 1}", real=True) for i in range(k - r)))
-        if k - r > 0
-        else f(),
+        F0, f(*tuple(sp.Symbol(f"z{i + 1}", real=True) for i in range(k - r))) if k - r > 0 else f()
     )
     return ScalarMultiReductionResultKD(
         "diagonal_scaling_subalgebra_scalar_kd",
@@ -857,9 +812,7 @@ def reduce_scalar_by_diagonal_scaling_subalgebra_kd(
 
 
 def find_commuting_translation_subalgebras_scalar_kd(matches, k, max_generators=None):
-    trans = [
-        m for m in matches if m.match_data["kind"] == "translation_affine_scalar_kd"
-    ]
+    trans = [m for m in matches if m.match_data["kind"] == "translation_affine_scalar_kd"]
     if max_generators is None:
         max_generators = min(k, len(trans))
     out = []
@@ -883,14 +836,8 @@ def find_commuting_translation_subalgebras_scalar_kd(matches, k, max_generators=
     )
 
 
-def find_commuting_diagonal_scaling_subalgebras_scalar_kd(
-    matches, k, max_generators=None
-):
-    scal = [
-        m
-        for m in matches
-        if m.match_data["kind"] == "diagonal_scaling_affine_scalar_kd"
-    ]
+def find_commuting_diagonal_scaling_subalgebras_scalar_kd(matches, k, max_generators=None):
+    scal = [m for m in matches if m.match_data["kind"] == "diagonal_scaling_affine_scalar_kd"]
     if max_generators is None:
         max_generators = min(k, len(scal))
     out = []
@@ -917,13 +864,9 @@ def find_commuting_diagonal_scaling_subalgebras_scalar_kd(
 def auto_reduce_symbolic_match_scalar_kd(eq_obj, match):
     md = match.match_data
     if md["kind"] == "translation_affine_scalar_kd":
-        return reduce_scalar_by_translation_affine_kd(
-            eq_obj, md["xis"], a=md["a"], b=md["b"]
-        )
+        return reduce_scalar_by_translation_affine_kd(eq_obj, md["xis"], a=md["a"], b=md["b"])
     if md["kind"] == "diagonal_scaling_affine_scalar_kd":
-        return reduce_scalar_by_diagonal_scaling_affine_kd(
-            eq_obj, md["scales"], a=md["a"], b=0
-        )
+        return reduce_scalar_by_diagonal_scaling_affine_kd(eq_obj, md["scales"], a=md["a"], b=0)
     if md["kind"] == "affine_independent_affine_u_scalar_kd":
         return reduce_scalar_by_projectable_affine_generator_transport(
             eq_obj, match.generator_xis, match.generator_phi
@@ -943,9 +886,7 @@ def _generator_data_from_affine_match(match):
     raise NotImplementedError
 
 
-def reduce_scalar_by_commuting_affine_subalgebra_kd(
-    eq_obj, Xis_list, a_list=None, beta_list=None
-):
+def reduce_scalar_by_commuting_affine_subalgebra_kd(eq_obj, Xis_list, a_list=None, beta_list=None):
     """General commuting affine-subalgebra reduction using the restricted local engine."""
     xs = list(eq_obj.jet.xs)
     r = len(Xis_list)
@@ -955,9 +896,7 @@ def reduce_scalar_by_commuting_affine_subalgebra_kd(
         beta_list = [0] * r
     if len(a_list) != r or len(beta_list) != r:
         raise ValueError("a_list and beta_list must match the number of generators.")
-    fields = [
-        VectorFieldKD(tuple(xs), tuple(sp.expand(v) for v in xis)) for xis in Xis_list
-    ]
+    fields = [VectorFieldKD(tuple(xs), tuple(sp.expand(v) for v in xis)) for xis in Xis_list]
     dist = DistributionKD(tuple(xs), tuple(fields))
     chart = local_frobenius_chart(dist)
     coords = chart
@@ -969,9 +908,7 @@ def reduce_scalar_by_commuting_affine_subalgebra_kd(
         eq_obj.jet.max_order,
     )
     F0 = reducer.coord(()) if k - r == 0 else reducer.coord((0,) * (k - r))
-    U = _common_scalar_ansatz_from_transverse_parameters(
-        F0, coords.transverse, a_list, beta_list
-    )
+    U = _common_scalar_ansatz_from_transverse_parameters(F0, coords.transverse, a_list, beta_list)
     subs = {eq_obj.jet.u: U}
     for J in eq_obj.jet.all_indices():
         if multiindex_sum(J) == 0:
@@ -985,10 +922,7 @@ def reduce_scalar_by_commuting_affine_subalgebra_kd(
     f = sp.Function("f")
     reduced_expr = reducer.to_function_notation(expr, f)
     ansatz = sp.expand(U).subs(
-        F0,
-        f(*tuple(sp.Symbol(f"z{i + 1}", real=True) for i in range(k - r)))
-        if k - r > 0
-        else f(),
+        F0, f(*tuple(sp.Symbol(f"z{i + 1}", real=True) for i in range(k - r))) if k - r > 0 else f()
     )
     return ScalarMultiReductionResultKD(
         "commuting_affine_subalgebra_scalar_kd",
@@ -1060,9 +994,7 @@ def find_commuting_affine_subalgebras_scalar_kd(matches, xs, max_generators=None
             best_chart = atlas.best()
             if coords is None or best_chart is None:
                 continue
-            complexity = sum(
-                _match_secondary_complexity_scalar_kd(m.match_data) for m in subset
-            )
+            complexity = sum(_match_secondary_complexity_scalar_kd(m.match_data) for m in subset)
             complexity += sum(
                 expr_complexity(v)
                 for v in best_chart.chart.invariants + best_chart.chart.transverse
@@ -1082,13 +1014,9 @@ def find_commuting_affine_subalgebras_scalar_kd(matches, xs, max_generators=None
     return sorted(out, key=lambda c: c.score)
 
 
-def auto_reduce_best_commuting_subalgebra_scalar_kd(
-    eq_obj, matches, max_generators=None
-):
+def auto_reduce_best_commuting_subalgebra_scalar_kd(eq_obj, matches, max_generators=None):
     xs = list(eq_obj.jet.xs)
-    cands = find_commuting_affine_subalgebras_scalar_kd(
-        matches, xs, max_generators=max_generators
-    )
+    cands = find_commuting_affine_subalgebras_scalar_kd(matches, xs, max_generators=max_generators)
     if not cands:
         return None
     best = cands[0]
@@ -1106,9 +1034,7 @@ def auto_reduce_best_commuting_subalgebra_scalar_kd(
 
 
 def choose_best_symbolic_match_scalar_kd(eq_obj, matches):
-    ranked = rank_symbolic_combination_matches_scalar_kd(
-        matches, xs=list(eq_obj.jet.xs)
-    )
+    ranked = rank_symbolic_combination_matches_scalar_kd(matches, xs=list(eq_obj.jet.xs))
     return ranked[0] if ranked else None
 
 
@@ -1129,11 +1055,9 @@ def _common_scalar_ansatz_from_transverse_parameters(F0, s_exprs, a_list, beta_l
     if not _u_action_compatibility(a_list, beta_list):
         raise ValueError("Dependent affine actions are not mutually commuting.")
     if all(sp.simplify(a) == 0 for a in a_list):
-        return sp.expand(
-            F0 + sum(beta_list[j] * s_exprs[j] for j in range(len(s_exprs)))
-        )
+        return sp.expand(F0 + sum(beta_list[j] * s_exprs[j] for j in range(len(s_exprs))))
     kappa = None
-    for a, beta in zip(a_list, beta_list):
+    for a, beta in zip(a_list, beta_list, strict=True):
         if sp.simplify(a) != 0:
             cand = sp.simplify(beta / a)
             if kappa is None:
@@ -1162,13 +1086,9 @@ def reduce_scalar_by_frobenius_chart(eq_obj, chart, a_list=None, beta_list=None)
     if beta_list is None:
         beta_list = [0] * r
     if len(a_list) != r or len(beta_list) != r:
-        raise ValueError(
-            "a_list and beta_list must match the number of transverse coordinates."
-        )
+        raise ValueError("a_list and beta_list must match the number of transverse coordinates.")
 
-    zsyms = tuple(
-        sp.Symbol(f"z{i + 1}", real=True) for i in range(len(chart.invariants))
-    )
+    zsyms = tuple(sp.Symbol(f"z{i + 1}", real=True) for i in range(len(chart.invariants)))
     reducer = ReducedFunctionJetKD(
         x_vars=xs,
         invariant_symbols=zsyms,
@@ -1176,9 +1096,7 @@ def reduce_scalar_by_frobenius_chart(eq_obj, chart, a_list=None, beta_list=None)
         max_order=jet.max_order,
     )
     F0 = reducer.coord((0,) * len(zsyms)) if len(zsyms) > 0 else reducer.coord(())
-    U = _common_scalar_ansatz_from_transverse_parameters(
-        F0, chart.transverse, a_list, beta_list
-    )
+    U = _common_scalar_ansatz_from_transverse_parameters(F0, chart.transverse, a_list, beta_list)
 
     subs = {jet.u: U}
     for J in jet.all_indices():

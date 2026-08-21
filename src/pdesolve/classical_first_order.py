@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import sympy as sp
 from sympy.solvers.pde import classify_pde, pdsolve
 
-from ._classical_shared import _as_zero_expr, _dep_and_vars
+from .classical_symbolic_helpers import _as_zero_expr, _dep_and_vars
 
 
 @dataclass(frozen=True)
@@ -41,9 +41,7 @@ def characteristic_form_first_order_2vars(
     """
     uexpr, vars_ = _dep_and_vars(dep_expr_or_func, indep_vars)
     if len(vars_) != 2:
-        raise ValueError(
-            "This characteristic detector is for two independent variables."
-        )
+        raise ValueError("This characteristic detector is for two independent variables.")
     x, y = vars_
     zero = _as_zero_expr(eq_or_expr)
     ux = sp.diff(uexpr, x)
@@ -61,9 +59,7 @@ def characteristic_form_first_order_2vars(
     try:
         poly = sp.Poly(zero, ux, uy, domain="EX")
     except Exception as exc:
-        raise ValueError(
-            "Could not treat PDE as polynomial in first derivatives."
-        ) from exc
+        raise ValueError("Could not treat PDE as polynomial in first derivatives.") from exc
 
     # Require degree at most 1 in ux, uy.
     if poly.total_degree() > 1:
@@ -80,9 +76,7 @@ def characteristic_form_first_order_2vars(
 
     normalized = sp.Eq(sp.expand(A * ux + B * uy), sp.expand(C))
     is_const = all(v.free_symbols.isdisjoint({x, y, uexpr}) for v in (A, B, C))
-    return FirstOrderCharacteristicForm(
-        vars_, uexpr, A, B, C, normalized, True, is_const
-    )
+    return FirstOrderCharacteristicForm(vars_, uexpr, A, B, C, normalized, True, is_const)
 
 
 def solve_first_order_pde_characteristic(eq_or_expr, dep_expr_or_func, indep_vars=None):
@@ -94,9 +88,7 @@ def solve_first_order_pde_characteristic(eq_or_expr, dep_expr_or_func, indep_var
       2. try SymPy's pdsolve,
       3. return a structured result.
     """
-    form = characteristic_form_first_order_2vars(
-        eq_or_expr, dep_expr_or_func, indep_vars
-    )
+    form = characteristic_form_first_order_2vars(eq_or_expr, dep_expr_or_func, indep_vars)
     try:
         hints = classify_pde(form.normalized_equation)
     except Exception:
@@ -116,12 +108,7 @@ def solve_first_order_pde_characteristic(eq_or_expr, dep_expr_or_func, indep_var
 
 
 def solve_transport_ivp(
-    eq_or_expr,
-    dep_expr_or_func,
-    indep_vars=None,
-    *,
-    initial_curve_value=0,
-    initial_profile=None,
+    eq_or_expr, dep_expr_or_func, indep_vars=None, *, initial_curve_value=0, initial_profile=None
 ):
     """
     Solve a constant-coefficient transport/advection-reaction PDE with initial data.

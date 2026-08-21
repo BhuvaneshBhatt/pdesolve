@@ -5,11 +5,11 @@ from pdesolve.classification import preprocess_pde_problem
 from pdesolve.conditions import parse_conditions, summarize_condition_model
 from pdesolve.dispatcher_support import as_verification_summary
 from pdesolve.domains import DomainGeometry, infer_domain_geometry
+from pdesolve.errors import PDEMethodNotApplicable
 from pdesolve.performance import clear_all_caches
 from pdesolve.results import PDESolutionRecord
 from pdesolve.solver_execution import temporary_method_handler
 from pdesolve.solvers.coordinator import execute_planned_solver
-from pdesolve.errors import PDEMethodNotApplicable
 
 
 def _heat_problem_vars(order="xt"):
@@ -56,10 +56,7 @@ def test_preprocess_cache_is_bounded():
     for index in range(classification._PREPROCESS_CACHE_MAXSIZE + 4):
         eq = sp.Eq(sp.diff(u, x), sp.Integer(index) * u)
         preprocess_pde_problem(eq, u, (x,))
-    assert (
-        len(classification._PREPROCESS_CACHE)
-        <= classification._PREPROCESS_CACHE_MAXSIZE
-    )
+    assert len(classification._PREPROCESS_CACHE) <= classification._PREPROCESS_CACHE_MAXSIZE
 
 
 def test_initial_condition_kind_is_independent_of_variable_order():

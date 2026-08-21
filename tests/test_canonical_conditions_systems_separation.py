@@ -1,12 +1,9 @@
 import sympy as sp
 
-from pdesolve.problem import build_pde_problem
 from pdesolve.classification import plan_pde_solution_methods
+from pdesolve.hyperbolic_system import extract_canonical_linear_system_form, solve_hyperbolic_system
+from pdesolve.problem import build_pde_problem
 from pdesolve.separation_framework import build_separable_geometry_plan
-from pdesolve.hyperbolic_system import (
-    extract_canonical_linear_system_form,
-    solve_hyperbolic_system,
-)
 
 
 def test_canonical_problem_carries_condition_analysis():
@@ -46,10 +43,7 @@ def test_compatibility_engine_flags_incomplete_rectangle_boundary():
     x, y, t = sp.symbols("x y t", real=True)
     u = sp.Function("u")
     problem = build_pde_problem(
-        sp.Eq(
-            sp.diff(u(x, y, t), t),
-            sp.diff(u(x, y, t), x, 2) + sp.diff(u(x, y, t), y, 2),
-        ),
+        sp.Eq(sp.diff(u(x, y, t), t), sp.diff(u(x, y, t), x, 2) + sp.diff(u(x, y, t), y, 2)),
         u(x, y, t),
         (x, y, t),
         ics=sp.Eq(u(x, y, 0), sp.sin(sp.pi * x) * sp.sin(sp.pi * y)),
@@ -83,10 +77,7 @@ def test_separation_plan_for_rectangle_dirichlet():
     x, y, t = sp.symbols("x y t", real=True)
     u = sp.Function("u")
     problem = build_pde_problem(
-        sp.Eq(
-            sp.diff(u(x, y, t), t),
-            sp.diff(u(x, y, t), x, 2) + sp.diff(u(x, y, t), y, 2),
-        ),
+        sp.Eq(sp.diff(u(x, y, t), t), sp.diff(u(x, y, t), x, 2) + sp.diff(u(x, y, t), y, 2)),
         u(x, y, t),
         (x, y, t),
         ics=sp.Eq(u(x, y, 0), x * (1 - x) * y * (1 - y)),

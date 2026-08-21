@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
+
 import sympy as sp
 
 
@@ -24,9 +25,7 @@ def evaluate_inner_transforms(expr, *, max_ops: int = 60):
     if not isinstance(expr, sp.Basic):
         return expr, TransformPostprocessReport(False, (), "non_symbolic")
     replacements = {}
-    for integ in sorted(
-        expr.atoms(sp.Integral), key=lambda i: len(i.atoms(sp.Integral))
-    ):
+    for integ in sorted(expr.atoms(sp.Integral), key=lambda i: len(i.atoms(sp.Integral))):
         if any(isinstance(a, sp.Integral) for a in integ.function.atoms(sp.Integral)):
             continue
         if len(integ.limits) != 1 or not _small(integ.function, max_ops):
@@ -37,8 +36,7 @@ def evaluate_inner_transforms(expr, *, max_ops: int = 60):
             continue
         f = integ.function
         if not (
-            f.has(sp.sin, sp.cos)
-            or any(node.func == sp.exp for node in sp.preorder_traversal(f))
+            f.has(sp.sin, sp.cos) or any(node.func == sp.exp for node in sp.preorder_traversal(f))
         ):
             continue
         try:

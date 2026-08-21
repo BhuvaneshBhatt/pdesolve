@@ -3,17 +3,17 @@ from __future__ import annotations
 import sympy as sp
 
 from .conditions import (
-    summarize_condition_model,
     extract_equations_by_role,
     select_boundary_equations,
+    summarize_condition_model,
 )
-from .problem import PDEProblem, build_pde_problem, build_system_pde_problem
-from .results import PDEVerificationSummary, PDESolutionRecord
-from .method_names import normalize_method_name
-from .solve_pipeline import solve_scalar_problem, solve_system_problem
 from .dispatcher_support import as_verification_summary
 from .errors import PDEInputError, PDEMethodNotApplicable
+from .method_names import normalize_method_name
+from .problem import PDEProblem, build_pde_problem, build_system_pde_problem
+from .results import PDESolutionRecord, PDEVerificationSummary
 from .separation_framework import execute_separation_plan
+from .solve_pipeline import solve_scalar_problem, solve_system_problem
 from .transform_framework import execute_transform_plan
 
 
@@ -30,11 +30,7 @@ def _derivative_order_in_expr(expr, dep_expr_or_func, vars_):
         zero = expr
     try:
         orders = []
-        dep_func = (
-            dep_expr_or_func.func
-            if hasattr(dep_expr_or_func, "func")
-            else dep_expr_or_func
-        )
+        dep_func = dep_expr_or_func.func if hasattr(dep_expr_or_func, "func") else dep_expr_or_func
         for d in zero.atoms(sp.Derivative):
             try:
                 if getattr(d.expr, "func", None) == dep_func:
@@ -60,9 +56,7 @@ def _is_constant_wrt(expr, syms):
 def _bundle_conditions_to_ic_bc(conditions, dep_expr_or_func, vars_):
     if not conditions:
         return None, None
-    dep_func = (
-        dep_expr_or_func.func if hasattr(dep_expr_or_func, "func") else dep_expr_or_func
-    )
+    dep_func = dep_expr_or_func.func if hasattr(dep_expr_or_func, "func") else dep_expr_or_func
     ics_eqs = []
     bc_eqs = []
     ics = {"equations": []}
@@ -109,9 +103,7 @@ def _bundle_conditions_to_ic_bc(conditions, dep_expr_or_func, vars_):
                     if order_v2 == 1:
                         ics["initial_velocity"] = other
                     else:
-                        ics.setdefault("higher_initial_derivatives", []).append(
-                            (order_v2, other)
-                        )
+                        ics.setdefault("higher_initial_derivatives", []).append((order_v2, other))
                 else:
                     if "initial_profile" not in ics:
                         ics["initial_profile"] = other
@@ -140,9 +132,7 @@ def _bundle_conditions_to_ic_bc(conditions, dep_expr_or_func, vars_):
                 bcs.setdefault("type", "half_line_neumann")
                 bcs.setdefault("value", vals[0])
         elif (
-            len(bc_markers) >= 2
-            and all(sp.simplify(v) == 0 for v in vals)
-            and len(set(locs)) >= 2
+            len(bc_markers) >= 2 and all(sp.simplify(v) == 0 for v in vals) and len(set(locs)) >= 2
         ):
             try:
                 L = max(set(locs), key=lambda z: sp.default_sort_key(z))
@@ -213,11 +203,7 @@ def _problem_separation_plan(problem):
         spn = details.get("separation_plan")
         if spn is not None:
             return spn
-    return (
-        problem.details.get("separation_plan")
-        if getattr(problem, "details", None)
-        else None
-    )
+    return problem.details.get("separation_plan") if getattr(problem, "details", None) else None
 
 
 def _problem_transform_plan(problem):
@@ -226,11 +212,7 @@ def _problem_transform_plan(problem):
         tp = details.get("transform_plan")
         if tp is not None:
             return tp
-    return (
-        problem.details.get("transform_plan")
-        if getattr(problem, "details", None)
-        else None
-    )
+    return problem.details.get("transform_plan") if getattr(problem, "details", None) else None
 
 
 def _problem_boundary_model(problem):
@@ -239,11 +221,7 @@ def _problem_boundary_model(problem):
         bm = details.get("boundary_model")
         if bm is not None:
             return bm
-    return (
-        problem.details.get("boundary_model")
-        if getattr(problem, "details", None)
-        else None
-    )
+    return problem.details.get("boundary_model") if getattr(problem, "details", None) else None
 
 
 def _structured_interval_length(problem):
@@ -265,16 +243,8 @@ def _structured_rectangle_lengths(problem):
         return None, None
     xext = geom.extents.get("x")
     yext = geom.extents.get("y")
-    xl = (
-        sp.simplify(xext[1] - xext[0])
-        if isinstance(xext, tuple) and len(xext) == 2
-        else None
-    )
-    yl = (
-        sp.simplify(yext[1] - yext[0])
-        if isinstance(yext, tuple) and len(yext) == 2
-        else None
-    )
+    xl = sp.simplify(xext[1] - xext[0]) if isinstance(xext, tuple) and len(xext) == 2 else None
+    yl = sp.simplify(yext[1] - yext[0]) if isinstance(yext, tuple) and len(yext) == 2 else None
     return xl, yl
 
 
@@ -286,9 +256,7 @@ def _structured_boundary_top(problem, yvar):
     yext = geom.extents.get("y")
     if not (isinstance(yext, tuple) and len(yext) == 2):
         return None
-    eqs = select_boundary_equations(
-        cm, variable=yvar, location=yext[1], kind="dirichlet"
-    )
+    eqs = select_boundary_equations(cm, variable=yvar, location=yext[1], kind="dirichlet")
     if eqs:
         return eqs[0].rhs
     return None
@@ -336,9 +304,7 @@ def pdesolve(
     max_ops = kwargs.pop("normalization_max_ops", 80)
     domain = kwargs.pop("domain", None)
 
-    if not isinstance(dep_expr_or_func, (list, tuple)) and isinstance(
-        eq_or_expr, (list, tuple)
-    ):
+    if not isinstance(dep_expr_or_func, (list, tuple)) and isinstance(eq_or_expr, (list, tuple)):
         eq_or_expr, bundled_ics, bundled_bcs = _split_scalar_pde_bundle(
             eq_or_expr,
             dep_expr_or_func,
@@ -352,16 +318,12 @@ def pdesolve(
     if isinstance(dep_expr_or_func, (list, tuple)):
         variables = tuple(indep_vars or ())
         if len(variables) != 2:
-            raise PDEInputError(
-                "Hyperbolic system solving expects two independent variables."
-            )
+            raise PDEInputError("Hyperbolic system solving expects two independent variables.")
         if method not in {"auto", "hyperbolic_system"}:
             raise PDEMethodNotApplicable(
                 "System problems support auto or hyperbolic_system methods."
             )
-        equations, bundled_ics = _split_system_bundle(
-            eq_or_expr, dep_expr_or_func, variables
-        )
+        equations, bundled_ics = _split_system_bundle(eq_or_expr, dep_expr_or_func, variables)
         if isinstance(ics, dict):
             initial_eqs = list(ics.get("equations", ()) or ())
         elif isinstance(ics, (list, tuple)):
@@ -435,11 +397,7 @@ def _problem_condition_model(problem):
         cm = details.get("condition_model")
         if cm is not None:
             return cm
-    return (
-        problem.details.get("condition_model")
-        if getattr(problem, "details", None)
-        else None
-    )
+    return problem.details.get("condition_model") if getattr(problem, "details", None) else None
 
 
 def _problem_domain_geometry(problem):
@@ -448,11 +406,7 @@ def _problem_domain_geometry(problem):
         dg = details.get("domain_geometry")
         if dg is not None:
             return dg
-    return (
-        problem.details.get("domain_geometry")
-        if getattr(problem, "details", None)
-        else None
-    )
+    return problem.details.get("domain_geometry") if getattr(problem, "details", None) else None
 
 
 def _extract_condition_payloads(problem):
@@ -475,33 +429,25 @@ def _extract_condition_payloads(problem):
             ics_payload["curve_value"] = ts[0]
         # Derive a simple initial profile / displacement / velocity payload from structured conditions.
         for cond, ck in zip(
-            getattr(cm, "initial_conditions", ()), summary.get("initial_kinds", ())
+            getattr(cm, "initial_conditions", ()), summary.get("initial_kinds", ()), strict=True
         ):
             rhs = cond.equation.rhs if isinstance(cond.equation, sp.Equality) else None
-            if (
-                ck == "profile"
-                and rhs is not None
-                and "initial_profile" not in ics_payload
-            ):
+            if ck == "profile" and rhs is not None and "initial_profile" not in ics_payload:
                 ics_payload["initial_profile"] = rhs
                 ics_payload.setdefault("initial_displacement", rhs)
-            elif (
-                ck == "velocity"
-                and rhs is not None
-                and "initial_velocity" not in ics_payload
-            ):
+            elif ck == "velocity" and rhs is not None and "initial_velocity" not in ics_payload:
                 ics_payload["initial_velocity"] = rhs
         # Attach geometric hints.
         geom = problem.details.get("domain_geometry")
         if geom is not None:
             if "type" not in bcs_payload:
-                if geom.kind == "interval" and set(
-                    summary.get("boundary_kinds", ())
-                ) == {"dirichlet"}:
+                if geom.kind == "interval" and set(summary.get("boundary_kinds", ())) == {
+                    "dirichlet"
+                }:
                     bcs_payload["type"] = "dirichlet_homogeneous_interval"
-                elif geom.kind == "interval" and set(
-                    summary.get("boundary_kinds", ())
-                ) == {"neumann"}:
+                elif geom.kind == "interval" and set(summary.get("boundary_kinds", ())) == {
+                    "neumann"
+                }:
                     bcs_payload["type"] = "neumann_homogeneous_interval"
             for key, val in getattr(geom, "extents", {}).items():
                 if key == "x" and isinstance(val, tuple) and len(val) == 2:

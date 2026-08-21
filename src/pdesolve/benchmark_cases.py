@@ -92,10 +92,7 @@ def build_benchmark_cases():
                 u(x, t),
                 (x, t),
                 ics=sp.Eq(u(0, t), 1 / (1 + t)),
-                expected_method_hints=(
-                    "quasilinear_implicit",
-                    "first_order_nonlinear_auto",
-                ),
+                expected_method_hints=("quasilinear_implicit", "first_order_nonlinear_auto"),
                 exact_output_kind="implicit",
                 stress_level="characteristics",
             ),
@@ -105,11 +102,7 @@ def build_benchmark_cases():
                 sp.Eq(sp.diff(u(x, y), x) + sp.diff(u(x, y), y) ** 2, 3),
                 u(x, y),
                 (x, y),
-                expected_method_hints=(
-                    "complete_integral",
-                    "charpit",
-                    "first_order_framework",
-                ),
+                expected_method_hints=("complete_integral", "charpit", "first_order_framework"),
                 solution_fragments=("C",),
                 exact_output_kind="complete_integral",
                 stress_level="symbolic_large",
@@ -123,10 +116,7 @@ def build_benchmark_cases():
                 u(x, t),
                 (x, t),
                 ics=sp.Eq(u(x, 0), sp.Piecewise((1, x < 0), (0, True))),
-                expected_method_hints=(
-                    "conservation_law",
-                    "quasilinear_implicit_characteristics",
-                ),
+                expected_method_hints=("conservation_law", "quasilinear_implicit_characteristics"),
                 exact_output_kind="weak_solution",
             ),
             BenchmarkCase(
@@ -148,11 +138,7 @@ def build_benchmark_cases():
             BenchmarkCase(
                 "conservation_law",
                 "nonconvex_stress",
-                sp.Eq(
-                    sp.diff(u(x, t), t)
-                    + (u(x, t) ** 3 - u(x, t)) * sp.diff(u(x, t), x),
-                    0,
-                ),
+                sp.Eq(sp.diff(u(x, t), t) + (u(x, t) ** 3 - u(x, t)) * sp.diff(u(x, t), x), 0),
                 u(x, t),
                 (x, t),
                 ics=sp.Eq(u(x, 0), sp.Piecewise((1, x < 0), (-1, True))),
@@ -238,10 +224,7 @@ def build_benchmark_cases():
                 sp.Eq(sp.diff(u(x, t), t, 2), sp.diff(u(x, t), x, 2)),
                 u(x, t),
                 (x, t),
-                ics=(
-                    sp.Eq(u(x, 0), sp.sin(x)),
-                    sp.Eq(sp.diff(u(x, t), t).subs(t, 0), 0),
-                ),
+                ics=(sp.Eq(u(x, 0), sp.sin(x)), sp.Eq(sp.diff(u(x, t), t).subs(t, 0), 0)),
                 bcs=(sp.Eq(u(0, t), 0), sp.Eq(u(sp.pi, t), 0)),
                 expected_method_hints=(
                     "wave_dirichlet_sine_series",
@@ -257,10 +240,7 @@ def build_benchmark_cases():
                 sp.Eq(sp.diff(u(x, t), t, 2), sp.diff(u(x, t), x, 2)),
                 u(x, t),
                 (x, t),
-                ics=(
-                    sp.Eq(u(x, 0), sp.exp(-(x**2))),
-                    sp.Eq(sp.diff(u(x, t), t).subs(t, 0), 0),
-                ),
+                ics=(sp.Eq(u(x, 0), sp.exp(-(x**2))), sp.Eq(sp.diff(u(x, t), t).subs(t, 0), 0)),
                 expected_method_hints=("dalembert_wave_ivp", "structured_transform"),
                 expected_solution=sp.Eq(
                     u(x, t), sp.exp(-((x - t) ** 2)) / 2 + sp.exp(-((x + t) ** 2)) / 2
